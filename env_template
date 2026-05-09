@@ -1,0 +1,7 @@
+GITHUB_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+GITHUB_BASE_URL=https://models.inference.ai.azure.com
+GROQ_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+GROQ_BASE_URL=https://api.groq.com/openai/v1
+OPENROUTER_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+INTER_CALL_DELAY=0.1

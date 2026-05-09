@@ -1,0 +1,30 @@
+# Web framework
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Data validation
+pydantic
+
+# LLM providers
+openai
+python-dotenv
+
+# Document parsing
+PyPDF2
+
+# NLP
+spacy
+nltk
+sentence-transformers
+
+# Graph construction + plotting (graph_builder.py imports matplotlib at module level)
+networkx
+matplotlib
+
+# Data / ML utilities
+numpy
+pandas
+scikit-learn
+scipy
+seaborn

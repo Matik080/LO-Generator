@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LO Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222;
+    --border: #2e2e2e;
+    --border2: #3a3a3a;
+    --text: #e8e8e8;
+    --muted: #888;
+    --accent: #4ade80;
+    --accent2: #22c55e;
+    --warn: #fbbf24;
+    --error: #f87171;
+    --blue: #60a5fa;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  header h1 {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+  }
+  header span {
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  #api-url-input {
+    margin-left: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    width: 260px;
+  }
+  #api-url-input:focus { outline: none; border-color: var(--accent); }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: calc(100vh - 57px);
+  }
+
+  /* ── Sidebar / pipeline steps ── */
+  aside {
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 57px;
+    height: calc(100vh - 57px);
+    overflow-y: auto;
+  }
+  .step-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    padding: 0 20px 8px;
+    text-transform: uppercase;
+  }
+  .step {
+    padding: 10px 20px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+  .step:hover { color: var(--text); background: var(--surface); }
+  .step.active { border-left-color: var(--accent); color: var(--text); background: var(--surface); }
+  .step.done { color: var(--accent); }
+  .step.done .step-num { background: var(--accent); color: #000; }
+  .step-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--border2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+  .step.active .step-num { background: var(--accent); color: #000; }
+  .step-name { font-size: 13px; font-weight: 500; }
+
+  .sidebar-stats {
+    margin: 24px 20px 0;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .sidebar-stats .stat-row {
+    display: flex; justify-content: space-between;
+    padding: 2px 0;
+    color: var(--muted);
+  }
+  .sidebar-stats .stat-row span:last-child { color: var(--accent); }
+
+  /* ── Main content ── */
+  main {
+    padding: 32px;
+    max-width: 900px;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .panel-desc {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  /* ── Upload zone ── */
+  .upload-zone {
+    border: 1.5px dashed var(--border2);
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+    margin-bottom: 16px;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(74, 222, 128, 0.04);
+  }
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 32px; margin-bottom: 10px; }
+  .upload-zone p { color: var(--muted); font-size: 13px; }
+  .upload-zone strong { color: var(--text); }
+  #file-list { margin-top: 12px; }
+  .file-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 4px; padding: 4px 10px; margin: 4px;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .file-chip .remove { cursor: pointer; color: var(--error); margin-left: 4px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 5px; border: none;
+    cursor: pointer; font-family: var(--sans); font-size: 13px;
+    font-weight: 500; transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--accent); color: #000;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; }
+  .btn-secondary {
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border2);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: rgba(248,113,113,0.1); color: var(--error); border: 1px solid rgba(248,113,113,0.3); }  .btn-danger:hover { background: rgba(248,113,113,0.2); }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+  /* ── Progress / log ── */
+  .log-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 16px;
+  }
+  .log-box .log-line { padding: 1px 0; }
+  .log-box .log-ok { color: var(--accent); }
+  .log-box .log-warn { color: var(--warn); }
+  .log-box .log-err { color: var(--error); }
+
+  .progress-bar-wrap {
+    height: 4px; background: var(--surface2);
+    border-radius: 2px; margin: 12px 0; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; background: var(--accent);
+    border-radius: 2px; transition: width 0.4s;
+    width: 0%;
+  }
+
+  /* ── Stats cards ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .stat-card .val {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .stat-card .lbl {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── LO table / cards ── */
+  .lo-controls {
+    display: flex; gap: 10px; margin-bottom: 16px; align-items: center; flex-wrap: wrap;
+  }
+  .lo-controls input[type=text] {
+    flex: 1; min-width: 200px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--sans); font-size: 13px;
+    padding: 7px 12px; border-radius: 4px;
+  }
+  .lo-controls input[type=text]:focus { outline: none; border-color: var(--accent); }
+  select {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-size: 13px; padding: 7px 10px;
+    border-radius: 4px; cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--accent); }
+
+  .lo-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .lo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    transition: border-color 0.15s;
+  }
+  .lo-card:hover { border-color: var(--border2); }
+  .lo-card.editing { border-color: var(--accent); }
+
+  .lo-header {
+    display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;
+  }
+  .lo-type {
+    font-family: var(--mono); font-size: 10px;
+    background: rgba(74,222,128,0.1); color: var(--accent);
+    border: 1px solid rgba(74,222,128,0.2);
+    padding: 2px 8px; border-radius: 3px;
+    flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .lo-id { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-left: auto; }
+
+  .lo-field label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); display: block; margin-bottom: 3px;
+  }
+  .lo-field { margin-bottom: 10px; }
+  .lo-field p { font-size: 13px; line-height: 1.55; }
+  .lo-field textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    color: var(--text); font-family: var(--sans); font-size: 13px;
+    padding: 8px 10px; border-radius: 4px; resize: vertical; min-height: 60px;
+    line-height: 1.55;
+  }
+  .lo-field textarea:focus { outline: none; border-color: var(--accent); }
+
+  .lo-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .lo-actions .btn { padding: 5px 12px; font-size: 12px; }
+
+  .lo-keywords {
+    display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;
+  }
+  .kw-tag {
+    font-family: var(--mono); font-size: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); padding: 1px 7px; border-radius: 3px;
+  }
+
+  .pagination {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 16px; justify-content: center;
+  }
+  .pagination .btn { padding: 5px 12px; font-size: 12px; }
+  .pagination span { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  /* ── Export panel ── */
+  .export-options { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+  .export-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .export-card .icon { font-size: 24px; }
+  .export-card h3 { font-size: 14px; font-weight: 500; }
+  .export-card p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .export-card .btn { margin-left: auto; flex-shrink: 0; }
+
+  /* ── Checkbox ── */
+  .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .checkbox-row input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+  .checkbox-row label { font-size: 13px; cursor: pointer; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(74,222,128,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── Add source section ── */
+  .add-source-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px; margin-top: 20px;
+  }
+  .add-source-section h3 { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+  .add-source-section p { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>LO·PIPELINE</h1>
+  <span>learning object generation</span>
+
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="step-label">Pipeline</div>
+    <div class="step active" data-panel="upload" onclick="gotoStep('upload')">
+      <div class="step-num">1</div>
+      <div class="step-name">Upload Sources</div>
+    </div>
+    <div class="step" data-panel="extract" onclick="gotoStep('extract')">
+      <div class="step-num">2</div>
+      <div class="step-name">Extract Units</div>
+    </div>
+    <div class="step" data-panel="generate" onclick="gotoStep('generate')">
+      <div class="step-num">3</div>
+      <div class="step-name">Generate LOs</div>
+    </div>
+    <div class="step" data-panel="evaluate" onclick="gotoStep('evaluate')">
+      <div class="step-num">4</div>
+      <div class="step-name">Evaluate &amp; Filter</div>
+    </div>
+    <div class="step" data-panel="graph" onclick="gotoStep('graph')">
+      <div class="step-num">5</div>
+      <div class="step-name">Build Knowledge Graph</div>
+    </div>
+    <div class="step" data-panel="view" onclick="gotoStep('view')">
+      <div class="step-num">6</div>
+      <div class="step-name">View &amp; Edit LOs</div>
+    </div>
+    <div class="step" data-panel="echub" onclick="gotoStep('echub')">
+      <div class="step-num">7</div>
+      <div class="step-name">Export to ECHub</div>
+    </div>
+    <div class="step" data-panel="export" onclick="gotoStep('export')">
+      <div class="step-num">8</div>
+      <div class="step-name">Export Files</div>
+    </div>
+
+    <div class="sidebar-stats" id="sidebar-stats">
+      <div class="stat-row"><span>Units</span><span id="ss-units">—</span></div>
+      <div class="stat-row"><span>LOs</span><span id="ss-los">—</span></div>
+      <div class="stat-row"><span>Graph nodes</span><span id="ss-nodes">—</span></div>
+      <div class="stat-row"><span>Graph edges</span><span id="ss-edges">—</span></div>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- ── Panel 1: Upload ── -->
+    <div class="panel active" id="panel-upload">
+      <h2>Upload Source Materials</h2>
+      <p class="panel-desc">Upload one or more PDF, HTML, or PPTX files. These will be processed together into atomic units.</p>
+
+      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" multiple accept=".pdf,.html,.htm,.pptx" onchange="addFiles(this.files)">
+        <div class="upload-icon">📂</div>
+        <p><strong>Click to browse</strong> or drag &amp; drop files here</p>
+        <p>PDF · HTML · PPTX</p>
+      </div>
+      <div id="file-list"></div>
+
+      <hr>
+      <h3 style="font-size:14px;font-weight:500;margin-bottom:6px">Or load existing LOs</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Upload a previously exported <code>learning_objects.json</code> to skip straight to the View &amp; Edit step, or to add more sources to an existing run.</p>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <input type="file" id="lo-json-input" accept=".json" onchange="loadExistingLOs(this)" style="font-size:13px;color:var(--muted)">
+        <span id="lo-json-status" style="font-size:12px;font-family:var(--mono);color:var(--accent)"></span>
+      </div>
+
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startExtraction()" id="btn-extract">
+          Run Extraction →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Panel 2: Extract ── -->
+    <div class="panel" id="panel-extract">
+      <h2>Extract Atomic Units</h2>
+      <p class="panel-desc">Each file is parsed, split into sections, and atomic knowledge units are extracted by the LLM. Near-duplicate units (≥90% embedding similarity) are merged.</p>
+
+      <div class="progress-bar-wrap"><div class="progress-bar" id="extract-progress"></div></div>
+      <div class="log-box" id="extract-log"><div class="log-line">Waiting to start…</div></div>
+
+      <div class="stats-grid hidden" id="extract-stats"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary hidden" id="btn-goto-generate" onclick="gotoStep('generate')">
+          Generate LOs →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Panel 3: Generate ── -->
+    <div class="panel" id="panel-generate">
+      <h2>Generate Learning Objects</h2>
+      <p class="panel-desc">Each atomic unit is transformed into a structured learning object (question, answer, hint, multiple-choice options).</p>
+
+      <div class="progress-bar-wrap"><div class="progress-bar" id="gen-progress"></div></div>
+      <div class="log-box" id="gen-log"><div class="log-line">Waiting to start…</div></div>
+
+      <div class="stats-grid hidden" id="gen-stats"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startGeneration()" id="btn-run-generate">
+          Run Generation →
+        </button>
+        <button class="btn btn-primary hidden" id="btn-goto-evaluate" onclick="gotoStep('evaluate')">
+          Evaluate &amp; Filter →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Panel 4: Graph ── -->
+    <div class="panel" id="panel-graph">
+      <h2>Build Knowledge Graph</h2>
+      <p class="panel-desc">Constructs a concept co-occurrence graph and a directed prerequisite knowledge graph over all learning objects.</p>
+
+      <div class="progress-bar-wrap"><div class="progress-bar" id="graph-progress"></div></div>
+      <div class="log-box" id="graph-log"><div class="log-line">Waiting to start…</div></div>
+
+      <div class="stats-grid hidden" id="graph-stats"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startGraph()" id="btn-run-graph">
+          Build Graph →
+        </button>
+        <button class="btn btn-primary hidden" id="btn-goto-view" onclick="gotoStep('view')">
+          View &amp; Edit LOs →
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ── Panel 5: Evaluate & Filter ── -->
+    <div class="panel" id="panel-evaluate">
+      <h2>Evaluate &amp; Filter</h2>
+      <p class="panel-desc">Evaluates LOs with LLM judges, flags failures by consensus, and regenerates low-quality LOs from their source units. Mirrors the quality gate in <code>ems.py</code>.</p>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:16px;">
+        <div class="lo-field" style="margin-bottom:12px">
+          <label>Evaluation models</label>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px">Groq</div>
+            <div class="checkbox-row">
+              <input type="checkbox" id="eval-model-llama" checked>
+              <label for="eval-model-llama" style="font-family:var(--mono);font-size:12px">llama-3.3-70b-versatile</label>
+            </div>
+            <div class="checkbox-row">
+              <input type="checkbox" id="eval-model-gpt" checked>
+              <label for="eval-model-gpt" style="font-family:var(--mono);font-size:12px">openai/gpt-oss-120b</label>
+            </div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:6px 0 2px">OpenRouter (requires key)</div>
+            <div class="checkbox-row">
+              <input type="checkbox" id="eval-model-kimi">
+              <label for="eval-model-kimi" style="font-family:var(--mono);font-size:12px">moonshotai/kimi-k2-instruct</label>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div class="lo-field" style="margin:0">
+            <label>Faithfulness threshold</label>
+            <input type="number" id="eval-threshold" value="3.0" min="1" max="5" step="0.5"
+              style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:6px 10px;border-radius:4px;width:80px;margin-top:4px">
+          </div>
+          <div class="lo-field" style="margin:0">
+            <label>Max regeneration attempts</label>
+            <input type="number" id="eval-attempts" value="2" min="1" max="5" step="1"
+              style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:6px 10px;border-radius:4px;width:80px;margin-top:4px">
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-bar-wrap"><div class="progress-bar" id="eval-progress"></div></div>
+      <div class="log-box" id="eval-log"><div class="log-line">Waiting to start…</div></div>
+      <div class="stats-grid hidden" id="eval-stats"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startEvaluate()" id="btn-run-evaluate">
+          Run Evaluation →
+        </button>
+        <button class="btn btn-secondary" id="btn-skip-evaluate" onclick="gotoStep('view')">
+          Skip (view LOs as-is)
+        </button>
+        <button class="btn btn-primary hidden" id="btn-goto-graph2" onclick="gotoStep('graph')">
+          Build Knowledge Graph →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Panel 6: View & Edit ── -->
+    <div class="panel" id="panel-view">
+      <h2>Learning Objects</h2>
+      <p class="panel-desc">Browse, search, filter, and edit generated learning objects.</p>
+      <span id="save-status" style="font-size:12px;font-family:var(--mono);color:var(--muted);display:block;margin-bottom:8px"></span>
+
+      <div class="lo-controls">
+        <input type="text" id="lo-search" placeholder="Search question, answer, keywords…" oninput="renderLOs()">
+        <select id="lo-filter-type" onchange="renderLOs()">
+          <option value="">All types</option>
+        </select>
+        <span id="lo-count" style="color:var(--muted);font-size:12px;font-family:var(--mono)"></span>
+      </div>
+
+      <div class="lo-list" id="lo-list"></div>
+      <div class="pagination" id="lo-pagination"></div>
+
+      <hr>
+
+      <!-- Add more sources -->
+      <div class="add-source-section">
+        <h3>➕ Add More Sources</h3>
+        <p>Upload additional files to extract new units, generate new LOs, and merge them into the existing knowledge graph.</p>
+        <div class="upload-zone" id="add-drop-zone" onclick="document.getElementById('add-file-input').click()" style="padding:20px">
+          <input type="file" id="add-file-input" multiple accept=".pdf,.html,.htm,.pptx" onchange="addMoreFiles(this.files)">
+          <p><strong>Click to browse</strong> or drag &amp; drop additional files</p>
+        </div>
+        <div id="add-file-list"></div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="processAdditionalSources()" id="btn-add-sources">
+            Extract &amp; Merge New Sources →
+          </button>
+        </div>
+        <div class="log-box hidden" id="add-log"></div>
+      </div>
+    </div>
+
+
+    <!-- ── Panel 7: ECHub Export ── -->
+    <div class="panel" id="panel-echub">
+      <h2>Export to ECHub</h2>
+      <p class="panel-desc">Enriches each LO with an LLM-generated name and time estimates, then converts to the EChub JSON format ready for upload.</p>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:16px;">
+        <div class="lo-field" style="margin-bottom:12px">
+          <label>Export mode</label>
+          <select id="echub-mode" style="margin-top:6px;width:100%">
+            <option value="by_source">Group by source file</option>
+            <option value="single_unit">Single unit (all LOs together)</option>
+          </select>
+        </div>
+        <div id="echub-single-fields" style="display:none">
+          <div class="lo-field" style="margin-bottom:8px">
+            <label>Unit title</label>
+            <input type="text" id="echub-unit-title" value="Generated Learning Objects"
+              style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:4px;width:100%;margin-top:4px">
+          </div>
+          <div class="lo-field">
+            <label>Unit description</label>
+            <input type="text" id="echub-unit-desc" value="Learning objects generated by the LO Pipeline."
+              style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:4px;width:100%;margin-top:4px">
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-bar-wrap"><div class="progress-bar" id="echub-progress"></div></div>
+      <div class="log-box" id="echub-log"><div class="log-line">Waiting to start…</div></div>
+      <div class="stats-grid hidden" id="echub-stats"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startEchubExport()" id="btn-run-echub">
+          Run ECHub Export →
+        </button>
+        <button class="btn btn-secondary hidden" id="btn-download-echub" onclick="downloadEchub()">
+          ⬇ Download JSON
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Panel 8: Export ── -->
+    <div class="panel" id="panel-export">
+      <h2>Export</h2>
+      <p class="panel-desc">Download your learning objects in various formats.</p>
+
+      <div class="export-options">
+        <div class="export-card">
+          <div class="icon">📄</div>
+          <div>
+            <h3>Learning Objects JSON</h3>
+            <p>Full structured LO data with all fields</p>
+          </div>
+          <button class="btn btn-primary" onclick="exportJSON('los')">Download</button>
+        </div>
+        <div class="export-card">
+          <div class="icon">🔗</div>
+          <div>
+            <h3>Atomic Units JSON</h3>
+            <p>Extracted &amp; merged atomic knowledge units</p>
+          </div>
+          <button class="btn btn-secondary" onclick="exportJSON('units')">Download</button>
+        </div>
+        <div class="export-card">
+          <div class="icon">📊</div>
+          <div>
+            <h3>Graph Data (edges)</h3>
+            <p>Prerequisite edges as JSON array</p>
+          </div>
+          <button class="btn btn-secondary" onclick="exportJSON('graph')">Download</button>
+        </div>
+        <div class="export-card">
+          <div class="icon">📋</div>
+          <div>
+            <h3>LOs as CSV</h3>
+            <p>Flat CSV for spreadsheet review</p>
+          </div>
+          <button class="btn btn-secondary" onclick="exportCSV()">Download</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const state = {
+  files: [],
+  addFiles: [],
+  units: [],
+  los: [],
+  graphData: null,
+  loPage: 0,
+  loPageSize: 20,
+};
+
+function apiBase() {
+  return '';
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function gotoStep(name) {
+  document.querySelectorAll('.step').forEach(s => s.classList.toggle('active', s.dataset.panel === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  if (name === 'view') renderLOs();
+}
+
+function markStepDone(name) {
+  document.querySelector(`.step[data-panel="${name}"]`).classList.add('done');
+}
+
+// ── File management ───────────────────────────────────────────────────────────
+function addFiles(fileList) {
+  for (const f of fileList) {
+    if (!state.files.find(x => x.name === f.name)) state.files.push(f);
+  }
+  renderFileList();
+}
+
+function renderFileList() {
+  const el = document.getElementById('file-list');
+  el.innerHTML = state.files.map((f, i) =>
+    `<div class="file-chip">📎 ${f.name} <span class="remove" onclick="removeFile(${i})">✕</span></div>`
+  ).join('');
+}
+
+function removeFile(i) {
+  state.files.splice(i, 1);
+  renderFileList();
+}
+
+function addMoreFiles(fileList) {
+  for (const f of fileList) {
+    if (!state.addFiles.find(x => x.name === f.name)) state.addFiles.push(f);
+  }
+  const el = document.getElementById('add-file-list');
+  el.innerHTML = state.addFiles.map((f, i) =>
+    `<div class="file-chip">📎 ${f.name}</div>`
+  ).join('');
+}
+
+// Drag & drop
+['drop-zone', 'add-drop-zone'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+  el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+  el.addEventListener('drop', e => {
+    e.preventDefault(); el.classList.remove('dragover');
+    if (id === 'drop-zone') addFiles(e.dataTransfer.files);
+    else addMoreFiles(e.dataTransfer.files);
+  });
+});
+
+// ── Logging ───────────────────────────────────────────────────────────────────
+// activeLogBox: the log box currently receiving server-side print() output
+let activeLogBox = null;
+let sseSource = null;
+
+// Map stage names to log box IDs
+const STAGE_LOG_BOX = {
+  'extract':     'extract-log',
+  'generate':    'gen-log',
+  'evaluate':    'eval-log',
+  'graph':       'graph-log',
+  'add-sources': 'add-log',
+  'echub':       'echub-log',
+  'global':      null,
+};
+
+function connectLogStream() {
+  if (sseSource) { sseSource.close(); sseSource = null; }
+  sseSource = new EventSource(`${apiBase()}/logs`);
+  sseSource.onmessage = (e) => {
+    const raw = e.data;
+    // Messages are tagged "stage::message"
+    const sep = raw.indexOf('::');
+    let stage, msg;
+    if (sep === -1) {
+      stage = 'global';
+      msg = raw;
+    } else {
+      stage = raw.slice(0, sep);
+      msg = raw.slice(sep + 2);
+    }
+
+    // Route to the right log box
+    const targetBox = STAGE_LOG_BOX[stage] || activeLogBox;
+    if (!targetBox) return;
+
+    const cls = msg.includes('FAIL') || msg.toLowerCase().includes('error') || msg.includes('✗') ? 'err'
+              : msg.includes('✓') || msg.includes('Done') || msg.includes('Kept') || msg.includes('complete') ? 'ok'
+              : msg.includes('WARN') || msg.includes('skipping') || msg.includes('Cancelled') ? 'warn'
+              : '';
+    _appendLog(targetBox, msg, cls);
+  };
+  sseSource.onerror = () => {
+    if (activeLogBox) _appendLog(activeLogBox, '[stream] reconnecting…', 'warn');
+  };
+}
+
+function setActiveLog(boxId) {
+  activeLogBox = boxId;
+}
+
+function _appendLog(boxId, msg, cls = '') {
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  const line = document.createElement('div');
+  line.className = 'log-line' + (cls ? ' log-' + cls : '');
+  line.textContent = msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function log(boxId, msg, cls = '') {
+  _appendLog(boxId, msg, cls);
+}
+
+function clearLog(boxId) {
+  const box = document.getElementById(boxId);
+  if (box) box.innerHTML = '';
+}
+
+function setProgress(barId, pct) {
+  const bar = document.getElementById(barId);
+  if (bar) bar.style.width = pct + '%';
+}
+
+// Connect once the API URL is set and page loads
+window.addEventListener('load', () => {
+  setTimeout(connectLogStream, 500);
+});
+
+
+
+// ── Sidebar stats ─────────────────────────────────────────────────────────────
+function updateSidebarStats() {
+  document.getElementById('ss-units').textContent = state.units.length || '—';
+  document.getElementById('ss-los').textContent = state.los.length || '—';
+  if (state.graphData) {
+    document.getElementById('ss-nodes').textContent = state.graphData.stats.knowledge_graph_nodes;
+    document.getElementById('ss-edges').textContent = state.graphData.stats.knowledge_graph_edges;
+  }
+}
+
+// ── Stage 1 → 2: Extraction ───────────────────────────────────────────────────
+async function startExtraction() {
+  if (!state.files.length) { alert('Please add at least one file.'); return; }
+  gotoStep('extract');
+    setActiveLog('extract-log');
+  clearLog('extract-log');
+  setProgress('extract-progress', 0);
+    document.getElementById('extract-stats').classList.add('hidden');
+  document.getElementById('btn-goto-generate').classList.add('hidden');
+
+  let allUnits = [];
+
+  for (let i = 0; i < state.files.length; i++) {
+    const f = state.files[i];
+    log('extract-log', `[${i+1}/${state.files.length}] Extracting "${f.name}"…`);
+
+    const fd = new FormData();
+    fd.append('file', f);
+
+    try {
+      const resp = await fetch(`${apiBase()}/extract-units`, { method: 'POST', body: fd });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+      const data = await resp.json();
+      allUnits = allUnits.concat(data.units);
+      log('extract-log', `  ✓ ${data.stats.total_units} units extracted`, 'ok');
+    } catch (e) {
+      log('extract-log', `  ✗ Error: ${e.message}`, 'err');
+    }
+
+    setProgress('extract-progress', Math.round(((i + 1) / state.files.length) * 100));
+  }
+
+  state.units = allUnits;
+  updateSidebarStats();
+  markStepDone('upload');
+
+  log('extract-log', `Done. ${allUnits.length} total units.`, 'ok');
+
+  // Stats cards
+  const typeCounts = {};
+  allUnits.forEach(u => { typeCounts[u.type] = (typeCounts[u.type] || 0) + 1; });
+  const statsEl = document.getElementById('extract-stats');
+  statsEl.innerHTML = `
+    <div class="stat-card"><div class="val">${allUnits.length}</div><div class="lbl">Total Units</div></div>
+    ${Object.entries(typeCounts).map(([t,c]) => `<div class="stat-card"><div class="val">${c}</div><div class="lbl">${t}</div></div>`).join('')}
+  `;
+  statsEl.classList.remove('hidden');
+  document.getElementById('btn-goto-generate').classList.remove('hidden');
+    markStepDone('extract');
+}
+
+// ── Stage 3: Generation ───────────────────────────────────────────────────────
+async function startGeneration() {
+  if (!state.units.length) { alert('No units — run extraction first.'); return; }
+    setActiveLog('gen-log');
+  clearLog('gen-log');
+  setProgress('gen-progress', 0);
+    document.getElementById('gen-stats').classList.add('hidden');
+  document.getElementById('btn-goto-evaluate').classList.add('hidden');
+  document.getElementById('btn-run-generate').disabled = true;
+
+  const units = state.units;
+  const batchSize = 10;
+  const totalBatches = Math.ceil(units.length / batchSize);
+  let allLOs = [];
+
+  log('gen-log', `Generating LOs for ${units.length} units in ${totalBatches} batch(es) of ${batchSize}…`);
+
+  for (let b = 0; b < totalBatches; b++) {
+    const batch = units.slice(b * batchSize, (b + 1) * batchSize);
+    setProgress('gen-progress', Math.round((b / totalBatches) * 90));
+    log('gen-log', `Batch ${b + 1}/${totalBatches} — sending ${batch.length} units…`);
+
+    try {
+      const resp = await fetch(`${apiBase()}/generate-los`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ units: batch }),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+      const data = await resp.json();
+      allLOs = allLOs.concat(data.learning_objects);
+      log('gen-log', `  ✓ Batch ${b + 1} done — ${data.learning_objects.length} LOs generated (${allLOs.length} total)`, 'ok');
+    } catch (e) {
+      log('gen-log', `  ✗ Batch ${b + 1} failed: ${e.message}`, 'err');
+    }
+  }
+
+  state.los = allLOs;
+  updateSidebarStats();
+  setProgress('gen-progress', 100);
+  log('gen-log', `Done. ${state.los.length} LOs total (including MC variants).`, 'ok');
+
+  const typeCounts = {};
+  state.los.forEach(lo => { typeCounts[lo.type] = (typeCounts[lo.type] || 0) + 1; });
+  const statsEl = document.getElementById('gen-stats');
+  statsEl.innerHTML = `
+    <div class="stat-card"><div class="val">${state.los.length}</div><div class="lbl">Total LOs</div></div>
+    ${Object.entries(typeCounts).map(([t,c]) => `<div class="stat-card"><div class="val">${c}</div><div class="lbl">${t}</div></div>`).join('')}
+  `;
+  statsEl.classList.remove('hidden');
+    document.getElementById('btn-goto-evaluate').classList.remove('hidden');
+  markStepDone('generate');
+  document.getElementById('btn-run-generate').disabled = false;
+  saveLOsToServer();
+}
+
+// ── Stage 4: Graph ────────────────────────────────────────────────────────────
+async function startGraph() {
+  if (!state.los.length) { alert('No LOs — run generation first.'); return; }
+    setActiveLog('graph-log');
+  clearLog('graph-log');
+  setProgress('graph-progress', 0);
+    document.getElementById('graph-stats').classList.add('hidden');
+  document.getElementById('btn-goto-view').classList.add('hidden');
+  document.getElementById('btn-run-graph').disabled = true;
+
+  log('graph-log', `Building knowledge graph for ${state.los.length} LOs…`);
+
+  try {
+    const resp = await fetch(`${apiBase()}/build-graph`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ units: state.units, learning_objects: state.los }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+    const data = await resp.json();
+    state.los = data.learning_objects;
+    state.graphData = data;
+    updateSidebarStats();
+    setProgress('graph-progress', 100);
+    log('graph-log', `✓ Graph built. Nodes: ${data.stats.knowledge_graph_nodes}, Edges: ${data.stats.knowledge_graph_edges}, DAG: ${data.stats.is_dag}`, 'ok');
+
+    const statsEl = document.getElementById('graph-stats');
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="val">${data.stats.concept_graph_nodes}</div><div class="lbl">Concept nodes</div></div>
+      <div class="stat-card"><div class="val">${data.stats.concept_graph_edges}</div><div class="lbl">Concept edges</div></div>
+      <div class="stat-card"><div class="val">${data.stats.knowledge_graph_nodes}</div><div class="lbl">KG nodes</div></div>
+      <div class="stat-card"><div class="val">${data.stats.knowledge_graph_edges}</div><div class="lbl">KG edges</div></div>
+      <div class="stat-card"><div class="val">${data.stats.is_dag ? '✓' : '✗'}</div><div class="lbl">Is DAG</div></div>
+    `;
+    statsEl.classList.remove('hidden');
+      document.getElementById('btn-goto-view').classList.remove('hidden');
+    markStepDone('graph');
+    saveLOsToServer();
+  } catch (e) {
+    log('graph-log', `✗ Error: ${e.message}`, 'err');
+  }
+  document.getElementById('btn-run-graph').disabled = false;
+}
+
+// ── Panel 5: View & Edit LOs ──────────────────────────────────────────────────
+function getFilteredLOs() {
+  const search = document.getElementById('lo-search').value.toLowerCase();
+  const typeFilter = document.getElementById('lo-filter-type').value;
+  return state.los.filter(lo => {
+    const matchType = !typeFilter || lo.type === typeFilter;
+    const matchSearch = !search || [lo.question, lo.answer, lo.hint, (lo.keywords||[]).join(' ')]
+      .join(' ').toLowerCase().includes(search);
+    return matchType && matchSearch;
+  });
+}
+
+function renderLOs() {
+  const filtered = getFilteredLOs();
+  const total = filtered.length;
+  const pageSize = state.loPageSize;
+  const maxPage = Math.max(0, Math.ceil(total / pageSize) - 1);
+  if (state.loPage > maxPage) state.loPage = maxPage;
+
+  document.getElementById('lo-count').textContent = `${total} LOs`;
+
+  // Populate type filter
+  const types = [...new Set(state.los.map(lo => lo.type))].sort();
+  const sel = document.getElementById('lo-filter-type');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All types</option>' +
+    types.map(t => `<option value="${t}" ${t === cur ? 'selected' : ''}>${t}</option>`).join('');
+
+  const page = filtered.slice(state.loPage * pageSize, (state.loPage + 1) * pageSize);
+  const container = document.getElementById('lo-list');
+  container.innerHTML = page.map((lo, localIdx) => {
+    const globalIdx = state.los.indexOf(lo);
+    return renderLOCard(lo, globalIdx);
+  }).join('');
+
+  // Pagination
+  const pgEl = document.getElementById('lo-pagination');
+  if (total > pageSize) {
+    pgEl.innerHTML = `
+      <button class="btn btn-secondary" onclick="changePage(-1)" ${state.loPage === 0 ? 'disabled' : ''}>← Prev</button>
+      <span>Page ${state.loPage + 1} / ${maxPage + 1}</span>
+      <button class="btn btn-secondary" onclick="changePage(1)" ${state.loPage >= maxPage ? 'disabled' : ''}>Next →</button>
+    `;
+  } else {
+    pgEl.innerHTML = '';
+  }
+}
+
+function changePage(d) {
+  state.loPage += d;
+  renderLOs();
+  document.getElementById('lo-list').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderMCOptions(lo) {
+  if (!lo.mc_options || !lo.mc_options.length) return '';
+  const correct = lo.mc_correct_index ?? 0;
+  const opts = lo.mc_options.map((o, i) =>
+    `<div style="padding:2px 0;display:flex;gap:6px;align-items:flex-start">
+      <span style="font-family:var(--mono);font-size:10px;color:${i === correct ? 'var(--accent)' : 'var(--muted)'};flex-shrink:0;margin-top:1px">${i === correct ? '✓' : '○'}</span>
+      <span style="font-size:12px;color:${i === correct ? 'var(--text)' : 'var(--muted)'}">${escHtml(o)}</span>
+    </div>`
+  ).join('');
+  return `<div class="lo-field"><label>MC Options</label>${opts}</div>`;
+}
+
+function renderLOCard(lo, idx) {
+  return `
+    <div class="lo-card" id="lo-card-${idx}">
+      <div class="lo-header">
+        <span class="lo-type">${lo.type || 'unknown'}</span>
+        <span class="lo-id">#${lo.id || idx}</span>
+      </div>
+      <div class="lo-field">
+        <label>Question</label>
+        <p>${escHtml(lo.question || '')}</p>
+      </div>
+      <div class="lo-field">
+        <label>Answer</label>
+        <p>${escHtml(lo.answer || '')}</p>
+      </div>
+      ${lo.hint ? `<div class="lo-field"><label>Hint</label><p>${escHtml(lo.hint)}</p></div>` : ''}
+      ${renderMCOptions(lo)}
+      ${lo.keywords?.length ? `<div class="lo-keywords">${lo.keywords.map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}</div>` : ''}
+      <div class="lo-actions">
+        <button class="btn btn-secondary" onclick="editLO(${idx})">✏️ Edit</button>
+        <button class="btn btn-danger" onclick="deleteLO(${idx})">🗑 Delete</button>
+      </div>
+    </div>
+  `;
+}
+
+function editLO(idx) {
+  const lo = state.los[idx];
+  const card = document.getElementById(`lo-card-${idx}`);
+  card.classList.add('editing');
+
+  // Build MC options editor if present
+  let mcHtml = '';
+  if (lo.mc_options && lo.mc_options.length) {
+    const correct = lo.mc_correct_index ?? 0;
+    const optFields = lo.mc_options.map((o, i) => `
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+        <input type="radio" name="mc-correct-${idx}" value="${i}" ${i === correct ? 'checked' : ''}
+          style="accent-color:var(--accent);flex-shrink:0">
+        <textarea id="edit-mc-${idx}-${i}" style="flex:1;min-height:36px;font-size:12px">${escHtml(o)}</textarea>
+      </div>`).join('');
+    mcHtml = `
+      <div class="lo-field">
+        <label>MC Options (select correct answer with radio)</label>
+        ${optFields}
+        <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;margin-top:4px"
+          onclick="addMCOption(${idx})">+ Add option</button>
+      </div>`;
+  }
+
+  card.innerHTML = `
+    <div class="lo-header">
+      <span class="lo-type">${lo.type || 'unknown'}</span>
+      <span class="lo-id">#${lo.id || idx}</span>
+    </div>
+    <div class="lo-field">
+      <label>Question</label>
+      <textarea id="edit-q-${idx}">${escHtml(lo.question || '')}</textarea>
+    </div>
+    <div class="lo-field">
+      <label>Answer</label>
+      <textarea id="edit-a-${idx}">${escHtml(lo.answer || '')}</textarea>
+    </div>
+    <div class="lo-field">
+      <label>Hint</label>
+      <textarea id="edit-h-${idx}" style="min-height:40px">${escHtml(lo.hint || '')}</textarea>
+    </div>
+    ${mcHtml}
+    <div class="lo-actions">
+      <button class="btn btn-primary" onclick="saveLO(${idx})">💾 Save</button>
+      <button class="btn btn-secondary" onclick="renderLOs()">Cancel</button>
+    </div>
+  `;
+}
+
+function addMCOption(idx) {
+  const lo = state.los[idx];
+  if (!lo.mc_options) lo.mc_options = [];
+  lo.mc_options.push('');
+  editLO(idx);
+}
+
+function saveLO(idx) {
+  const lo = state.los[idx];
+  lo.question = document.getElementById(`edit-q-${idx}`).value;
+  lo.answer   = document.getElementById(`edit-a-${idx}`).value;
+  lo.hint     = document.getElementById(`edit-h-${idx}`).value;
+
+  // Save MC options if present
+  if (lo.mc_options && lo.mc_options.length) {
+    lo.mc_options = lo.mc_options.map((_, i) => {
+      const el = document.getElementById(`edit-mc-${idx}-${i}`);
+      return el ? el.value : _;
+    });
+    const radioSel = document.querySelector(`input[name="mc-correct-${idx}"]:checked`);
+    if (radioSel) lo.mc_correct_index = parseInt(radioSel.value);
+  }
+  renderLOs();
+  saveLOsToServer();
+}
+
+function deleteLO(idx) {
+  if (!confirm('Delete this learning object?')) return;
+  state.los.splice(idx, 1);
+  updateSidebarStats();
+  renderLOs();
+  saveLOsToServer();
+}
+
+// ── Add more sources ──────────────────────────────────────────────────────────
+async function processAdditionalSources() {
+  if (!state.addFiles.length) { alert('No new files added.'); return; }
+  const logEl = document.getElementById('add-log');
+  setActiveLog('add-log');
+  logEl.classList.remove('hidden');
+  logEl.innerHTML = '';
+
+  let newUnits = [];
+
+  for (const f of state.addFiles) {
+    log('add-log', `Extracting "${f.name}"…`);
+    const fd = new FormData();
+    fd.append('file', f);
+    try {
+      const resp = await fetch(`${apiBase()}/extract-units`, { method: 'POST', body: fd });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      newUnits = newUnits.concat(data.units);
+      log('add-log', `  ✓ ${data.units.length} units from "${f.name}"`, 'ok');
+    } catch (e) {
+      log('add-log', `  ✗ ${e.message}`, 'err');
+    }
+  }
+
+  if (!newUnits.length) { log('add-log', 'No new units extracted.', 'warn'); return; }
+
+  log('add-log', `Merging ${newUnits.length} new units with ${state.los.length} existing LOs and rebuilding graph…`);
+
+  try {
+    const resp = await fetch(`${apiBase()}/add-sources`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        existing_units: state.units,
+        existing_los: state.los,
+        new_units: newUnits,
+      }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+    const data = await resp.json();
+    state.units = state.units.concat(newUnits);
+    state.los = data.learning_objects;
+    state.graphData = data;
+    updateSidebarStats();
+    state.addFiles = [];
+    document.getElementById('add-file-list').innerHTML = '';
+    log('add-log', `✓ Done. ${data.stats.new_los} new LOs added. Total: ${data.stats.total_los} LOs.`, 'ok');
+    renderLOs();
+  } catch (e) {
+    log('add-log', `✗ Error: ${e.message}`, 'err');
+  }
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function exportJSON(type) {
+  let data, filename;
+  if (type === 'los') { data = state.los; filename = 'learning_objects.json'; }
+  else if (type === 'units') { data = state.units; filename = 'atomic_units.json'; }
+  else if (type === 'graph') {
+    if (!state.graphData) { alert('Run the graph build first.'); return; }
+    // Extract edges from the graph stats (we store the b64 pickle server-side)
+    data = {
+      knowledge_graph_stats: state.graphData.stats,
+      los_with_anchors: state.los.map(lo => ({ id: lo.id, anchor: lo.anchor, type: lo.type })),
+    };
+    filename = 'graph_data.json';
+  }
+  downloadJSON(data, filename);
+}
+
+function exportCSV() {
+  if (!state.los.length) { alert('No LOs to export.'); return; }
+  const cols = ['id', 'type', 'question', 'answer', 'hint', 'anchor'];
+  const rows = state.los.map(lo =>
+    cols.map(c => `"${(lo[c] || '').toString().replace(/"/g, '""')}"`).join(',')
+  );
+  const csv = [cols.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'learning_objects.csv';
+  a.click();
+}
+
+function downloadJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+// ── Start extraction when clicking the button from panel 1 ────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Stage 5: Evaluate & Filter ────────────────────────────────────────────────
+async function startEvaluate() {
+  if (!state.los.length) { alert('No LOs — run generation first.'); return; }
+
+  const models = [];
+  if (document.getElementById('eval-model-llama').checked) models.push('llama-3.3-70b-versatile');
+  if (document.getElementById('eval-model-gpt').checked) models.push('openai/gpt-oss-120b');
+  if (document.getElementById('eval-model-kimi').checked) models.push('moonshotai/kimi-k2-instruct');
+
+  if (!models.length) { alert('Select at least one evaluation model.'); return; }
+
+    setActiveLog('eval-log');
+  clearLog('eval-log');
+  setProgress('eval-progress', 0);
+    document.getElementById('eval-stats').classList.add('hidden');
+  document.getElementById('btn-goto-graph2').classList.add('hidden');
+  document.getElementById('btn-run-evaluate').disabled = true;
+  document.getElementById('btn-skip-evaluate').classList.add('hidden');
+
+  const threshold = parseFloat(document.getElementById('eval-threshold').value);
+  const attempts  = parseInt(document.getElementById('eval-attempts').value);
+
+  log('eval-log', `Evaluating ${state.los.length} LOs with: ${models.join(', ')}`);
+  log('eval-log', `Faithfulness threshold: ${threshold}, max attempts: ${attempts}`);
+
+  try {
+    const resp = await fetch(`${apiBase()}/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        learning_objects: state.los,
+        units: state.units,
+        models,
+        faithfulness_threshold: threshold,
+        max_attempts: attempts,
+      }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+    const data = await resp.json();
+    state.los = data.learning_objects;
+    updateSidebarStats();
+    setProgress('eval-progress', 100);
+    log('eval-log', `✓ Done. ${data.stats.total_los} LOs after filtering.`, 'ok');
+
+    const statsEl = document.getElementById('eval-stats');
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="val">${data.stats.total_los}</div><div class="lbl">LOs after filter</div></div>
+      ${Object.entries(data.stats.type_distribution).map(([t,c]) => `<div class="stat-card"><div class="val">${c}</div><div class="lbl">${t}</div></div>`).join('')}
+    `;
+    statsEl.classList.remove('hidden');
+      document.getElementById('btn-goto-graph2').classList.remove('hidden');
+    markStepDone('evaluate');
+    saveLOsToServer();
+  } catch(e) {
+    log('eval-log', `✗ Error: ${e.message}`, 'err');
+  }
+  document.getElementById('btn-run-evaluate').disabled = false;
+}
+
+// ── Load existing LOs from JSON ───────────────────────────────────────────────
+function loadExistingLOs(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      let data = JSON.parse(e.target.result);
+      // Handle both raw array and {learning_objects: [...]} shapes
+      if (Array.isArray(data)) {
+        state.los = data;
+      } else if (data.learning_objects) {
+        state.los = data.learning_objects;
+      } else {
+        throw new Error('Unrecognised JSON shape — expected array or {learning_objects: [...]}');
+      }
+      document.getElementById('lo-json-status').textContent = `✓ ${state.los.length} LOs loaded`;
+      updateSidebarStats();
+      // Jump straight to view
+      gotoStep('view');
+    } catch(err) {
+      document.getElementById('lo-json-status').textContent = `✗ ${err.message}`;
+      document.getElementById('lo-json-status').style.color = 'var(--error)';
+    }
+  };
+  reader.readAsText(file);
+}
+
+
+function hideCancelBtn(id) {
+  _activeCancelBtn = null;
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
+}
+
+async function cancelOperation() {
+  try {
+    await fetch(`${apiBase()}/cancel`, { method: 'POST' });
+    if (_activeCancelBtn) {
+      const box = document.getElementById(_activeCancelBtn);
+      if (box) box.disabled = true;
+    }
+    // activeLogBox is set by setActiveLog — log the cancel there
+    if (activeLogBox) log(activeLogBox, '⏹ Cancellation requested — waiting for current batch to finish…', 'warn');
+  } catch(e) {
+    if (activeLogBox) log(activeLogBox, `Cancel request failed: ${e.message}`, 'err');
+  }
+}
+
+async function clearCancel() {
+  try { await fetch(`${apiBase()}/cancel/clear`, { method: 'POST' }); } catch(_) {}
+}
+
+
+// ── ECHub export mode toggle ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const modeEl = document.getElementById('echub-mode');
+  if (modeEl) {
+    modeEl.addEventListener('change', () => {
+      document.getElementById('echub-single-fields').style.display =
+        modeEl.value === 'single_unit' ? 'block' : 'none';
+    });
+  }
+});
+
+let _echubResult = null;
+
+async function startEchubExport() {
+  if (!state.los.length) { alert('No LOs — run the pipeline first.'); return; }
+    setActiveLog('echub-log');
+  clearLog('echub-log');
+  setProgress('echub-progress', 0);
+  document.getElementById('echub-stats').classList.add('hidden');
+  document.getElementById('btn-download-echub').classList.add('hidden');
+  document.getElementById('btn-run-echub').disabled = true;
+
+  const mode = document.getElementById('echub-mode').value;
+  const body = {
+    learning_objects: state.los,
+    mode,
+    unit_title: document.getElementById('echub-unit-title')?.value || 'Generated Learning Objects',
+    unit_description: document.getElementById('echub-unit-desc')?.value || '',
+    batch_size: 10,
+  };
+
+  log('echub-log', `Starting ECHub export for ${state.los.length} LOs (mode: ${mode})…`);
+
+  try {
+    const resp = await fetch(`${apiBase()}/export-echub`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+    _echubResult = await resp.json();
+    setProgress('echub-progress', 100);
+
+    const totalQ = _echubResult.units.reduce((s, u) => s + u.questions.length, 0);
+    log('echub-log', `✓ Done. ${totalQ} questions across ${_echubResult.units.length} unit(s).`, 'ok');
+
+    const statsEl = document.getElementById('echub-stats');
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="val">${_echubResult.units.length}</div><div class="lbl">Units</div></div>
+      <div class="stat-card"><div class="val">${totalQ}</div><div class="lbl">Questions</div></div>
+      <div class="stat-card"><div class="val">${_echubResult.units.filter(u => u.questions.some(q => q.type === 'choice')).length}</div><div class="lbl">Units w/ MC</div></div>
+    `;
+    statsEl.classList.remove('hidden');
+    document.getElementById('btn-download-echub').classList.remove('hidden');
+    markStepDone('echub');
+  } catch(e) {
+    log('echub-log', `✗ Error: ${e.message}`, 'err');
+  }
+  document.getElementById('btn-run-echub').disabled = false;
+  }
+
+function downloadEchub() {
+  if (!_echubResult) return;
+  downloadJSON(_echubResult, 'echub_export.json');
+}
+
+
+// ── Save LOs to server ────────────────────────────────────────────────────────
+async function saveLOsToServer() {
+  if (!state.los.length) { alert('No LOs to save.'); return; }
+  const statusEl = document.getElementById('save-status');
+  statusEl.textContent = 'Saving…';
+  try {
+    const resp = await fetch(`${apiBase()}/save-los`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ learning_objects: state.los, filename: 'learning_objects.json' }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    statusEl.textContent = `✓ Saved ${state.los.length} LOs`;
+    statusEl.style.color = 'var(--accent)';
+    setTimeout(() => { statusEl.textContent = ''; statusEl.style.color = 'var(--muted)'; }, 3000);
+  } catch(e) {
+    statusEl.textContent = `✗ ${e.message}`;
+    statusEl.style.color = 'var(--error)';
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+.env
+fastapi/.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+.idea/
+fastapi/output/*
+fastapi/input/*
+!fastapi/output/.gitkeep
+!fastapi/input/.gitkeep
+*.png
+evaluations_final_metrics_*.json
