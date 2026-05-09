@@ -210,8 +210,29 @@ curl -X POST http://localhost:8000/build-graph \
 ## Project Structure
 
 ```
-
-
+.
+├── docker-compose.yml
+├── env_template                  ← copy to fastapi/.env and fill in keys
+└── fastapi/
+    ├── .env                      ← your API keys (not committed)
+    ├── Dockerfile
+    ├── requirements.txt
+    ├── pipeline_ui.html          ← served at http://localhost:8000
+    ├── main.py                   ← FastAPI app + all endpoints
+    ├── llm_service.py            ← LLM call wrapper (Groq / OpenRouter / GitHub / OpenAI)
+    ├── atomic_unit_extractor.py
+    ├── concept_normalizer.py
+    ├── echub_format_converter.py ← EChub JSON export
+    ├── embedding_service.py      ← sentence-transformers (all-MiniLM-L6-v2)
+    ├── ems.py                    ← offline pipeline runner (used by main.py)
+    ├── graph_builder.py
+    ├── learning_object_evaluator.py
+    ├── learning_object_generator.py
+    ├── lexical_overlap_computation.py
+    ├── post_statistics.py
+    ├── utilities.py
+    ├── input/                    ← uploaded source files (persisted via volume)
+    └── output/                   ← pipeline outputs (persisted via volume)
 ```
 
 ---
