@@ -1,0 +1,902 @@
+[
+  {
+    "faithfulness": 3,
+    "question_clarity": 4,
+    "self_contained": "no",
+    "answer_grounded": "yes",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "3dc09671"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "7b6be45d"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "2638089e"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "b4099fdc"
+  },
+  {
+    "faithfulness": 2,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "no",
+    "distractor_plausibility": 3,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "99270d57"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "1e2f1181"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "29a65253"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "f05e9669"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "9304d73e"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "4360d67a"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "8215b3b7"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 4,
+    "self_contained": "no",
+    "answer_grounded": "yes",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "76b9f365"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "c05f1c7f"
+  },
+  {
+    "faithfulness": 2,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "4706b9eb"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "1eb0a67e"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "fb90c338"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "d5a0a63a"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "c0813931"
+  },
+  {
+    "faithfulness": 2,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "f2147aa6"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "ec86e1c5"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "296f1ce7"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "no",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "604da24b"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "97095a12"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "f7e18050"
+  },
+  {
+    "faithfulness": 1,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "e269e6da"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "7ad4dfee"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "b0dbdad1"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "no",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "0efd9e29"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "0a59ad87"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "llama-3.3-70b-versatile",
+    "lo_id": "9b5429cb"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "3dc09671"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 1,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "7b6be45d"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "2638089e"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "b4099fdc"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 1,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "99270d57"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "1e2f1181"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "29a65253"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "f05e9669"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 1,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "9304d73e"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "4360d67a"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "8215b3b7"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "76b9f365"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "c05f1c7f"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "4706b9eb"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "1eb0a67e"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "fb90c338"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "d5a0a63a"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "c0813931"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "f2147aa6"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "ec86e1c5"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "296f1ce7"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "604da24b"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "97095a12"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "f7e18050"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "e269e6da"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "7ad4dfee"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "b0dbdad1"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "0efd9e29"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "0a59ad87"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "openai/gpt-oss-120b",
+    "lo_id": "9b5429cb"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 3,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "3dc09671"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "7b6be45d"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "2638089e"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "b4099fdc"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "99270d57"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "1e2f1181"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 3,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "29a65253"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "f05e9669"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "9304d73e"
+  },
+  {
+    "faithfulness": 4,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "4360d67a"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "8215b3b7"
+  },
+  {
+    "faithfulness": 2,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "76b9f365"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "c05f1c7f"
+  },
+  {
+    "faithfulness": 1,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "4706b9eb"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "1eb0a67e"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "fb90c338"
+  },
+  {
+    "faithfulness": 1,
+    "question_clarity": 3,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "d5a0a63a"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 3,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "no",
+    "distractor_plausibility": 2,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "c0813931"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 3,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "f2147aa6"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "no",
+    "distractor_plausibility": 2,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "ec86e1c5"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 3,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 2,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "296f1ce7"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "no",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "604da24b"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "97095a12"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "f7e18050"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": null,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "e269e6da"
+  },
+  {
+    "faithfulness": 3,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "yes",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "7ad4dfee"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 5,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "b0dbdad1"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "0efd9e29"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 2,
+    "self_contained": "no",
+    "answer_grounded": "no",
+    "atomic": "no",
+    "distractor_plausibility": null,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "0a59ad87"
+  },
+  {
+    "faithfulness": 5,
+    "question_clarity": 4,
+    "self_contained": "yes",
+    "answer_grounded": "no",
+    "atomic": "yes",
+    "distractor_plausibility": 3,
+    "model": "moonshotai/kimi-k2-instruct",
+    "lo_id": "9b5429cb"
+  }
+]

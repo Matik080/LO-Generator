@@ -233,9 +233,9 @@ curl -X POST http://localhost:8000/build-graph \
     ├── utilities.py                    <- text extraction from PDF/HTML/PPTX, section splitting, JSON parsing helpers
     ├── input/                          <- uploaded source files (persisted on host via Docker volume mount)
     └── output/                         <- generated outputs: atomic_units.json, learning_objects.json, echub_export.json
-```
-
+``` 
 ---
+The *_OUTPUTS folders included are mentioned in the conceptual part of the thesis and are here for the sake of reproducibility and transparency of the evaluation.
 
 ## License
 

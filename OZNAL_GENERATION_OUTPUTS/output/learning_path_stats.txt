@@ -1,0 +1,5 @@
+nodes:	30
+edges:	96
+is_dag:	True
+longest_path_length:	5
+root_nodes:	9

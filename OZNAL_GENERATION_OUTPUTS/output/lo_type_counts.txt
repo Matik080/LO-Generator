@@ -1,0 +1,6 @@
+fact:	20
+example:	3
+definition:	3
+property:	1
+algorithm_step:	2
+rule:	1

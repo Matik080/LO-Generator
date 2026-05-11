@@ -1,0 +1,7285 @@
+[
+  {
+    "type": "definition",
+    "statement": "A program is a set of instructions that a computer can execute.",
+    "concepts": [
+      "program",
+      "instructions",
+      "computer"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Programs must conform to ANSI C standards.",
+    "concepts": [
+      "ANSI C",
+      "programming standards"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C programming language is used for creating programs that are easy to read, maintain, and debug.",
+    "concepts": [
+      "C programming language",
+      "program maintainability"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To create a program, you must first conceive the idea, then write the code, and finally execute it.",
+    "concepts": [
+      "program creation",
+      "code writing",
+      "execution"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Variable declarations must be made before they are used in a program.",
+    "concepts": [
+      "variable declarations",
+      "program structure"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "The printf function is used to output data to the screen in C programming.",
+    "concepts": [
+      "printf function",
+      "output"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C programming language has a brief history that started with its development.",
+    "concepts": [
+      "C programming language",
+      "history"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example of a simple C program: #include <stdio.h> int main() { printf(\"Hello, World!\"); return 0; }",
+    "concepts": [
+      "C program",
+      "printf function"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A bitwise OR operation (|) compares each bit of the first operand to the corresponding bit of the second operand.",
+    "concepts": [
+      "bitwise OR",
+      "bitwise operators"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The #define statement is used for conditional compilation in C.",
+    "concepts": [
+      "C preprocessor",
+      "conditional compilation"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The left-shift operator (<<) shifts the bits of the number to the left and fills 0 on voids left as a result.",
+    "concepts": [
+      "left-shift operator",
+      "bitwise operators"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To set a bit, use the bitwise OR operator (&) with a mask that has the bit set to 1.",
+    "concepts": [
+      "bitwise OR",
+      "bit manipulation"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "In C, the scope of a variable is the region of the program where the variable is defined and accessible.",
+    "concepts": [
+      "variable scope",
+      "C programming"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "The associative property of bitwise operators states that (a | b) | c = a | (b | c).",
+    "concepts": [
+      "bitwise operators",
+      "associative property"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The C preprocessor is used to expand macros and include header files before compilation.",
+    "concepts": [
+      "C preprocessor",
+      "macros"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code snippet `#define MAX 100` defines a constant MAX with the value 100.",
+    "concepts": [
+      "C preprocessor",
+      "macros"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A linked list is a data structure in which each element points to the next element.",
+    "concepts": [
+      "linked list",
+      "data structures"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, the extern modifier is used to declare a variable or function that is defined in another file.",
+    "concepts": [
+      "extern modifier",
+      "C programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Multiply and divide come before add and subtract",
+    "concepts": [
+      "operator precedence"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Put parentheses around everything else",
+    "concepts": [
+      "operator precedence"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "A well-written program is simple and easy to understand",
+    "concepts": [
+      "good programming style"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C is currently the premier language for software developers",
+    "concepts": [
+      "programming languages"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Good style is an art in which writing and programming skills blend together to form a masterpiece",
+    "concepts": [
+      "good programming style"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "A program should be as simple as possible",
+    "concepts": [
+      "good programming style"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "A well-commented program is highly prized",
+    "concepts": [
+      "comments",
+      "good programming style"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "There are 15 operator precedence rules in C",
+    "concepts": [
+      "operator precedence"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The book covers the use of the programming utility make for automated program production.",
+    "concepts": [
+      "make utility",
+      "automated program production"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The C preprocessor gives the programmer tremendous flexibility in writing code.",
+    "concepts": [
+      "C preprocessor",
+      "code flexibility"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Simple rules help keep the preprocessor from becoming a problem.",
+    "concepts": [
+      "C preprocessor",
+      "best practices"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The sizeof operator is used to determine the size of a data type.",
+    "concepts": [
+      "sizeof operator",
+      "data type size"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To create a simple program, follow the steps from specification through release.",
+    "concepts": [
+      "program creation",
+      "software life cycle"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The limits of number handling depend on memory allocation size.",
+    "concepts": [
+      "number handling",
+      "memory allocation"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "Roundoff error, precision loss, overflow, and underflow are problems inherent in floating point.",
+    "concepts": [
+      "floating point",
+      "numerical errors"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The book provides examples of using the programming utility make for automated program production.",
+    "concepts": [
+      "make utility",
+      "example"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Computer languages are best learned by writing and debugging programs.",
+    "concepts": [
+      "learning programming",
+      "debugging"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Information-hiding and modular programming techniques are used to construct complex programs.",
+    "concepts": [
+      "information-hiding",
+      "modular programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The C language has evolved since the first edition of Practical C Programming was published, with a shift from K&R syntax to ANSI compilers.",
+    "concepts": [
+      "C language",
+      "ANSI compilers",
+      "K&R syntax"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "All programs and examples in the third edition of Practical C Programming have been updated to conform to the ANSI standard.",
+    "concepts": [
+      "ANSI standard",
+      "C programming"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The notation CTRL-X or ^X indicates use of control characters, instructing the user to hold down the control key while typing the character x.",
+    "concepts": [
+      "control characters",
+      "notation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To obtain source code via FTP, point your browser to ftp://ftp.oreilly.com/published/oreilly/nutshell/practical_c3/examples.tar.gz",
+    "concepts": [
+      "FTP",
+      "source code"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When using FTP, the user must have an Internet connection (permanent or dialup) to access the examples.",
+    "concepts": [
+      "FTP",
+      "Internet connection"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The third edition of Practical C Programming includes additional instructions for more compilers, including a generic UNIX compiler and the Free Software Foundations gcc compilers.",
+    "concepts": [
+      "compilers",
+      "UNIX"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The command % ftp ftp.oreilly.com is used to connect to the FTP server and access the examples.",
+    "concepts": [
+      "FTP command",
+      "FTP server"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "FTPMAIL is a mail server available to anyone who can send electronic mail to, and receive electronic mail from, Internet sites.",
+    "concepts": [
+      "FTPMAIL",
+      "mail server",
+      "Internet sites"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "To get a complete help file, send a message with no subject and the single word 'help' in the body.",
+    "concepts": [
+      "FTPMAIL",
+      "help file"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The following is an example mail message that gets the examples: 'open', 'cd /published/oreilly/nutshell/practical_c3', 'dir', 'mode binary', 'uuencode', 'get examples.tar.gz', 'quit'",
+    "concepts": [
+      "FTPMAIL",
+      "mail message",
+      "FTP commands"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "A signature at the end of the message is acceptable as long as it appears after 'quit'",
+    "concepts": [
+      "FTPMAIL",
+      "mail message",
+      "signature"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "You can send mail to ftpmail@online.oreilly.com to access FTPMAIL",
+    "concepts": [
+      "FTPMAIL",
+      "mail address"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "C is a programming language that allows a software engineer to efficiently communicate with a computer.",
+    "concepts": [
+      "C programming language",
+      "computer communication"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C is one of the most widely used languages in the world and is fairly stable.",
+    "concepts": [
+      "C programming language",
+      "popularity"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "C++ is an improved C language that adds new features, including classes, to facilitate code reuse through object-oriented design (OOD).",
+    "concepts": [
+      "C++ programming language",
+      "object-oriented design"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C++ automatically calls constructors and destructors for variables, making some types of programming easy but static checking of programs difficult.",
+    "concepts": [
+      "C++ programming language",
+      "automatic memory management"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Much more C code exists than C++ code, and that C code will need to be maintained and upgraded.",
+    "concepts": [
+      "C programming language",
+      "code maintenance"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Machine language is a series of numbers that can be directly input into a computer.",
+    "concepts": [
+      "machine language",
+      "computer programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Assembly language is a simple language in which each word stands for a single instruction.",
+    "concepts": [
+      "assembly language",
+      "computer programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A computer requires instructions that are exact and detailed.",
+    "concepts": [
+      "computer programming",
+      "instruction"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "English is a language full of ambiguity and imprecision, making it unsuitable for writing exact instructions.",
+    "concepts": [
+      "English language",
+      "computer programming"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To program in assembly language, software engineers would write their programs using a simple language and then hand translate, or assemble, each line into machine code.",
+    "concepts": [
+      "assembly language",
+      "machine code"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The cost of an hour of computer time versus the cost of an hour of programmer time was a significant factor in determining the feasibility of using a computer for translation tasks.",
+    "concepts": [
+      "computer time",
+      "programmer time",
+      "cost"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The first computers cost millions of dollars, while a good programmer cost about $15,000 a year.",
+    "concepts": [
+      "computer cost",
+      "programmer cost"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "A typical machine-language program looks like: 1010 1111, 0011 0111, 0111 0110, and so on for several hundred instructions.",
+    "concepts": [
+      "machine language",
+      "program example"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "An assembler is a program that automatically translates assembly language into machine language.",
+    "concepts": [
+      "assembler",
+      "assembly language",
+      "machine language"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Dennis Ritchie created the C programming language in 1970 with the goal of writing operating systems.",
+    "concepts": [
+      "C programming language",
+      "Dennis Ritchie",
+      "operating systems"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A computer program consists of two main parts: data and instructions.",
+    "concepts": [
+      "computer program",
+      "data",
+      "instructions"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C is a high-level language that lets programmers write high-level statements that are translated into low-level machine instructions.",
+    "concepts": [
+      "C programming language",
+      "high-level language"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The compiler translates the C language into something that the machine can use.",
+    "concepts": [
+      "compiler",
+      "C programming language"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Data declarations are used by the programmer to describe the information they are working with.",
+    "concepts": [
+      "data declarations",
+      "programming"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "int total; /* Total number accounts */",
+    "concepts": [
+      "variable declaration",
+      "C programming language"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C organizes bytes into useful data using data declarations.",
+    "concepts": [
+      "C programming language",
+      "data organization"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A structure in C is a group of variables that can be organized into one unit.",
+    "concepts": [
+      "structure",
+      "C programming language"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "struct rectangle { int width; int height; color_type color; fill_type fill; };",
+    "concepts": [
+      "structure",
+      "C programming language"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The compiler translates data descriptions into something the computer can use.",
+    "concepts": [
+      "compiler",
+      "data description"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "An assignment statement is used to compute and store the value of an arithmetic expression.",
+    "concepts": [
+      "assignment statement",
+      "arithmetic expression"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "area = (base * height) / 2.0; /* Compute area of triangle */",
+    "concepts": [
+      "assignment statement",
+      "C programming language"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Control statements are used to control the order of processing in a program.",
+    "concepts": [
+      "control statements",
+      "programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A function is a group of statements that can be reused in a program.",
+    "concepts": [
+      "function",
+      "programming"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C provides a rich set of standard functions that perform common functions such as searching, sorting, input, and output.",
+    "concepts": [
+      "C programming language",
+      "standard functions"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A library is a collection of reusable functions that can be linked into a program.",
+    "concepts": [
+      "library",
+      "programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "To learn how to program, you must write programs.",
+    "concepts": [
+      "programming",
+      "learning"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Commenting helps organize thoughts and keeps you in practice.",
+    "concepts": [
+      "commenting",
+      "programming style"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Programs tend to be around far longer than expected.",
+    "concepts": [
+      "program longevity"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A source file contains source code written by a programmer.",
+    "concepts": [
+      "source file",
+      "source code"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The compiler transforms the source file into an object file.",
+    "concepts": [
+      "compiler",
+      "object file"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A linker combines the object file with predefined routines from a standard library to produce an executable program.",
+    "concepts": [
+      "linker",
+      "executable program"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Most C compilers use wrapper programs to determine which tools need to be run.",
+    "concepts": [
+      "C compilers",
+      "wrapper programs"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "An Integrated Development Environment (IDE) contains an editor, compiler, linker, project manager, debugger, and more in one package.",
+    "concepts": [
+      "IDE",
+      "development environment"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A standalone or command-line compiler is a type of compiler that is operated in a batch mode from the command line.",
+    "concepts": [
+      "compiler",
+      "command-line compiler"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "An IDE (Integrated Development Environment) is a package that contains an editor, compiler, project manager, and debugger.",
+    "concepts": [
+      "IDE",
+      "compiler",
+      "editor",
+      "project manager",
+      "debugger"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Most UNIX systems use command-line compilers, while almost every compiler for MS-DOS/Windows contains an IDE.",
+    "concepts": [
+      "UNIX",
+      "MS-DOS",
+      "Windows",
+      "compiler",
+      "IDE"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To create a program using a command-line compiler, first create a separate directory for the program.",
+    "concepts": [
+      "command-line compiler",
+      "directory"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Use a text editor to create a source file for the program, and name it with a .c extension (e.g., hello.c).",
+    "concepts": [
+      "text editor",
+      "source file",
+      "file extension"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "MS-DOS/Windows users should not use a word processor to write programs, as they add formatting codes that confuse the compiler.",
+    "concepts": [
+      "word processor",
+      "compiler",
+      "formatting codes"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To compile a program using the UNIX cc compiler, use the command % cc -g -ohello hello.c.",
+    "concepts": [
+      "UNIX",
+      "cc compiler",
+      "compilation command"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To compile a program using the Free Software Foundation's gcc compiler, use the command % gcc -g -Wall -ohello hello.c.",
+    "concepts": [
+      "gcc compiler",
+      "compilation command"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To compile a program using Borland's Turbo C++ under MS-DOS, use the command C:> tcc -ml -v -N -w -ehello hello.c.",
+    "concepts": [
+      "Turbo C++",
+      "compilation command"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 2-1 shows a simple C program in source form: #include <stdio.h> int main() { printf(\"Hello World \\n\"); return (0); }",
+    "concepts": [
+      "C program",
+      "source code"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Programming in Windows is much more complex than programming in MS-DOS.",
+    "concepts": [
+      "Windows",
+      "MS-DOS",
+      "programming complexity"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "To print the message \"Hello World\" in MS-DOS, you merely print the message.",
+    "concepts": [
+      "MS-DOS",
+      "printing"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To print the message \"Hello World\" in Windows, you must create a window, create a function to handle the messages from that window, select a font, select a place to put the font, and output the message.",
+    "concepts": [
+      "Windows",
+      "printing"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "An Integrated Development Environment (IDE) provides a one-stop shop for programming, wrapping a compiler, editor, and debugger into one package.",
+    "concepts": [
+      "Integrated Development Environment",
+      "IDE"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "It is easier to manage programs if you create a separate directory for each program you are working on.",
+    "concepts": [
+      "program management",
+      "directory organization"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "To create a directory called HELLO to hold a hello program in MS-DOS, type: C:> MKDIR HELLO and C:> CD HELLO",
+    "concepts": [
+      "MS-DOS",
+      "directory creation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To start the Turbo C++ IDE, type the command: C:> TC",
+    "concepts": [
+      "Turbo C++",
+      "IDE"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The command-line options for Borland C++ are the same as for Turbo C++.",
+    "concepts": [
+      "Borland C++",
+      "Turbo C++",
+      "command-line options"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The command line to compile a program with Borland C++ is: C:> bcc -ml -v -N -P -w -ehello hello.c",
+    "concepts": [
+      "Borland C++",
+      "compilation"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The command line to compile a program with Microsoft Visual C++ is: C:> cl /AL /Zi /W1 hello.c",
+    "concepts": [
+      "Microsoft Visual C++",
+      "compilation"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 2-2. hello/hello.c: #include <stdio.h> int main() { printf(\"Hello World \\n\"); return (0); }",
+    "concepts": [
+      "C programming",
+      "Hello World program"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "To display all warning messages, select the Options|Compiler|Messages|Display menu item and then select All.",
+    "concepts": [
+      "compiler messages",
+      "warning messages"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To add a file to a project, press the INSERT key and select the file to add.",
+    "concepts": [
+      "project management",
+      "file addition"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The INSERT key is used to add a file to the project.",
+    "concepts": [
+      "keyboard shortcuts",
+      "project management"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A project file is a file that contains information about a project, such as the files it includes.",
+    "concepts": [
+      "project file",
+      "project management"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Select the Run|Run menu item to execute the program.",
+    "concepts": [
+      "program execution",
+      "IDE"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "To see the results of the program, you must switch to the user screen by selecting the Window|User menu item.",
+    "concepts": [
+      "program output",
+      "user screen"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To return to the IDE, press any key.",
+    "concepts": [
+      "IDE navigation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Select the File|Save menu item to save your program.",
+    "concepts": [
+      "program saving",
+      "IDE"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Select the File|Quit menu item to exit the IDE.",
+    "concepts": [
+      "IDE exit"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Create a directory using the Windows' File Manager program or by typing the command \"C:> mkdir \\\\HELLO\" at the MS-DOS prompt.",
+    "concepts": [
+      "directory creation",
+      "MS-DOS"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Select the Project|New Project menu item to create a project for your program.",
+    "concepts": [
+      "project creation",
+      "Borland C++"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The Target Model is set to Large by default in Borland C++.",
+    "concepts": [
+      "Borland C++",
+      "Target Model"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Click on the Advanced button to bring up the Advanced Options dialog and clear the .rc and .def items and set the .c Node items.",
+    "concepts": [
+      "Advanced Options",
+      "Borland C++"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Press ALT-F10 to bring up the node submenu",
+    "concepts": [
+      "node submenu",
+      "ALT-F10"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Select the Edit node attributes menu item to bring up the dialog",
+    "concepts": [
+      "Edit node attributes",
+      "node attributes dialog"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Select the item Debug Info and Diagnostics in the Style Sheet blank",
+    "concepts": [
+      "Debug Info and Diagnostics",
+      "Style Sheet"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Go to the Project Options dialog by selecting the Options|Project Options menu item",
+    "concepts": [
+      "Project Options dialog",
+      "Options|Project Options"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Turn on the Test stack overflow option",
+    "concepts": [
+      "Test stack overflow option"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "#include <stdio.h> int main() { printf(\"Hello World \\n\"); return (0); }",
+    "concepts": [
+      "hello.c example",
+      "C programming"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Compile and run the program by selecting the Debug|Run menu item.",
+    "concepts": [
+      "program execution",
+      "Debug menu"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Create a directory using the Windows' File Manager program or by typing the command \"C:> mkdir \\HELLO\" at the MS-DOS prompt.",
+    "concepts": [
+      "directory creation",
+      "MS-DOS prompt"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Clear out any old junk by selecting the Window|Close All menu item in Microsoft Visual C++.",
+    "concepts": [
+      "Microsoft Visual C++",
+      "workspace management"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Click on the Project|New menu item to bring up the New Project dialog.",
+    "concepts": [
+      "project creation",
+      "New Project dialog"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Fill in the Project Name blank with \"\\hello\\hello.mak\" and change the Project Type to QuickWin application (.EXE).",
+    "concepts": [
+      "project configuration",
+      "QuickWin application"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Name the source files in the project, such as \"hello.c\", and click on Add to put it in the project.",
+    "concepts": [
+      "source file management",
+      "project files"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Select the Options|Project Options menu item to bring up the Project Options dialog",
+    "concepts": [
+      "Project Options dialog",
+      "menu item"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Click on the Compiler button to change the compiler options",
+    "concepts": [
+      "Compiler button",
+      "compiler options"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Change the Warning Level to 4 under the Custom Options menu item",
+    "concepts": [
+      "Warning Level",
+      "Custom Options menu item"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Change the Model to Large under the Memory Model category",
+    "concepts": [
+      "Memory Model category",
+      "Model"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Close the dialog by clicking on the OK button",
+    "concepts": [
+      "OK button",
+      "dialog"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "#include <stdio.h> int main() { printf(\"Hello World \\n\"); return (0); }",
+    "concepts": [
+      "C programming",
+      "Hello World program"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Use the File|Save As menu item to save the file under the name hello.c",
+    "concepts": [
+      "File|Save As menu item",
+      "file saving"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Use the Project|Build menu item to compile the program",
+    "concepts": [
+      "Project|Build menu item",
+      "program compilation"
+    ]
+  },
+  {
+    "type": "command",
+    "statement": "man subject",
+    "concepts": [
+      "UNIX",
+      "manpages",
+      "manual"
+    ]
+  },
+  {
+    "type": "command",
+    "statement": "man -k keyword",
+    "concepts": [
+      "UNIX",
+      "manpages",
+      "keyword search"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "IDEs such as Turbo C++, Borland C++, and Microsoft C++ have a Help menu item.",
+    "concepts": [
+      "IDEs",
+      "Help menu"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Window|Close All",
+    "concepts": [
+      "Turbo C++",
+      "IDE"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Options|Compiler|Code Generation",
+    "concepts": [
+      "Turbo C++",
+      "compiler options"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Project|Open",
+    "concepts": [
+      "Turbo C++",
+      "project management"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Insert",
+    "concepts": [
+      "Turbo C++",
+      "file management"
+    ]
+  },
+  {
+    "type": "command",
+    "statement": "Run|Run",
+    "concepts": [
+      "Turbo C++",
+      "program execution"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The man command is used to read manpages on UNIX systems.",
+    "concepts": [
+      "UNIX",
+      "manpages",
+      "man command"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Manpages are online documentation systems on UNIX systems.",
+    "concepts": [
+      "UNIX",
+      "manpages",
+      "documentation"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Most software is built on existing software.",
+    "concepts": [
+      "software development",
+      "programming"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "According to Datamation, the amount of time spent on maintenance is skyrocketing.",
+    "concepts": [
+      "software maintenance",
+      "programming"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "74% of the managers surveyed at the 1990 Annual Meeting and Conference of the Software Maintenance Association reported that they have systems in their department, that have to be maintained by specific individuals because no one else understands them.",
+    "concepts": [
+      "software maintenance",
+      "programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Style is what separates the gems from the junk in programming.",
+    "concepts": [
+      "programming style",
+      "software quality"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Programs should serve two purposes: to present the computer with a compact set of instructions and to be understandable by humans.",
+    "concepts": [
+      "programming principles",
+      "software design"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Programs written only for the machine have two problems: they are difficult to correct and modifications and upgrades are difficult to make.",
+    "concepts": [
+      "programming principles",
+      "software maintenance"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The average number of lines in a typical application went from 23,000 to 1,200,000 from 1980 to 1990.",
+    "concepts": [
+      "software development",
+      "programming"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The average system age went from 4.75 to 9.4 years from 1980 to 1990.",
+    "concepts": [
+      "software development",
+      "programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A comment in C starts with a slash asterisk (/*) and ends with an asterisk slash (*/).",
+    "concepts": [
+      "C programming",
+      "comments"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A program should be as clear, concise, and simple as possible.",
+    "concepts": [
+      "programming style",
+      "code readability"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "A well-commented program is easier to understand and maintain.",
+    "concepts": [
+      "code comments",
+      "program maintainability"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To write a program, you must have a clear idea of what you are going to do, and then translate it into a computer program.",
+    "concepts": [
+      "programming process",
+      "algorithm design"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "In programming, you are limited to a single, mono-spaced font, so comments and formatting must be used to make the code stand out.",
+    "concepts": [
+      "programming limitations",
+      "code formatting"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Understanding what you are doing is the most important part of programming.",
+    "concepts": [
+      "programming principles",
+      "code understanding"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 3-1 is an improved version of Example 2-1, with added comments to explain the program.",
+    "concepts": [
+      "code example",
+      "commenting"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A comment box is a block of comments surrounded by asterisks, used to emphasize important comments.",
+    "concepts": [
+      "comment box",
+      "code formatting"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A program should include a comment block at the beginning with information about the program, such as the name, author, purpose, and usage.",
+    "concepts": [
+      "program documentation",
+      "comment block"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Comments should explain everything the programmer needs to know about the program, but no more.",
+    "concepts": [
+      "comments",
+      "programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A variable is a place in the computer's memory for storing a value.",
+    "concepts": [
+      "variables",
+      "memory"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Every variable in C must be declared.",
+    "concepts": [
+      "variables",
+      "C programming"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "int account_number; int balance_owed;",
+    "concepts": [
+      "variable declaration",
+      "C programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Avoid abbreviations in variable names.",
+    "concepts": [
+      "variable names",
+      "readability"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To insert a comment box in vi, use the abbreviations #b and #e.",
+    "concepts": [
+      "vi editor",
+      "comments"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "(defun c-begin-comment-box () (interactive) (insert \"/************************************************ \\n\"))",
+    "concepts": [
+      "LISP code",
+      "GNU Emacs"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Variable names in C can be of any length, but a length limit exists.",
+    "concepts": [
+      "variable names",
+      "C programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Put a comment after each declaration to explain what the variable is used for.",
+    "concepts": [
+      "code readability",
+      "variable declaration"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Units are very important in programming to avoid confusion.",
+    "concepts": [
+      "code clarity",
+      "units"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Avoid being too clever when writing code, as it can make the program unreadable and unmaintainable.",
+    "concepts": [
+      "code readability",
+      "code maintainability"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "while (' \n' != (*p++ = *q++)); is an example of unclear code, whereas the properly written version is: while (1) { *destination_ptr = *source_ptr; if (*destination_ptr == ' \n') break; destination_ptr++; source_ptr++; }",
+    "concepts": [
+      "code clarity",
+      "code example"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Coding religion refers to the different programming styles, such as structured programming, top-down programming, goto-less programming, and object-oriented design (OOD).",
+    "concepts": [
+      "programming styles",
+      "coding religion"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Indentation should be used to make programs easier to understand, with one level of indentation for each new block or conditional.",
+    "concepts": [
+      "code readability",
+      "indentation"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Consistency in indentation is more important than the size of the indentation.",
+    "concepts": [
+      "code readability",
+      "indentation"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Studies have shown that a four-space indent makes the code most readable.",
+    "concepts": [
+      "code readability",
+      "indentation size"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A program should be organized into sections and paragraphs, with procedures forming a natural section boundary.",
+    "concepts": [
+      "code organization",
+      "code readability"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A single function should not be longer than two or three pages.",
+    "concepts": [
+      "function length",
+      "code organization"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Avoid complex logic like multiply nested ifs.",
+    "concepts": [
+      "code complexity",
+      "conditional statements"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Comments serve two purposes: to help the programmer follow the code and to help the programmer remember what he did.",
+    "concepts": [
+      "comments",
+      "code readability"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Variables are the basic building blocks of a program.",
+    "concepts": [
+      "variables",
+      "program structure"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Declare variables before using them.",
+    "concepts": [
+      "variable declaration",
+      "code syntax"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "/* Swap X coordinate */ temp = box_x1; box_x1 = box_x2; box_x2 = temp;",
+    "concepts": [
+      "code example",
+      "variable swapping"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Long statements should be avoided.",
+    "concepts": [
+      "code length",
+      "readability"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Comments are ignored by the computer.",
+    "concepts": [
+      "comments",
+      "compiler behavior"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Start with a single step, like declaring variables, before constructing a larger program.",
+    "concepts": [
+      "program construction",
+      "variable declaration"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The basic structure of a one-function program in C consists of a heading comment, data declarations, and a main function.",
+    "concepts": [
+      "C programming",
+      "program structure"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The main function in C begins with 'int main()' and ends with 'return (0);'.",
+    "concepts": [
+      "C programming",
+      "main function"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The 'return (0);' statement in C indicates that the program exited normally.",
+    "concepts": [
+      "C programming",
+      "return statement"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A library routine in C is a pre-written procedure or function that performs a specific task.",
+    "concepts": [
+      "C programming",
+      "library routine"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The 'printf' function in C is used to output messages to the screen.",
+    "concepts": [
+      "C programming",
+      "printf function"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, the semicolon (;) is used to end a statement.",
+    "concepts": [
+      "C programming",
+      "statement termination"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C uses parentheses to group terms in expressions and follow the order of operations.",
+    "concepts": [
+      "C programming",
+      "operator precedence"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A variable in C is a named storage location that holds a value.",
+    "concepts": [
+      "C programming",
+      "variables"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, variable names start with a letter or underscore and can be followed by letters, digits, or underscores.",
+    "concepts": [
+      "C programming",
+      "variable naming"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To store the results of calculations in C, assign the result to a variable.",
+    "concepts": [
+      "C programming",
+      "variable assignment"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The expression '(1 + 2) * 4' in C evaluates to 12.",
+    "concepts": [
+      "C programming",
+      "expression evaluation"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code 'int main() { (1 + 2) * 4; return (0); }' demonstrates a simple C program with an expression.",
+    "concepts": [
+      "C programming",
+      "example program"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Variable names should not depend on case differences to avoid confusion.",
+    "concepts": [
+      "variable names",
+      "case sensitivity"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Reserved words are names that have a special meaning to C and cannot be used for variable names.",
+    "concepts": [
+      "reserved words",
+      "variable names"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Most C programmers use all-lowercase variable names.",
+    "concepts": [
+      "variable names",
+      "naming conventions"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Variable names should not be similar to avoid confusion.",
+    "concepts": [
+      "variable names",
+      "naming conventions"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A variable declaration serves three purposes: defines the name of the variable, defines the type of the variable, and gives the programmer a description of the variable.",
+    "concepts": [
+      "variable declaration",
+      "variable name",
+      "variable type"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The general form of a variable declaration is: type name; /* comment */",
+    "concepts": [
+      "variable declaration",
+      "syntax"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Integers are numbers with no fractional part or decimal point.",
+    "concepts": [
+      "integers",
+      "number types"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The limits on integers are implementation dependent, meaning they change from computer to computer.",
+    "concepts": [
+      "integers",
+      "implementation dependence"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "On most UNIX machines, integers are 32 bits (4 bytes), providing a range of 2147483647 to -2147483648.",
+    "concepts": [
+      "integers",
+      "UNIX machines",
+      "bit size"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The C standard does not specify the actual size of numbers, so programs that depend on an integer being a specific size may fail when moved to another machine.",
+    "concepts": [
+      "C standard",
+      "integer size",
+      "portability"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Variables are given a value through the use of assignment statements, such as answer = (1 + 2) * 4;",
+    "concepts": [
+      "assignment statements",
+      "variable assignment"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "An assignment statement is used to give a variable a value.",
+    "concepts": [
+      "assignment statement",
+      "variable"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The general form of the assignment statement is: variable = expression;",
+    "concepts": [
+      "assignment statement",
+      "variable",
+      "expression"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "In C, the = operator is used for assignment, not for testing equality.",
+    "concepts": [
+      "C programming language",
+      "assignment operator"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The printf function is a library function used to print results.",
+    "concepts": [
+      "printf function"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The general form of the printf statement is: printf(format, expression-1, expression-2, ...);",
+    "concepts": [
+      "printf function",
+      "format string",
+      "parameter list"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The %d conversions in the format string are replaced with the values of the expressions in the parameter list.",
+    "concepts": [
+      "printf function",
+      "format string",
+      "parameter list"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The number of %d conversions in the format string should exactly match the number of expressions in the printf statement.",
+    "concepts": [
+      "printf function",
+      "format string",
+      "parameter list"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 4-3 shows a program that computes term and prints it via two printf functions.",
+    "concepts": [
+      "printf function",
+      "example program"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "term = 3 * 5; term_2 = 2 * term; term_3 = 3 * term;",
+    "concepts": [
+      "assignment statement",
+      "variable",
+      "expression"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The GNU gcc compiler will check printf arguments if the proper warnings are turned on.",
+    "concepts": [
+      "GNU gcc compiler",
+      "printf function"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A floating-point number is a real number stored internally in a computer and distinguished from integers by the presence of a decimal point.",
+    "concepts": [
+      "floating-point number",
+      "real number",
+      "integer"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A floating-point number must contain a decimal point.",
+    "concepts": [
+      "floating-point number",
+      "decimal point"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The form of a floating-point declaration is: float variable;",
+    "concepts": [
+      "floating-point declaration",
+      "variable"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To print a floating-point number using printf, the %f conversion is used.",
+    "concepts": [
+      "printf",
+      "floating-point number",
+      "%f conversion"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "There is a limit on the range of floating-point numbers that a computer can handle.",
+    "concepts": [
+      "floating-point numbers",
+      "range limit"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "If either the divisor or the dividend is a floating-point number, a floating-point divide is executed.",
+    "concepts": [
+      "floating-point divide",
+      "divisor",
+      "dividend"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C allows the assignment of an integer expression to a floating-point variable and automatically performs the conversion from integer to floating point.",
+    "concepts": [
+      "C programming language",
+      "integer expression",
+      "floating-point variable"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The expression 1 / 2 is an integer expression resulting in an integer divide and an integer result of 0.",
+    "concepts": [
+      "integer expression",
+      "integer divide",
+      "result"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code snippet \"floating = 1.0 / 2.0;\" assigns the value 0.5 to the floating-point variable \"floating\".",
+    "concepts": [
+      "code snippet",
+      "floating-point variable",
+      "assignment"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code snippet \"printf(\"The answer is %f \\n\", 1.0/3.0);\" prints the result of the expression 1.0/3.0 as a floating-point number.",
+    "concepts": [
+      "code snippet",
+      "printf",
+      "floating-point number"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The type char represents single characters.",
+    "concepts": [
+      "char",
+      "characters"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Characters are enclosed in single quotes.",
+    "concepts": [
+      "characters",
+      "single quotes"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The backslash character (\\) is called the escape character.",
+    "concepts": [
+      "backslash",
+      "escape character"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "printf(\"%c%c%c reversed is %c%c%c \\n\", char1, char2, char3, char3, char2, char1);",
+    "concepts": [
+      "printf",
+      "character reversal"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Characters can be specified by \\nnn, where nnn is the octal code for the character.",
+    "concepts": [
+      "octal code",
+      "character specification"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The largest number that can be stored in an int on most UNIX machines is 2147483647.",
+    "concepts": [
+      "int",
+      "UNIX machines"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "Fractions are truncated in an integer divide.",
+    "concepts": [
+      "integer divide",
+      "fractions"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The expression 1/3 should be written as 1.0 / 3.0 to avoid integer divide.",
+    "concepts": [
+      "integer divide",
+      "floating-point division"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "printf does not check to make sure it is given the right number of parameters.",
+    "concepts": [
+      "printf",
+      "parameter checking"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The printf function has no way of checking its parameters for type.",
+    "concepts": [
+      "printf",
+      "type checking"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "An array is a set of consecutive memory locations used to store data.",
+    "concepts": [
+      "array",
+      "memory locations",
+      "data"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, arrays are 0-indexed, meaning the first element is at index 0.",
+    "concepts": [
+      "array",
+      "indexing",
+      "C programming"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Accessing an array element outside its declared bounds is illegal.",
+    "concepts": [
+      "array",
+      "bounds",
+      "illegal access"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The declaration `int data_list[3];` declares an array of three elements, with indices 0, 1, and 2.",
+    "concepts": [
+      "array declaration",
+      "indices"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To compute the total and average of an array of numbers, sum all elements and divide by the number of elements.",
+    "concepts": [
+      "array",
+      "sum",
+      "average"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A string in C is a sequence of characters terminated by the null character '\\0'.",
+    "concepts": [
+      "string",
+      "null character",
+      "C programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, string constants are enclosed in double quotes, while character constants are enclosed in single quotes.",
+    "concepts": [
+      "string constants",
+      "character constants",
+      "C programming"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C uses variable-length strings, where the length of the string is determined by the null character '\\0'.",
+    "concepts": [
+      "variable-length strings",
+      "null character",
+      "C programming"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code `strcpy(name, \"Sam\");` copies the string \"Sam\" into the character array `name`. ",
+    "concepts": [
+      "strcpy",
+      "string copying",
+      "C programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A string variable in C is an array of characters, with each character taking up one byte, and an additional byte for the end-of-string character (\\0).",
+    "concepts": [
+      "string variable",
+      "character array",
+      "end-of-string character"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The dimension of a string variable should be at least as large as the maximum number of characters it is expected to hold, plus one for the end-of-string character.",
+    "concepts": [
+      "string variable",
+      "dimension",
+      "end-of-string character"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The printf function uses the conversion %s for printing string variables.",
+    "concepts": [
+      "printf function",
+      "string variable",
+      "conversion specifier"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "strcpy(string1, string2) copies string2 into string1.",
+    "concepts": [
+      "strcpy function",
+      "string copying"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "strcat(string1, string2) concatenates string2 onto the end of string1.",
+    "concepts": [
+      "strcat function",
+      "string concatenation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "strlen(string) returns the length of a string.",
+    "concepts": [
+      "strlen function",
+      "string length"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "strcmp(string1, string2) returns 0 if string1 equals string2, otherwise nonzero.",
+    "concepts": [
+      "strcmp function",
+      "string comparison"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code `strcpy(name, \"Sam\"); printf(\"The name is %s \\n\", name);` initializes a string variable and prints its value.",
+    "concepts": [
+      "string initialization",
+      "string printing"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code `strcpy(full_name, first); strcat(full_name, \" \"); strcat(full_name, last);` constructs a full name by concatenating first and last names with a space in between.",
+    "concepts": [
+      "string concatenation",
+      "full name construction"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The fgets function can be used to read a string from the keyboard, with the general form `fgets(name, sizeof(name), stdin);`.",
+    "concepts": [
+      "fgets function",
+      "string input"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "If a string variable is not large enough to hold the input, writing into memory that should not be accessed can cause the program to crash, run normally and give incorrect results, or behave in other unexpected ways.",
+    "concepts": [
+      "string variable",
+      "buffer overflow"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "fgets includes the end-of-line in the string.",
+    "concepts": [
+      "fgets",
+      "end-of-line",
+      "string"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 5-5 shows how to write a program to ask the user for his first and last name.",
+    "concepts": [
+      "programming",
+      "user input",
+      "strings"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The length of a string is the index of the end-of-string null character.",
+    "concepts": [
+      "strings",
+      "length",
+      "null character"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To trim the string, use the statement: first[strlen(first) -1] = '\\0';",
+    "concepts": [
+      "string trimming",
+      "algorithm"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A multidimensional array is declared as type variable [size1][size2];",
+    "concepts": [
+      "multidimensional arrays",
+      "declaration"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "C does not follow the notation used in other languages of matrix[10,12].",
+    "concepts": [
+      "C programming",
+      "matrix notation"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C allows the programmer to use as many dimensions as needed (limited only by the amount of memory available).",
+    "concepts": [
+      "C programming",
+      "multidimensional arrays",
+      "memory"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "scanf is a function that reads numbers from the standard input.",
+    "concepts": [
+      "scanf",
+      "standard input"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "scanf has poor end-of-line handling, making it useless for all but an expert.",
+    "concepts": [
+      "scanf",
+      "end-of-line handling"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To read a line of input and convert it to numbers, use fgets to read the line and sscanf to convert the text into numbers.",
+    "concepts": [
+      "fgets",
+      "sscanf",
+      "input processing"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When using sscanf, the ampersand (&) symbol is required in front of variable names to indicate that sscanf will change their values.",
+    "concepts": [
+      "sscanf",
+      "ampersand",
+      "variable names"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Omitting the ampersand (&) in front of variable names when using sscanf can result in a Segmentation violation or Illegal memory access error.",
+    "concepts": [
+      "sscanf",
+      "ampersand",
+      "error handling"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 5-8 demonstrates how to use sscanf to get and double a number from the user.",
+    "concepts": [
+      "sscanf",
+      "user input",
+      "number doubling"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "sscanf is similar to scanf, but works on strings instead of the standard input.",
+    "concepts": [
+      "sscanf",
+      "scanf",
+      "string input"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "sscanf stands for string scanf.",
+    "concepts": [
+      "sscanf",
+      "string scanf"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "C allows variables to be initialized in the declaration statement.",
+    "concepts": [
+      "C",
+      "variable initialization"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "int counter = 0; /* number cases counted so far */",
+    "concepts": [
+      "C",
+      "variable initialization",
+      "integer"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Arrays can also be initialized in this manner, with the element list enclosed in curly braces ({}).",
+    "concepts": [
+      "C",
+      "array initialization"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "int product_codes[3] = {10, 972, 45};",
+    "concepts": [
+      "C",
+      "array initialization"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "If no dimension is given, C will determine the dimension from the number of elements in the initialization list.",
+    "concepts": [
+      "C",
+      "array initialization"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "int product_codes[] = {10, 972, 45};",
+    "concepts": [
+      "C",
+      "array initialization"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Initializing multidimensional arrays is similar to initializing single-dimension arrays, with a set of brackets ([ ]) enclosing each dimension.",
+    "concepts": [
+      "C",
+      "multidimensional array initialization"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "int matrix[2][4] = { {1, 2, 3, 4}, {10, 20, 30, 40} };",
+    "concepts": [
+      "C",
+      "multidimensional array initialization"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Strings can be initialized in a similar manner, with the dimension of the string including a place for the ' \\0' character that ends the string.",
+    "concepts": [
+      "C",
+      "string initialization"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "char name[] = \"Sam\";",
+    "concepts": [
+      "C",
+      "string initialization"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "C is considered a medium-level language because it allows you to get very close to the actual hardware of the machine.",
+    "concepts": [
+      "C",
+      "medium-level language"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C allows the programmer to specify many different flavors of integers, so that the programmer can make best use of hardware.",
+    "concepts": [
+      "C",
+      "integer types"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The type specifier int tells C to use the most efficient size (for the machine you are using) for the integer.",
+    "concepts": [
+      "C",
+      "int type"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "long int answer; /* the result of our calculations */",
+    "concepts": [
+      "C",
+      "long int type"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "C guarantees that the size of storage for short <= int <= long.",
+    "concepts": [
+      "C",
+      "integer types"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The type short int usually uses 2 bytes, or 16 bits, with 15 bits used normally for the number and 1 bit for the sign.",
+    "concepts": [
+      "C",
+      "short int type"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "signed long int answer; /* final result */",
+    "concepts": [
+      "C",
+      "signed long int type"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Character variables use 1 byte and can also be used for numbers in the range of -128 to 127 (signed char) or 0 to 255 (unsigned char).",
+    "concepts": [
+      "C",
+      "character variables"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A very short integer must be read into an integer and then assigned to a signed char variable.",
+    "concepts": [
+      "very short integer",
+      "signed char"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The range of integers is listed in Appendix B.",
+    "concepts": [
+      "integer range",
+      "Appendix B"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Long int declarations allow for extra precision at the expense of memory.",
+    "concepts": [
+      "long int",
+      "precision",
+      "memory"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Short int numbers save space but have a limited range.",
+    "concepts": [
+      "short int",
+      "space",
+      "range"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The most compact integers have type char and the most limited range.",
+    "concepts": [
+      "char",
+      "compact",
+      "range"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Unsigned numbers provide a way of doubling the positive range at the expense of eliminating negative numbers.",
+    "concepts": [
+      "unsigned numbers",
+      "positive range",
+      "negative numbers"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The float type comes in various flavors, including float, double, and long double.",
+    "concepts": [
+      "float",
+      "double",
+      "long double"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Double-precision variables give the programmer many times the range and precision of single-precision variables.",
+    "concepts": [
+      "double-precision",
+      "range",
+      "precision"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "All types of floating-point numbers are always signed.",
+    "concepts": [
+      "floating-point numbers",
+      "signed"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The keyword const indicates a variable that never changes.",
+    "concepts": [
+      "const",
+      "variable"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Constants must be initialized at declaration time and can never be changed.",
+    "concepts": [
+      "constants",
+      "initialization"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "const float PI = 3.1415927;",
+    "concepts": [
+      "const",
+      "float",
+      "PI"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Integer constants can be used as a size parameter when declaring an array.",
+    "concepts": [
+      "integer constants",
+      "array declaration"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Octal numbers are represented with a leading zero, and hexadecimal numbers are represented with '0x'.",
+    "concepts": [
+      "octal",
+      "hexadecimal",
+      "representation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "fgets(line, sizeof(line), stdin); sscanf(line, \"%d\", &temp);",
+    "concepts": [
+      "fgets",
+      "sscanf",
+      "input"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The ++ operator is used for incrementing a variable.",
+    "concepts": [
+      "increment operator",
+      "C programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The ++ operator increments the variable before assigning its value when used as a prefix.",
+    "concepts": [
+      "prefix increment operator",
+      "C programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The ++ operator increments the variable after assigning its value when used as a postfix.",
+    "concepts": [
+      "postfix increment operator",
+      "C programming"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The shorthand operators +=, -=, *=, /=, and %= can be used to perform common arithmetic operations.",
+    "concepts": [
+      "shorthand operators",
+      "C programming"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Using side effects in C code can lead to compiler-dependent behavior and decreased code clarity.",
+    "concepts": [
+      "side effects",
+      "C programming"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To increment a variable by 1, use the ++ operator.",
+    "concepts": [
+      "increment operator",
+      "C programming"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C provides two flavors of the ++ operator: prefix (++x) and postfix (x++).",
+    "concepts": [
+      "increment operator",
+      "C programming"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code snippet \"result = ++size;\" demonstrates the use of the prefix increment operator.",
+    "concepts": [
+      "prefix increment operator",
+      "C programming"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "In C++, the prefix version of the increment operator (++x) is more efficient than the postfix version (x++).",
+    "concepts": [
+      "increment operator",
+      "C++ programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Each index to a multidimensional array must be placed inside its own set of square brackets ([ ]).",
+    "concepts": [
+      "multidimensional arrays",
+      "array indexing"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The comma operator can be used to string multiple expressions together, and its value is the value of the last expression.",
+    "concepts": [
+      "comma operator",
+      "expression evaluation"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "To avoid trouble and keep the program simple, always put ++ and -- on a line by themselves.",
+    "concepts": [
+      "increment operator",
+      "decrement operator",
+      "code readability"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The result of an expression with multiple operators of equal priority is ambiguous and may depend on the compiler implementation.",
+    "concepts": [
+      "operator precedence",
+      "compiler implementation"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The expression `array[x,y]` is equivalent to `array[y]`, which is a pointer to row y of the array, and can produce strange results when used in a printf statement.",
+    "concepts": [
+      "array indexing",
+      "comma operator",
+      "pointer arithmetic"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The perimeter of a rectangle is calculated as `perimeter = 2 \u00b7 (width + height)`.",
+    "concepts": [
+      "perimeter",
+      "rectangle",
+      "geometry"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To convert Centigrade to Fahrenheit, a program can be written to perform the necessary calculations.",
+    "concepts": [
+      "temperature conversion",
+      "programming exercise"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The if statement allows us to put some decision-making into our programs.",
+    "concepts": [
+      "if statement",
+      "decision-making"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "If the condition is true (nonzero), the statement will be executed. If the condition is false (0), the statement will not be executed.",
+    "concepts": [
+      "if statement",
+      "condition",
+      "execution"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "if (total_owed <= 0) printf(\"You owe nothing. \\n\");",
+    "concepts": [
+      "if statement",
+      "relational operator",
+      "printf"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The operator <= is a relational operator that represents less than or equal to.",
+    "concepts": [
+      "relational operator",
+      "less than or equal to"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The complete list of relational operators is found in Table 6-1.",
+    "concepts": [
+      "relational operators",
+      "Table 6-1"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Multiple statements may be grouped by putting them inside curly braces ({}).",
+    "concepts": [
+      "curly braces",
+      "statement grouping"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "if (total_owed <= 0) { ++zero_count; printf(\"You owe nothing. \\n\"); }",
+    "concepts": [
+      "if statement",
+      "curly braces",
+      "statement grouping"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "An alternate form of the if statement is: if (condition) statement; else statement;",
+    "concepts": [
+      "if statement",
+      "else statement"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "If the condition is true (nonzero), the first statement is executed. If it is false (0), the second statement is executed.",
+    "concepts": [
+      "if statement",
+      "else statement",
+      "execution"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, the else clause belongs to the nearest if statement.",
+    "concepts": [
+      "C syntax",
+      "if-else statements"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The KISS principle stands for Keep It Simple, Stupid, which means writing code as clearly and simply as possible.",
+    "concepts": [
+      "KISS principle",
+      "code readability"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The strcmp function returns zero if two strings are equal and nonzero if they are different.",
+    "concepts": [
+      "strcmp function",
+      "string comparison"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To check if two strings are equal using strcmp, use the code: if (strcmp(string1, string2) == 0)",
+    "concepts": [
+      "strcmp function",
+      "string comparison"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A while statement is used to repeat a section of code until a condition becomes false.",
+    "concepts": [
+      "while statement",
+      "looping statements"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The Fibonacci sequence is computed using the equation: next_number = current_number + old_number;",
+    "concepts": [
+      "Fibonacci sequence",
+      "mathematical equations"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "In C, it is recommended to use verbose variable names instead of terse mathematical variable names.",
+    "concepts": [
+      "variable naming conventions",
+      "code readability"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The first two terms of the Fibonacci sequence are 1 and 1.",
+    "concepts": [
+      "Fibonacci sequence"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Initialize the first two terms of the Fibonacci sequence to 1.",
+    "concepts": [
+      "Fibonacci sequence",
+      "initialization"
+    ]
+  },
+  {
+    "type": "code",
+    "statement": "while (current_number < 100) { ... }",
+    "concepts": [
+      "while loop",
+      "Fibonacci sequence"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A while loop exits when the condition after the while becomes false (0).",
+    "concepts": [
+      "while loop",
+      "loop exit"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A break statement is used to exit a loop at any point.",
+    "concepts": [
+      "break statement",
+      "loop control"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Using the number zero (0) as an end-of-list signal in a while loop.",
+    "concepts": [
+      "while loop",
+      "end-of-list signal"
+    ]
+  },
+  {
+    "type": "code",
+    "statement": "if (item == 0) break;",
+    "concepts": [
+      "break statement",
+      "conditional statement"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The continue statement starts reexecuting the body of the loop from the top.",
+    "concepts": [
+      "continue statement",
+      "loop control"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Using the continue statement to total only numbers larger than 0.",
+    "concepts": [
+      "continue statement",
+      "conditional statement"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "C allows the use of assignment statements almost anywhere",
+    "concepts": [
+      "C programming",
+      "assignment statements"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Assignment statements can be used inside other assignment statements",
+    "concepts": [
+      "C programming",
+      "assignment statements",
+      "nesting"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "average = total_value / (number_of_entries = last - first);",
+    "concepts": [
+      "C programming",
+      "assignment statements",
+      "order of operations"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Programs should be clear and simple and should not hide anything",
+    "concepts": [
+      "C programming",
+      "code quality",
+      "readability"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C allows the programmer to put assignment statements in the while conditional",
+    "concepts": [
+      "C programming",
+      "while loops",
+      "assignment statements"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "while ((current_number = last_number + old_number) < 100)",
+    "concepts": [
+      "C programming",
+      "while loops",
+      "assignment statements"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "if (balance_owed = 0) is equivalent to balance_owed = 0; if (balance_owed != 0)",
+    "concepts": [
+      "C programming",
+      "if statements",
+      "assignment statements"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Use == for comparison and = for assignment",
+    "concepts": [
+      "C programming",
+      "if statements",
+      "assignment statements"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "if (balance_owed == 0) to check if balance_owed is zero",
+    "concepts": [
+      "C programming",
+      "if statements",
+      "comparison"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A leap year is any year divisible by 4, unless the year is divisible by 100, but not 400.",
+    "concepts": [
+      "leap year",
+      "year divisibility"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Count any hours over 40 as overtime at time and a half.",
+    "concepts": [
+      "overtime calculation",
+      "hourly wage"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Software life cycle includes birth, growth, maturity, and death.",
+    "concepts": [
+      "software life cycle",
+      "program development"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "A grade modifier is based on the last digit of the score.",
+    "concepts": [
+      "grade modifier",
+      "score calculation"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "An F is only an F, there is no F+ or F-.",
+    "concepts": [
+      "grade modifier",
+      "F grade"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "81=B-, 94=A, and 68=D+.",
+    "concepts": [
+      "grade modifier",
+      "score example"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "For a given amount of money, compute the number of quarters, dimes, nickels, and pennies needed.",
+    "concepts": [
+      "coin calculation",
+      "money conversion"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The software development process includes requirements, program specification, code design, and maintenance.",
+    "concepts": [
+      "software development process",
+      "program development"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A directory is a way of grouping files, similar to how file folders keep papers together in a filing cabinet.",
+    "concepts": [
+      "directory",
+      "file management"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The programmer should design a test plan and use it to test the program.",
+    "concepts": [
+      "testing",
+      "program development"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "A preliminary specification document describes what the program will do and how to use it, but not the internal structure or algorithm.",
+    "concepts": [
+      "specification",
+      "program development"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To create a new directory in UNIX, use the commands % cd ~, % mkdir calc, and % cd ~/calc.",
+    "concepts": [
+      "UNIX",
+      "directory creation"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Dividing by 0 results in an error message and the result register is left unchanged.",
+    "concepts": [
+      "error handling",
+      "division"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "A program should be packaged, documented, and sent out into the world to be used after it is developed.",
+    "concepts": [
+      "program release",
+      "documentation"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "A four-function calculator program can be designed to add, subtract, multiply, and divide simple integers.",
+    "concepts": [
+      "calculator program",
+      "arithmetic operations"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The code design phase involves planning the work, breaking up code into modules, planning file formats, designing data structures, and deciding on major algorithms.",
+    "concepts": [
+      "code design",
+      "program development"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Loop, Read an operator and number, Do the calculation, Display the result, End-Loop",
+    "concepts": [
+      "algorithm design",
+      "pseudo code"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Fast prototyping is a method of implementing the smallest portion of the specification that will still do something",
+    "concepts": [
+      "fast prototyping",
+      "software development"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code for the first version of the four-function calculator is found in Example 7-1",
+    "concepts": [
+      "calculator program",
+      "C programming"
+    ]
+  },
+  {
+    "type": "code",
+    "statement": "#include <stdio.h>\nchar line[100];\nint result;\nchar operator;\nint value;\nint main() {\n    result = 0;\n    while (1) {\n        printf(\"Result: %d \\n\", result);\n        printf(\"Enter operator and number: \");\n        fgets(line, sizeof(line), stdin);\n        sscanf(line, \"%c %d\", &operator, &value);\n        if (operator = '+') {\n            result += value;\n        } else {\n            printf(\"Unknown operator %c \\n\", operator);\n        }\n    }\n}",
+    "concepts": [
+      "C programming",
+      "calculator program"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The make utility is responsible for compiling and linking the program, and the Makefile contains the rules for compilation",
+    "concepts": [
+      "make utility",
+      "Makefile"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The line in the Makefile that compiles the program must begin with a tab",
+    "concepts": [
+      "Makefile syntax"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Microsoft's Visual C++ calls the make utility nmake",
+    "concepts": [
+      "make utility",
+      "Visual C++"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "make uses the modification dates of the files to determine whether or not a compile is necessary",
+    "concepts": [
+      "make",
+      "compilation",
+      "modification dates"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "If the source is edited, the source's modification date is updated, and the object file is then out of date",
+    "concepts": [
+      "source files",
+      "object files",
+      "modification dates"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Compilation creates an object file",
+    "concepts": [
+      "compilation",
+      "object files"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "make checks the modification dates of the source and object files, and if the source was modified after the object, make recompiles the object",
+    "concepts": [
+      "make",
+      "compilation",
+      "modification dates"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A test plan is a document that lists the steps to be performed to ensure the program works",
+    "concepts": [
+      "test plan",
+      "program testing"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A test plan is written to reproduce bugs and to retest the program after changes are made",
+    "concepts": [
+      "test plan",
+      "bug reproduction",
+      "regression testing"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Try the following operations: + 123, + 52, x 37",
+    "concepts": [
+      "test plan",
+      "example test cases"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The make command determines which compilation commands are needed and then executes them",
+    "concepts": [
+      "make",
+      "compilation"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When debugging, start by inspecting the program to detect the error, and if the program is too large, proceed to the next step.",
+    "concepts": [
+      "debugging",
+      "program inspection"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A diagnostic print statement is a technique used to debug a program by adding printf statements at points where the data is known to be good or bad.",
+    "concepts": [
+      "diagnostic print statement",
+      "debugging"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To use diagnostic print statements, put a printf at the points where you know the data is good, then put a printf at points where the data is bad, and run the program until you isolate the area with the mistake.",
+    "concepts": [
+      "diagnostic print statement",
+      "debugging"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When using diagnostic print statements, use a distinct marker, such as ##, to indicate temporary debugging printfs, making them easy to identify and remove later.",
+    "concepts": [
+      "diagnostic print statement",
+      "debugging"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Most systems have C debugging programs, but each system is different, and some systems have no debugger.",
+    "concepts": [
+      "C debugging programs",
+      "system differences"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code `if (operator = '+')` is an example of a common mistake, using = instead of == for comparison.",
+    "concepts": [
+      "common mistake",
+      "comparison operator"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The `sscanf` function can be used to parse input from the user, but it requires careful handling of the input format string.",
+    "concepts": [
+      "sscanf",
+      "input parsing"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A test plan is a set of test cases used to verify that a program works correctly.",
+    "concepts": [
+      "test plan",
+      "test cases"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When expanding a test plan to include new operators, try the new operators and verify that the program works as expected.",
+    "concepts": [
+      "test plan",
+      "operator testing"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The code `if (value == 0)` is used to check for division by zero and prevent a runtime error.",
+    "concepts": [
+      "division by zero",
+      "error handling"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, the single equals sign (=) is used for assignment, while the double equals sign (==) is used for comparison.",
+    "concepts": [
+      "C",
+      "assignment",
+      "comparison"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code `if (operator = '+')` will always evaluate to true and assign '+' to `operator`, instead of comparing `operator` to '+'.",
+    "concepts": [
+      "C",
+      "conditional statements",
+      "assignment"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The code `result += value;` adds the `value` to the `result` variable.",
+    "concepts": [
+      "C",
+      "arithmetic operations"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "In the code, the `while (1)` loop will continue to execute indefinitely until a `break` statement is encountered.",
+    "concepts": [
+      "C",
+      "control structures",
+      "loops"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The `fgets` function in C reads a line of text from the standard input and stores it in the `line` array.",
+    "concepts": [
+      "C",
+      "input/output",
+      "strings"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The `sscanf` function in C parses the input string according to the specified format and stores the values in the corresponding variables.",
+    "concepts": [
+      "C",
+      "input/output",
+      "strings"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Electronic archeology refers to the process of examining and understanding old or legacy code.",
+    "concepts": [
+      "software maintenance",
+      "code analysis"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "A well-designed program with a clear and concise specification is more maintainable and easier to modify than a poorly designed one.",
+    "concepts": [
+      "software design",
+      "software maintenance"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A cross reference is a list of variables and their usage locations in a program.",
+    "concepts": [
+      "cross reference",
+      "variable usage"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Correct indentation in a program is defined by the tool maker.",
+    "concepts": [
+      "indentation",
+      "programming tools"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "A pretty printer formats source code for printing on a laser printer.",
+    "concepts": [
+      "pretty printer",
+      "source code formatting"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To understand a program, take a printout, make notes, and add comments to the code.",
+    "concepts": [
+      "program understanding",
+      "code commenting"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When renaming a variable, ensure the new name is not already defined.",
+    "concepts": [
+      "variable renaming",
+      "naming constraints"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "Adding comments to a program makes it easier to understand for future programmers.",
+    "concepts": [
+      "code commenting",
+      "program maintainability"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Debuggers allow users to step through a program one line at a time, examining variables.",
+    "concepts": [
+      "debuggers",
+      "program execution"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 7-3 demonstrates a well-commented, easy-to-understand program.",
+    "concepts": [
+      "code commenting",
+      "program example"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The rand() function returns a number between 0 and maxint.",
+    "concepts": [
+      "rand() function",
+      "maxint"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The expression rand() % 100 generates a random number between 0 and 99, but slightly favors lower numbers.",
+    "concepts": [
+      "random number generation",
+      "rand() function"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To generate a random number between 1 and 100, use the expression rand() % 100 + 1.",
+    "concepts": [
+      "random number generation",
+      "rand() function"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The fgets() function reads a line of input from the standard input and stores it in a character array.",
+    "concepts": [
+      "fgets() function",
+      "standard input"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The sscan f() function requires a format string and a variable to store the converted value.",
+    "concepts": [
+      "sscan f() function",
+      "format string"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code snippet \"number_to_guess = rand() % 100 + 1;\" generates a random number between 1 and 100.",
+    "concepts": [
+      "random number generation",
+      "rand() function"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "A 400MB file contains 419,430,400 bytes.",
+    "concepts": [
+      "file size",
+      "bytes"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A prime number is a positive integer that is divisible only by itself and 1.",
+    "concepts": [
+      "prime number",
+      "divisibility"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The for statement allows the programmer to execute a block of code for a specified number of times.",
+    "concepts": [
+      "for statement",
+      "control structures"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The general form of the for statement is: for (initial-statement ; condition; iteration-statement )",
+    "concepts": [
+      "for statement syntax"
+    ]
+  },
+  {
+    "type": "equivalence",
+    "statement": "The for statement is equivalent to: initial-statement ; while (condition ) { body-statement ; iteration-statement ; }",
+    "concepts": [
+      "for statement",
+      "while loop"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 8-1 uses a while loop to add five numbers.",
+    "concepts": [
+      "while loop example"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 8-2 uses a for statement to add five numbers.",
+    "concepts": [
+      "for statement example"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "In C, it is common to use zero-based counting, where the first item is counted as 0.",
+    "concepts": [
+      "zero-based counting"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Many programming languages do not allow changing the control variable inside a loop, but C does.",
+    "concepts": [
+      "control variable",
+      "loop constraints"
+    ]
+  },
+  {
+    "type": "code snippet",
+    "statement": "for (counter = 0; counter < 5; ++counter) { ... }",
+    "concepts": [
+      "for loop example"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "One-based counting can lead to array overflow errors.",
+    "concepts": [
+      "array overflow errors"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The switch statement is similar to a chain of if/else statements.",
+    "concepts": [
+      "switch statement",
+      "if/else statements"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Duplicate labels are not allowed in a switch statement, so only one case will be selected.",
+    "concepts": [
+      "switch statement",
+      "case labels"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The expression in a switch statement must evaluate an integer, character, or enumeration.",
+    "concepts": [
+      "switch statement",
+      "expression"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The switch statement evaluates the value of an expression and branches to one of the case labels.",
+    "concepts": [
+      "switch statement",
+      "expression evaluation"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "No two case labels can have the same value in a switch statement.",
+    "concepts": [
+      "switch statement",
+      "case labels"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C allows many statements after a case label, and execution will continue until a break statement is encountered.",
+    "concepts": [
+      "switch statement",
+      "C programming language"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 8-6 demonstrates how to rewrite a series of if/else statements as a switch statement.",
+    "concepts": [
+      "switch statement",
+      "if/else statements",
+      "code rewriting"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The default label in a switch statement can be put anywhere and is used when no matching case label is found.",
+    "concepts": [
+      "switch statement",
+      "default label"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A break statement is necessary after each case in a switch statement to prevent fall-through behavior.",
+    "concepts": [
+      "switch statement",
+      "break statement",
+      "fall-through behavior"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "If a break statement is not present after a case, execution will continue with the next statement.",
+    "concepts": [
+      "switch statement",
+      "break statement"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code `switch (control) { case 0: printf(\"Reset \n\"); case 1: printf(\"Initializing \n\"); break; case 2: printf(\"Working \n\"); }` demonstrates fall-through behavior when control == 0.",
+    "concepts": [
+      "switch statement",
+      "fall-through behavior"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A /* Fall through */ comment is used to indicate intentional fall-through behavior in a switch statement.",
+    "concepts": [
+      "switch statement",
+      "fall-through behavior"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To avoid unintentional fall-through behavior, always include a break statement after each case in a switch statement.",
+    "concepts": [
+      "switch statement",
+      "break statement"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The last case in a switch statement does not require a break statement, but it is still good practice to include one for clarity.",
+    "concepts": [
+      "switch statement",
+      "break statement"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A default statement should be included in every switch statement, even if it is empty, to indicate that out-of-range data is being ignored.",
+    "concepts": [
+      "switch statement",
+      "default statement"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "When a switch statement does not have a matching case or default clause, the entire switch statement is skipped.",
+    "concepts": [
+      "switch statement",
+      "case clause",
+      "default clause"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The break statement has two uses: inside a switch statement, it causes the program to go to the end of the switch, and inside a for or while loop, it causes a loop exit.",
+    "concepts": [
+      "break statement",
+      "switch statement",
+      "loop"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The continue statement is valid only inside a loop and causes the program to go to the top of the loop.",
+    "concepts": [
+      "continue statement",
+      "loop"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "/* The final version */ switch (control) { case 0: printf(\"Reset \\n\"); /* Fall through */ case 1: printf(\"Initializing \\n\"); break; case 2: printf(\"Working \\n\"); break; default: printf(\"Internal error, control value (%d) impossible \\n\", control); break; }",
+    "concepts": [
+      "switch statement",
+      "case clause",
+      "default clause"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The C compiler does not look at indentation, it only looks at the syntax of the code.",
+    "concepts": [
+      "C compiler",
+      "indentation",
+      "syntax"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, the range of legal array indices is 0 to array-size-1",
+    "concepts": [
+      "array indices",
+      "C programming"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Most C for loops start at 0 and use < for termination",
+    "concepts": [
+      "C programming",
+      "for loops"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The scope of a variable is the area of the program in which the variable is valid",
+    "concepts": [
+      "variable scope",
+      "programming"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "A global variable is valid everywhere in the program",
+    "concepts": [
+      "global variables",
+      "programming"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "A local variable has a scope that is limited to the block in which it is declared",
+    "concepts": [
+      "local variables",
+      "programming"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To fix an array index out of bounds error, change the loop to start at 0 and use < for termination",
+    "concepts": [
+      "array indices",
+      "C programming",
+      "error fixing"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "sscanf(line, \"%d %d %d %d %d\", &data[0], &data[1], &data[2], &data[3], &data[4])",
+    "concepts": [
+      "C programming",
+      "sscanf function"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The total resistance of n resistors in parallel is calculated using the formula 1/R_total = 1/R_1 + 1/R_2 + ... + 1/R_n",
+    "concepts": [
+      "electricity",
+      "resistors in parallel"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A variable's scope is the region of the program where the variable is accessible.",
+    "concepts": [
+      "variable scope"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When a variable is declared inside a block, it becomes the active one for the length of the block, hiding any global variable with the same name.",
+    "concepts": [
+      "variable hiding"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Global variables are always permanent, created and initialized before the program starts, and remain until it terminates.",
+    "concepts": [
+      "global variables",
+      "permanent variables"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Temporary variables are allocated from a section of memory called the stack at the beginning of the block and returned to the stack at the end of the block.",
+    "concepts": [
+      "temporary variables",
+      "stack allocation"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The space used by temporary variables is limited by the stack size, which depends on the system and compiler.",
+    "concepts": [
+      "stack size",
+      "temporary variables"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A static variable is a permanent variable that is local to the current file when declared outside all blocks.",
+    "concepts": [
+      "static variables"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "int temporary = 1; /* A temporary variable */",
+    "concepts": [
+      "temporary variables",
+      "variable initialization"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 9-1 illustrates the difference between permanent and temporary variables.",
+    "concepts": [
+      "permanent variables",
+      "temporary variables"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Automatic variables are another name for temporary variables, with the qualifier auto used to denote them.",
+    "concepts": [
+      "automatic variables",
+      "temporary variables"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Functions allow us to group commonly used code into a compact unit that can be used repeatedly.",
+    "concepts": [
+      "functions"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A function type in C is the data type of the value returned by the function.",
+    "concepts": [
+      "function type",
+      "C programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, if no function type is declared, the type defaults to int.",
+    "concepts": [
+      "function type",
+      "C programming",
+      "default type"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C uses a form of parameter passing called 'Call by value'.",
+    "concepts": [
+      "parameter passing",
+      "Call by value",
+      "C programming"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The function computes the area with the statement: area = width * height / 2.0;",
+    "concepts": [
+      "area calculation",
+      "triangle area"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "With 'Call by value' parameter passing, a function cannot pass data back to the caller using parameters.",
+    "concepts": [
+      "parameter passing",
+      "Call by value",
+      "C programming"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 9-2 shows a full triangle function in C: float triangle(float width, float height) { float area; area = width * height / 2.0; return (area); }",
+    "concepts": [
+      "triangle function",
+      "C programming",
+      "example code"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The return statement is used to give the result to the caller.",
+    "concepts": [
+      "return statement",
+      "C programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Parameters are the doors between functions, allowing data to be passed into a function.",
+    "concepts": [
+      "parameters",
+      "functions",
+      "C programming"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "The return value of a function can be assigned to a variable in the caller.",
+    "concepts": [
+      "return value",
+      "function call",
+      "C programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A function prototype is a declaration of a function that informs the compiler about the function's return type and parameters.",
+    "concepts": [
+      "function prototype",
+      "compiler",
+      "function declaration"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When declaring a function prototype, the variable names are not required, but including them provides additional information to the programmer.",
+    "concepts": [
+      "function prototype",
+      "variable names"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "If no prototype is specified, the C compiler assumes the function returns an int and takes any number of parameters.",
+    "concepts": [
+      "prototype",
+      "C compiler",
+      "function return type"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To declare a prototype for a function with no parameters, the keyword void is used to indicate an empty parameter list.",
+    "concepts": [
+      "function prototype",
+      "void",
+      "parameter list"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "A function can have any number of parameters, including none, but the parentheses are still required when calling the function.",
+    "concepts": [
+      "function parameters",
+      "parentheses"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The keyword void is used to indicate that a function does not return a value.",
+    "concepts": [
+      "void",
+      "function return type"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The function `void print_answer(int answer)` prints a result but does not return a value.",
+    "concepts": [
+      "void function",
+      "print_answer"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The `length` function in Example 9-4 always reports the length of any string as 0 because the loop condition is incorrect.",
+    "concepts": [
+      "length function",
+      "string length"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Structured programming is a methodology that involves dividing a program into small, well-defined functions to make it easy to write and understand.",
+    "concepts": [
+      "structured programming",
+      "functions"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Recursion occurs when a function calls itself directly or indirectly.",
+    "concepts": [
+      "recursion"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A recursive function must have an ending point.",
+    "concepts": [
+      "recursion",
+      "ending point"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A recursive function must make the problem simpler.",
+    "concepts": [
+      "recursion",
+      "problem simplification"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "fact(n) = n * fact(n -1)",
+    "concepts": [
+      "factorial",
+      "recursion"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "int fact(int number) { if (number == 0) return (1); /* else */ return (number * fact(number -1)); }",
+    "concepts": [
+      "factorial",
+      "recursion",
+      "C programming"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Factorial is legal only for number >= 0.",
+    "concepts": [
+      "factorial",
+      "domain constraint"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "Infinite recursion error occurs when there is no ending point in a recursive function.",
+    "concepts": [
+      "recursion",
+      "infinite recursion error"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Sum(1 8 3 2) = 1 + Sum(8 3 2) = 1 + (8 + Sum(3 2)) = 1 + (8 + (3 + 2)) = 14",
+    "concepts": [
+      "recursion",
+      "array sum"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "int sum(int first, int last, int array[]) { if (first == last) return (array[first]); /* else */ return (array[first] + sum(first+1, last, array)); }",
+    "concepts": [
+      "recursion",
+      "array sum",
+      "C programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Top-down programming starts at the top (main) and works its way down.",
+    "concepts": [
+      "top-down programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Bottom-up programming involves writing the lowest-level function first, testing it, and then building on that working set.",
+    "concepts": [
+      "bottom-up programming"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The preprocessor is a specialized text editor that recognizes and processes preprocessor directives before passing the code to the C compiler.",
+    "concepts": [
+      "preprocessor",
+      "C compiler",
+      "preprocessor directives"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "All preprocessor commands begin with a hash mark (#) in column one.",
+    "concepts": [
+      "preprocessor commands",
+      "hash mark"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The preprocessor has a different syntax than C and does not understand C constructs.",
+    "concepts": [
+      "preprocessor syntax",
+      "C syntax"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The #define statement acts as a command to globally replace a symbol with a value.",
+    "concepts": [
+      "#define statement",
+      "symbol replacement"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "A preprocessor directive terminates at the end of the line, and a semicolon should not be used to end a preprocessor directive.",
+    "concepts": [
+      "preprocessor directive",
+      "line termination"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The preprocessor can be used to edit files other than C programs.",
+    "concepts": [
+      "preprocessor usage"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 10-2 demonstrates the use of the #define statement to define a constant for the size of an array.",
+    "concepts": [
+      "#define statement",
+      "array size"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A preprocessor directive can be continued on the next line by putting a backslash (\\) at the end of the line.",
+    "concepts": [
+      "preprocessor directive",
+      "line continuation"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A replacement macro is defined using the #define command, which causes the preprocessor to replace the word with the specified substitute text.",
+    "concepts": [
+      "preprocessor",
+      "macro",
+      "replacement"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "It is common programming practice to use all uppercase letters for macro names to distinguish them from variables.",
+    "concepts": [
+      "macro naming convention",
+      "variable naming convention"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The general form of a simple define statement is #define name substitute-text, where name can be any valid C identifier and substitute-text can be anything.",
+    "concepts": [
+      "define statement",
+      "preprocessor directive"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To use a defined macro, simply use the macro name in the code, and the preprocessor will replace it with the substitute text.",
+    "concepts": [
+      "macro usage",
+      "preprocessor replacement"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Defining macros that do large-scale replacement of basic C programming constructs is considered bad programming practice.",
+    "concepts": [
+      "macro definition",
+      "programming practice"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The preprocessor does not check for correct C syntax, which can cause unexpected problems.",
+    "concepts": [
+      "preprocessor limitation",
+      "syntax checking"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The definition #define BIG_NUMBER 10 ** 10 can cause a syntax error because ** is an illegal operator.",
+    "concepts": [
+      "macro definition",
+      "syntax error"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The command % cc -E prog.c (in UNIX) or C:> cpp prog.c (in MS-DOS/Windows) can be used to run a program through the preprocessor and view the output.",
+    "concepts": [
+      "preprocessor command",
+      "output viewing"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The definition #define ALL_PARTS FIRST_PART + LAST_PART can cause unexpected results due to the order of operations.",
+    "concepts": [
+      "macro definition",
+      "order of operations"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The #define directive is used to define simple constants, while the const statement can define almost any type of C constant.",
+    "concepts": [
+      "#define",
+      "const"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The const keyword is preferred over #define for defining constants because it checks syntax immediately, uses C syntax, and follows normal C scope rules.",
+    "concepts": [
+      "const",
+      "#define"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Constants defined by a #define directive continue on forever, while constants defined by const follow normal C scope rules.",
+    "concepts": [
+      "#define",
+      "const",
+      "scope"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The size of an integer is implementation dependent.",
+    "concepts": [
+      "integer",
+      "implementation dependency"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To use conditional compilation, include code in a #ifdef/#endif section.",
+    "concepts": [
+      "conditional compilation",
+      "#ifdef",
+      "#endif"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Some compilers do not allow using a constant to define the size of an array.",
+    "concepts": [
+      "constant",
+      "array size"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The #define directive can be used for conditional compilation and other specialized uses, such as `#ifdef DEBUG`.",
+    "concepts": [
+      "#define",
+      "conditional compilation"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "C code is portable in theory, but in practice, different operating systems have quirks that must be accounted for.",
+    "concepts": [
+      "portability",
+      "operating system"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The #define directive is used to define a symbol.",
+    "concepts": [
+      "preprocessor",
+      "directive"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The #undef directive is used to explicitly undefine a symbol.",
+    "concepts": [
+      "preprocessor",
+      "directive"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "If a symbol is not defined, it is considered undefined.",
+    "concepts": [
+      "preprocessor",
+      "symbol"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The #ifdef directive checks if a symbol is defined.",
+    "concepts": [
+      "preprocessor",
+      "directive"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Defining a data structure or union twice is a fatal error.",
+    "concepts": [
+      "preprocessor",
+      "include files"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "The #ifndef directive causes the code to be compiled if the symbol is not defined.",
+    "concepts": [
+      "preprocessor",
+      "directive"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The compiler switch -Dsymbol allows symbols to be defined on the command line.",
+    "concepts": [
+      "compiler",
+      "command line"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "#include <stdio.h> is a directive that includes the standard I/O header file.",
+    "concepts": [
+      "include files",
+      "header files"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Header files are files that are included in other programs.",
+    "concepts": [
+      "include files",
+      "header files"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Local include files should be specified using double quotes around the file name.",
+    "concepts": [
+      "include files",
+      "local files"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The #ifndef directive is true if the symbol is not defined.",
+    "concepts": [
+      "#ifndef directive"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Good programming practices dictate that you should limit header files to types and definitions only.",
+    "concepts": [
+      "header files",
+      "programming practices"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The #ifndef conditional hides all defines so they don't cause trouble when a header file is included multiple times.",
+    "concepts": [
+      "#ifndef conditional",
+      "header files"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Macros can take parameters.",
+    "concepts": [
+      "macros",
+      "parameters"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "No spaces must exist between the macro name and the parenthesis.",
+    "concepts": [
+      "macro name",
+      "parenthesis"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "#define SQR(x)  ((x) * (x))",
+    "concepts": [
+      "macro definition",
+      "SQR macro"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Always put parentheses around the parameters of a macro.",
+    "concepts": [
+      "macro parameters",
+      "parentheses"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The C preprocessor is a very useful part of the C language.",
+    "concepts": [
+      "C preprocessor",
+      "C language"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The #pragma directive is used for inserting compiler-dependent commands into a file.",
+    "concepts": [
+      "#pragma directive",
+      "compiler-dependent commands"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Put parentheses around everything, especially #define constants and macro parameters.",
+    "concepts": [
+      "parentheses",
+      "#define constants",
+      "macro parameters"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When defining a macro with more than one statement, enclose the code in curly braces ( {}).",
+    "concepts": [
+      "macros",
+      "curly braces"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The preprocessor is not C and does not respect C syntax conventions.",
+    "concepts": [
+      "preprocessor",
+      "C syntax"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Do not use = and ; in macro definitions.",
+    "concepts": [
+      "macro definitions",
+      "preprocessor"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Put parentheses around all expressions in macros to avoid evaluation errors.",
+    "concepts": [
+      "macros",
+      "expression evaluation"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C allows you to compute a result and throw it away, which can generate a null-effect warning in some compilers.",
+    "concepts": [
+      "C programming",
+      "null-effect warning"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A parameterized macro is defined with parentheses immediately following the macro name.",
+    "concepts": [
+      "parameterized macros",
+      "macro definition"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "#define SQR(x)  ((x) * (x)) is a corrected macro definition that puts parentheses around the parameters.",
+    "concepts": [
+      "macros",
+      "parameterized macros"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "The order of operations in a macro expansion can lead to unexpected results if not properly parenthesized.",
+    "concepts": [
+      "macro expansion",
+      "order of operations"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A bit is the smallest unit of information, normally represented by the values 1 and 0.",
+    "concepts": [
+      "bit",
+      "information unit"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Eight bits together form a byte, represented by the C data type char.",
+    "concepts": [
+      "byte",
+      "char data type"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Hexadecimal is convenient for representing binary data because each hexadecimal digit represents 4 binary bits.",
+    "concepts": [
+      "hexadecimal",
+      "binary representation"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The hexadecimal number 0xAF represents the binary number 10101111.",
+    "concepts": [
+      "hexadecimal",
+      "binary conversion"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The printf format for hexadecimal is %x; for octal the format is %o.",
+    "concepts": [
+      "printf format",
+      "hexadecimal",
+      "octal"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "A number is independent of its representation (octal, decimal, hex, or binary).",
+    "concepts": [
+      "number representation",
+      "independence"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Bit operators allow the programmer to work on individual bits, treating each bit as independent.",
+    "concepts": [
+      "bit operators",
+      "individual bits"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The bitwise and operator (&) compares two bits and returns 1 if both bits are 1, otherwise it returns 0.",
+    "concepts": [
+      "bitwise and",
+      "bitwise operators"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The bitwise and operator (&) works on each bit independently.",
+    "concepts": [
+      "bitwise and",
+      "bitwise operators"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The bitwise and operator (&) is similar to the logical and (&&), but works on each bit independently, while the logical and (&&) works on the operands as a whole.",
+    "concepts": [
+      "bitwise and",
+      "logical and"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To test if a number is even or odd, use the bitwise and operator (&) to pick off the last digit of the number.",
+    "concepts": [
+      "bitwise and",
+      "even numbers",
+      "odd numbers"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The following function uses the bitwise and to test if a number is even: int even(const int value) { return ((value & 1) == 0); }",
+    "concepts": [
+      "bitwise and",
+      "even numbers"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The bitwise and operator (&) should not be used in place of the logical and (&&) operator in conditional statements.",
+    "concepts": [
+      "bitwise and",
+      "logical and"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The result of the bitwise and operator (&) is 0 if the corresponding bits of both operands are not both 1.",
+    "concepts": [
+      "bitwise and",
+      "bitwise operators"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The inclusive or operator (|) compares its two operands and if one or the other bit is a one, the result is a one.",
+    "concepts": [
+      "inclusive or operator",
+      "bitwise or"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The truth table for the or operator is: 0 | 0 = 0, 0 | 1 = 1, 1 | 0 = 1, 1 | 1 = 1",
+    "concepts": [
+      "or operator",
+      "truth table"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The exclusive or operator (^) results in a one when either of its two operands is a one, but not both.",
+    "concepts": [
+      "exclusive or operator",
+      "xor"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The truth table for the exclusive or operator is: 0 ^ 0 = 0, 0 ^ 1 = 1, 1 ^ 0 = 1, 1 ^ 1 = 0",
+    "concepts": [
+      "exclusive or operator",
+      "truth table"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The not operator (~) is a unary operator that returns the inverse of its operand.",
+    "concepts": [
+      "not operator",
+      "invert operator",
+      "bit flip"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The truth table for the not operator is: ~0 = 1, ~1 = 0",
+    "concepts": [
+      "not operator",
+      "truth table"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The left-shift operator (<<) moves the data to the left a specified number of bits.",
+    "concepts": [
+      "left-shift operator"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Shifting left by n places is the same as multiplying by 2^n.",
+    "concepts": [
+      "left-shift operator",
+      "multiplication"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The right-shift operator (>>) moves the data to the right a specified number of bits.",
+    "concepts": [
+      "right-shift operator"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The right-shift operator divides by 2^n.",
+    "concepts": [
+      "right-shift operator",
+      "division"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "For signed variables, C uses the value of the sign bit to fill the space on the left-hand side when shifting to the right.",
+    "concepts": [
+      "right-shift operator",
+      "signed variables"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "For unsigned variables, C uses zero to fill the space on the left-hand side when shifting to the right.",
+    "concepts": [
+      "right-shift operator",
+      "unsigned variables"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "i = j << 3; is faster than i = j * 8; because shifting is faster than multiplication.",
+    "concepts": [
+      "left-shift operator",
+      "multiplication",
+      "performance"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A character (char) contains eight bits.",
+    "concepts": [
+      "character",
+      "bits"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Bit operations can be used to pack eight single-bit values in a single byte.",
+    "concepts": [
+      "bit operations",
+      "byte"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Bits are numbered 76543210 by convention.",
+    "concepts": [
+      "bit numbering"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The left-shift operator (<<) can be used to define bits.",
+    "concepts": [
+      "left-shift operator",
+      "bit definition"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To set a bit, use the | operator.",
+    "concepts": [
+      "bit manipulation",
+      "OR operator"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To test a bit, use the & operator to mask out the bits.",
+    "concepts": [
+      "bit manipulation",
+      "AND operator"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "const int ERROR = (1<<0);",
+    "concepts": [
+      "bit definition",
+      "left-shift operator"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The ANSI standard specifies that right shifts may be arithmetic (sign bit fill) or logical (zero bit fill).",
+    "concepts": [
+      "ANSI standard",
+      "right shift"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Bitmapped graphics represent each pixel on the screen as a single bit in memory.",
+    "concepts": [
+      "bitmapped graphics",
+      "pixel representation"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "To clear a bit, create a mask with all bits set except the bit to clear, then AND the mask with the number.",
+    "concepts": [
+      "bit clearing",
+      "masking"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "flags &= ~PARITY_ERROR; /* clear the PARITY_ERROR bit */",
+    "concepts": [
+      "bit clearing",
+      "C programming"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "In C, there is no data type for an array of bits, so an array of bytes is used instead.",
+    "concepts": [
+      "C programming",
+      "data types"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "const int HIGH_SPEED = (1<<7); /* modem is running fast */",
+    "concepts": [
+      "bit flags",
+      "C programming"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When using bitmapped graphics, the x, y index must be transformed to a byte_x, byte_y, bit_index, and bit.",
+    "concepts": [
+      "bitmapped graphics",
+      "index transformation"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A byte contains 8 bits.",
+    "concepts": [
+      "byte",
+      "bit"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "byte_y = y",
+    "concepts": [
+      "byte_y",
+      "y"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "byte_x = x / 8",
+    "concepts": [
+      "byte_x",
+      "x"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "bit_index = x % 8",
+    "concepts": [
+      "bit_index",
+      "x"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "bit = 0x80 >> bit_index",
+    "concepts": [
+      "bit",
+      "bit_index"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The index starts out at 0, goes to 7, and then goes back to 0.",
+    "concepts": [
+      "bit_index"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "A bit index of zero indicates the left-most bit or the bit represented by 1000 0000 2 or 0x80.",
+    "concepts": [
+      "bit_index",
+      "bit"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "To set the pixel at bit number 4,7, we need to set the fourth bit of byte 0,7.",
+    "concepts": [
+      "bit_number",
+      "byte"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "char graphics[X_SIZE / 8][Y_SIZE] is a bitmapped graphic array.",
+    "concepts": [
+      "graphics",
+      "bitmapped"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "#define SET_BIT(x,y) graphics[(x)/8][y] |= (0x80 >>((x)%8))",
+    "concepts": [
+      "SET_BIT",
+      "graphics"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The loop counter cycles through bits from left to right by bit = (bit >> 1).",
+    "concepts": [
+      "loop_counter",
+      "bit"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A structure is a data type that allows the programmer to combine multiple variables of different types into a single unit.",
+    "concepts": [
+      "structure",
+      "data type"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In a structure, each element or field is named and has its own data type.",
+    "concepts": [
+      "structure",
+      "field"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The general form of a structure definition is: struct structure-name { field-type field-name; ... } variable-name;",
+    "concepts": [
+      "structure definition",
+      "syntax"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "struct bin { char name[30]; int quantity; int cost; }",
+    "concepts": [
+      "structure example",
+      "bin structure"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The value 0x80 represented in 8 bits is 1000 0000 2, where the first bit is the sign bit.",
+    "concepts": [
+      "binary representation",
+      "sign bit"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When a right shift is done on a signed variable, the sign bit is used for fill.",
+    "concepts": [
+      "right shift",
+      "signed variable"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "if ((graphics[x][y] & bit) != 0) printf(\"X\"); else printf(\".\");",
+    "concepts": [
+      "bit testing",
+      "printing"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The solution to the problem of the second loop failing is to declare ch as an unsigned variable.",
+    "concepts": [
+      "unsigned variable",
+      "loop failure"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "The number of bits set in an integer can be counted using a program.",
+    "concepts": [
+      "bit counting",
+      "integer"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A bitmapped square is a square made up of bits, where each bit represents a pixel.",
+    "concepts": [
+      "bitmapped square",
+      "pixel"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A structure is used to define a data type with several fields, where each field takes up a separate storage location.",
+    "concepts": [
+      "structure",
+      "data type",
+      "fields"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In a structure, the fields do not interact, so changing one field does not change any others.",
+    "concepts": [
+      "structure",
+      "fields"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A union is similar to a structure, but it defines a single location that can be given many different field names.",
+    "concepts": [
+      "union",
+      "structure",
+      "fields"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In a union, all fields occupy the same space, so only one may be active at a time.",
+    "concepts": [
+      "union",
+      "fields"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To access a field in a structure, use the syntax: variable.field",
+    "concepts": [
+      "structure",
+      "fields",
+      "access"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "To compute the value of everything in a bin, use the formula: total_cost = printer_cable_bin.cost * printer_cable_bin.quantity;",
+    "concepts": [
+      "structure",
+      "computation",
+      "total cost"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Structures may be initialized at declaration time by putting the list of elements in curly braces ({ }).",
+    "concepts": [
+      "structure",
+      "initialization"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "In a union, assigning a value to one field wipes out the old value of any other field.",
+    "concepts": [
+      "union",
+      "fields",
+      "assignment"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A union is a special data type that allows storing different types of data in the same memory location.",
+    "concepts": [
+      "union",
+      "data type"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, the use of unions can lead to unexpected results if not used carefully, as shown by the example where accessing i_value after assigning to f_value is not legal.",
+    "concepts": [
+      "union",
+      "C programming"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Unions are frequently used in communications, such as sending messages to a remote tape with different data for each message type (open, close, read, write).",
+    "concepts": [
+      "union",
+      "communications",
+      "remote tape"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The typedef statement in C allows programmers to define their own variable types.",
+    "concepts": [
+      "typedef",
+      "C programming"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "typedef can be used to define more complex objects beyond the scope of a simple #define statement.",
+    "concepts": [
+      "typedef",
+      "complex objects"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "typedef int group[10]; defines a new type named group that denotes an array of ten integers.",
+    "concepts": [
+      "typedef",
+      "array"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The enumerated data type (enum) is designed for variables that contain only a limited set of values referenced by name.",
+    "concepts": [
+      "enum",
+      "enumerated data type"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The compiler assigns each tag in an enum an integer value internally.",
+    "concepts": [
+      "enum",
+      "compiler"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "enum week_day {SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY}; is a better method than using const for defining days of the week.",
+    "concepts": [
+      "enum",
+      "days of the week"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "In C, enum is implemented as compatible with integer.",
+    "concepts": [
+      "C",
+      "enum",
+      "integer"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C++, enum is a separate type and is not compatible with integer.",
+    "concepts": [
+      "C++",
+      "enum",
+      "integer"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A cast or typecast operation in C is used to convert one type of variable to another type.",
+    "concepts": [
+      "C",
+      "cast",
+      "typecast"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The general form of a cast in C is: (type) expression",
+    "concepts": [
+      "C",
+      "cast"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "ratio = ((float) won) / ((float) lost);",
+    "concepts": [
+      "C",
+      "casting",
+      "float"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Packed structures in C allow declaring structures to take up a minimum amount of storage.",
+    "concepts": [
+      "C",
+      "packed structures"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Bit fields in packed structures are declared by following each field with a colon and the number of bits to be used for that field.",
+    "concepts": [
+      "C",
+      "bit fields",
+      "packed structures"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Packed structures should be used with care as the code to extract data from bit fields is relatively large and slow.",
+    "concepts": [
+      "C",
+      "packed structures",
+      "performance"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "struct item { unsigned int list:1; unsigned int seen:1; unsigned int number:14; };",
+    "concepts": [
+      "C",
+      "packed structures",
+      "bit fields"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Arrays of structures in C can be used to store collections of related data.",
+    "concepts": [
+      "C",
+      "arrays of structures"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "struct time lap[MAX_LAPS];",
+    "concepts": [
+      "C",
+      "arrays of structures"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A structure is a collection of variables of different data types that are stored together in memory.",
+    "concepts": [
+      "structure",
+      "data types",
+      "memory"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The state field in the mailing structure is two elements because it is designed to hold two characters and does not have enough space for the end of string character ( '\\0' ).",
+    "concepts": [
+      "structure",
+      "state field",
+      "string character"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Structures and unions are powerful features of the C language that allow users to create their own data types.",
+    "concepts": [
+      "structures",
+      "unions",
+      "C language"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To declare an array to hold a mailing list, use the syntax: struct mailing list[MAX_ENTRIES];",
+    "concepts": [
+      "array declaration",
+      "mailing list",
+      "structure"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The mailing list structure must be sorted by name for most printouts and sorted in zip code order for actual mailings.",
+    "concepts": [
+      "mailing list",
+      "sorting",
+      "zip code"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A pointer is a variable that contains the address of another variable.",
+    "concepts": [
+      "pointer",
+      "variable",
+      "address"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The statement struct mailing { char name[60]; char address1[60]; char address2[60]; char city[40]; char state[2]; long int zip; }; declares a structure to store names and addresses.",
+    "concepts": [
+      "structure declaration",
+      "mailing list"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Addresses are automatically assigned by the C compiler to every variable.",
+    "concepts": [
+      "addresses",
+      "C compiler",
+      "variables"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A pointer is declared by putting an asterisk ( *) in front of the variable name in the declaration statement",
+    "concepts": [
+      "pointer declaration"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The operator ampersand ( &) returns the address of a thing which is a pointer",
+    "concepts": [
+      "address of operator"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The operator asterisk ( *) returns the object to which a pointer points",
+    "concepts": [
+      "dereference operator"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Many different address variables can point to the same thing",
+    "concepts": [
+      "pointer properties"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "thing_ptr = &thing;  /* Point to the thing */",
+    "concepts": [
+      "pointer assignment"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "*thing_ptr = 5;      /* Set \"thing\" to 5 */",
+    "concepts": [
+      "pointer dereference"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "*thing is illegal because thing is not a pointer",
+    "concepts": [
+      "pointer operations"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "int thing; thing = 2; thing_ptr = &thing;",
+    "concepts": [
+      "pointer example"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Pointers can be used as a quick and simple way to access arrays",
+    "concepts": [
+      "pointer uses"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A pointer is a variable that holds the address of another variable.",
+    "concepts": [
+      "pointer",
+      "variable",
+      "address"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, parameters are passed using call by value, meaning the parameters go only one way into the function.",
+    "concepts": [
+      "call by value",
+      "parameter passing"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Multiple pointers can point to the same variable.",
+    "concepts": [
+      "pointers",
+      "variable"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To increment a variable using a pointer, use the syntax (*pointer_name)++",
+    "concepts": [
+      "pointer",
+      "increment"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "A function can only return a single value.",
+    "concepts": [
+      "function",
+      "return value"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code `void inc_count(int *count_ptr) { (*count_ptr)++; }` demonstrates how to use a pointer to increment a variable.",
+    "concepts": [
+      "pointer",
+      "function",
+      "increment"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The & operator is used to get the address of a variable.",
+    "concepts": [
+      "address",
+      "operator"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The syntax `int *pointer_name` declares a pointer to an integer.",
+    "concepts": [
+      "pointer",
+      "declaration"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The NULL pointer is a special pointer that points to nothing and has a numeric value of 0.",
+    "concepts": [
+      "NULL pointer"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Declaring a constant pointer in C requires the const keyword to be placed after the * symbol.",
+    "concepts": [
+      "constant pointer",
+      "C syntax"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "In C, the declaration const char *answer_ptr = \"Forty-Two\"; means the data pointed to by answer_ptr is constant, but the pointer itself is not.",
+    "concepts": [
+      "constant data",
+      "pointer"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code answer_ptr = \"Fifty-One\"; is legal because answer_ptr is a variable, but *answer_ptr = 'X'; is illegal because *answer_ptr is a constant.",
+    "concepts": [
+      "pointer assignment",
+      "constant data"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A constant pointer in C is declared by placing the const keyword after the * symbol, such as char *const name_ptr = \"Test\";",
+    "concepts": [
+      "constant pointer",
+      "C syntax"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "In C, the elements of an array are assigned to consecutive addresses, allowing a pointer to be used to find each element.",
+    "concepts": [
+      "array",
+      "pointer arithmetic"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To access an array element using a pointer, the pointer must be dereferenced, such as *(array_ptr+1) to access the second element.",
+    "concepts": [
+      "pointer arithmetic",
+      "array access"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code #include <stdio.h> ... char array[ARRAY_SIZE + 1] = \"0123456789\"; ... printf(\"&array[index] (array+index) array[index] \\n\"); demonstrates how to print the elements and addresses of a character array.",
+    "concepts": [
+      "array",
+      "pointer arithmetic",
+      "C programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When printing pointers, the special conversion %p should be used.",
+    "concepts": [
+      "pointers",
+      "printf"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C automatically scales pointer arithmetic so that it works correctly for different data types.",
+    "concepts": [
+      "pointer arithmetic",
+      "data types"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "In C, arrays and pointers are treated in the same manner in many cases.",
+    "concepts": [
+      "arrays",
+      "pointers"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To count the number of elements before a zero in an array, use a while loop that increments an index or pointer until a zero is found.",
+    "concepts": [
+      "arrays",
+      "loops"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 13-4 counts the number of elements that are nonzero and stops when a zero is found.",
+    "concepts": [
+      "arrays",
+      "loops"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 13-5 is a version of Example 13-4 that uses pointers.",
+    "concepts": [
+      "pointers",
+      "arrays"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When passing an array to a procedure, C will automatically change the array into a pointer.",
+    "concepts": [
+      "arrays",
+      "pointers",
+      "functions"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The dereference operator (*) is used to examine the data in an array.",
+    "concepts": [
+      "pointers",
+      "dereference operator"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When using pointer arithmetic, the pointer must be incremented or decremented by the size of the data type.",
+    "concepts": [
+      "pointer arithmetic",
+      "data types"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The expression array_ptr - array computes how far array_ptr is into the array.",
+    "concepts": [
+      "pointers",
+      "arrays"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A pointer is a variable that holds the memory address of another variable.",
+    "concepts": [
+      "pointer",
+      "memory address"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Pointers and the increment operator should not be used together in the same statement.",
+    "concepts": [
+      "pointer",
+      "increment operator"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The expression *data_ptr++ will get the value at the current memory location and then increment the pointer.",
+    "concepts": [
+      "pointer arithmetic",
+      "increment operator"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "void init_array_2(int *data_ptr) { for (index = 0; index < MAX; ++index) *(data_ptr + index) = 0; }",
+    "concepts": [
+      "array initialization",
+      "pointer arithmetic"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When using pointers, it is generally better to use separate statements for pointer increment and value retrieval to avoid confusion.",
+    "concepts": [
+      "code readability",
+      "pointer usage"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "void copy_string(char *p, char *q) { while (*p++ = *q++); }",
+    "concepts": [
+      "string copying",
+      "pointer arithmetic"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Using pointers and increment operators together in the same statement can lead to confusing and hard-to-maintain code.",
+    "concepts": [
+      "code maintainability",
+      "pointer usage"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A string in C is an array of characters terminated by a null character ('\\0').",
+    "concepts": [
+      "string",
+      "null character"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To copy a string, iterate through the source string and assign each character to the destination string until the null character is reached.",
+    "concepts": [
+      "string copying"
+    ]
+  },
+  {
+    "type": "function",
+    "statement": "The my_strchr function takes a pointer to a string and a character as arguments and returns a pointer to the first occurrence of the character in the string or NULL if not found.",
+    "concepts": [
+      "my_strchr",
+      "string searching"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When searching for a character in a string, check for the null character to avoid going out of bounds.",
+    "concepts": [
+      "string searching",
+      "null character"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The strchr function from the standard library can be used to find the first occurrence of a character in a string.",
+    "concepts": [
+      "strchr",
+      "string searching"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The split.c program demonstrates how to use pointers and character arrays for simple string processing, such as splitting a string into two parts based on a delimiter.",
+    "concepts": [
+      "string processing",
+      "pointers",
+      "character arrays"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When using fgets to read a line of input, the newline character must be removed from the end of the string.",
+    "concepts": [
+      "fgets",
+      "newline character"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A pointer is a variable that holds a memory address as its value.",
+    "concepts": [
+      "pointer",
+      "memory address"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, the main function takes two arguments: argc and argv.",
+    "concepts": [
+      "main function",
+      "argc",
+      "argv"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The argc parameter is the number of arguments on the command line, including the program name.",
+    "concepts": [
+      "argc",
+      "command line arguments"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The argv array contains the actual arguments passed to the program.",
+    "concepts": [
+      "argv",
+      "command line arguments"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To sort a large array of structures, declare an array of pointers to the structures and sort the pointers instead.",
+    "concepts": [
+      "sorting",
+      "pointers",
+      "structures"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "In C, strings must be null-terminated.",
+    "concepts": [
+      "strings",
+      "null-termination"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The UNIX shell expands wildcard characters before sending the command line to the program.",
+    "concepts": [
+      "UNIX shell",
+      "wildcard characters"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The command line \"args this is a test\" would result in argc = 5 and argv = {\"args\", \"this\", \"is\", \"a\", \"test\", NULL}.",
+    "concepts": [
+      "command line arguments",
+      "argc",
+      "argv"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A structure is a collection of variables of different data types that can be stored together in memory.",
+    "concepts": [
+      "structure",
+      "data types"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A standard UNIX command has the form: command options file1 file2 ...",
+    "concepts": [
+      "UNIX command",
+      "command-line format"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Options are preceded by a dash ( -) and are usually a single letter.",
+    "concepts": [
+      "UNIX command",
+      "options"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "If the option takes a parameter, it follows the letter.",
+    "concepts": [
+      "UNIX command",
+      "options",
+      "parameters"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "while ((argc > 1) && (argv[1][0] == ' -')) {",
+    "concepts": [
+      "command-line arguments",
+      "parsing"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "--argc; ++argv;",
+    "concepts": [
+      "command-line arguments",
+      "parsing"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The switch statement is used to decode the options.",
+    "concepts": [
+      "switch statement",
+      "options decoding"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The address of operator ( &) is used to get the address of the first character in the output filename.",
+    "concepts": [
+      "address of operator",
+      "output filename"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "out_file = &argv[1][2];",
+    "concepts": [
+      "output filename",
+      "parsing"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The library function atoi is used to convert the string into an integer.",
+    "concepts": [
+      "atoi function",
+      "string conversion"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 13-12 contains the print program.",
+    "concepts": [
+      "print program",
+      "example"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "void usage(void) { fprintf(stderr,\"Usage is %s [options] [file -list]\\n\", program_name); }",
+    "concepts": [
+      "error handling",
+      "usage message"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The program name is saved for future use as program_name = argv[0];",
+    "concepts": [
+      "command line arguments",
+      "program name"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "while ((argc > 1) && (argv[1][0] == ' -')) { /* process options */ }",
+    "concepts": [
+      "command line arguments",
+      "option processing"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The switch statement is used to handle different options (e.g., '-v', '-l', '-o')",
+    "concepts": [
+      "switch statement",
+      "option handling"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "If no files exist, the program processes just the standard input stream",
+    "concepts": [
+      "input stream",
+      "file processing"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A static variable is a permanent variable that retains its value between function calls",
+    "concepts": [
+      "static variables",
+      "variable scope"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The tmp_name function returns a pointer to a temporary filename, but has a warning about its usage",
+    "concepts": [
+      "temporary filename",
+      "function warning"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The compiler allocates space for a variable when a function is entered and reclaims the space when the function exits",
+    "concepts": [
+      "variable allocation",
+      "compiler behavior"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A file is a collection of related data.",
+    "concepts": [
+      "file",
+      "data"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Before doing anything with files, you must include the line #include <stdio.h> at the beginning of your program.",
+    "concepts": [
+      "file",
+      "stdio.h"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The declaration for a file variable is FILE *file-variable;",
+    "concepts": [
+      "file variable",
+      "FILE"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Before a file can be used, it must be opened using the function fopen.",
+    "concepts": [
+      "fopen",
+      "file"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "fopen returns a pointer to the file structure for the file.",
+    "concepts": [
+      "fopen",
+      "file structure"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C treats a file as a series of bytes.",
+    "concepts": [
+      "file",
+      "bytes"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "FILE *in_file; /* file containing the input data */",
+    "concepts": [
+      "file variable",
+      "example"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "A value of NULL is returned on error by fopen.",
+    "concepts": [
+      "fopen",
+      "error"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The format for fopen is file-variable = fopen(name, mode);",
+    "concepts": [
+      "fopen",
+      "format"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The mode \"w\" is used for writing and \"r\" is used for reading a file.",
+    "concepts": [
+      "file mode"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The flag \"b\" can be added to indicate a binary file, and omitting it indicates an ASCII (text) file.",
+    "concepts": [
+      "file type",
+      "binary file",
+      "ASCII file"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The function fopen returns a file handle that will be used in subsequent I/O operations.",
+    "concepts": [
+      "fopen",
+      "file handle"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "If there is an I/O error, then the value NULL is returned by fopen.",
+    "concepts": [
+      "fopen",
+      "error handling"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The function fclose closes a file and returns zero if successful or nonzero for an error.",
+    "concepts": [
+      "fclose"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "C provides three pre-opened files: stdin, stdout, and stderr.",
+    "concepts": [
+      "standard files",
+      "stdin",
+      "stdout",
+      "stderr"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The function fgetc reads a single character from a file and returns the constant EOF if no more data exists.",
+    "concepts": [
+      "fgetc",
+      "EOF"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 14-1 counts the number of characters in the file input.txt using fgetc.",
+    "concepts": [
+      "fgetc",
+      "file input"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The function fputc writes a single character to a file.",
+    "concepts": [
+      "fputc"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The function fgets reads a line from a file and returns NULL if end-of-file or an error is detected.",
+    "concepts": [
+      "fgets"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The sizeof operator returns the size of its argument in bytes.",
+    "concepts": [
+      "sizeof operator"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The function fputs writes a string to a file.",
+    "concepts": [
+      "fputs"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The fputs function writes a string to a file until it encounters a null character ('\\0').",
+    "concepts": [
+      "fputs",
+      "string",
+      "file"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The fprintf function converts data and writes it to a file, and its general form is count = fprintf(file, format, parameter-1, parameter-2, ...);",
+    "concepts": [
+      "fprintf",
+      "file",
+      "format"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The fprintf function has two sister functions: printf and sprintf.",
+    "concepts": [
+      "fprintf",
+      "printf",
+      "sprintf"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To write a number to a printer or terminal, it must be converted to characters.",
+    "concepts": [
+      "number",
+      "characters",
+      "conversion"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The scanf function is very fussy about where the end-of-line characters occur in the input.",
+    "concepts": [
+      "scanf",
+      "input",
+      "end-of-line characters"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The fscanf function returns the number of parameters successfully converted, or 0 if there was input but nothing could be converted, or EOF if no data is present.",
+    "concepts": [
+      "fscanf",
+      "return value"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 14-2 demonstrates how to use the sscanf return value to parse input from the standard input (keyboard).",
+    "concepts": [
+      "sscanf",
+      "return value",
+      "input parsing"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The sprintf function is similar to fprintf, except that the first argument is a string.",
+    "concepts": [
+      "sprintf",
+      "string"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The fscanf function has the format: number = fscanf(file, format, &parameter-1, ...);",
+    "concepts": [
+      "fscanf",
+      "file",
+      "format"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The fgets function almost always gets a single line without trouble.",
+    "concepts": [
+      "fgets",
+      "line reading"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "ASCII stands for American Standard Code for Information Interchange.",
+    "concepts": [
+      "ASCII"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "ASCII is a set of 95 printable characters and 33 control codes.",
+    "concepts": [
+      "ASCII"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "ASCII files are readable text.",
+    "concepts": [
+      "ASCII files"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When writing a number to the screen, it must be converted to characters.",
+    "concepts": [
+      "character data",
+      "integer data"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To convert a single digit from ASCII to integer, subtract the ASCII value of '0'.",
+    "concepts": [
+      "ASCII to integer conversion"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "integer = ch - '0';",
+    "concepts": [
+      "ASCII to integer conversion"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Computers work on binary data.",
+    "concepts": [
+      "binary data"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Binary files require no conversion and generally take up less space than ASCII files.",
+    "concepts": [
+      "binary files"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "Binary files cannot be directly printed on a terminal or printer.",
+    "concepts": [
+      "binary files"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "ASCII files are portable, while binary files are almost certainly nonportable.",
+    "concepts": [
+      "ASCII files",
+      "binary files"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In most cases, ASCII files should be used, unless large amounts of data are involved.",
+    "concepts": [
+      "file type selection"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The newline character, \\n, is code 0x0A (LF or <LINE FEED>).",
+    "concepts": [
+      "newline character"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "UNIX uses <LINE FEED> for end-of-line, while MS-DOS/Windows uses <LINE FEED><RETURN>.",
+    "concepts": [
+      "end-of-line characters"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In MS-DOS/Windows, it makes a difference whether a file is opened as ASCII or binary.",
+    "concepts": [
+      "file opening modes"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "/* open ASCII file for reading */ ascii_file = fopen(\"name\", \"r\");",
+    "concepts": [
+      "file opening modes"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "/* open binary file for reading */ binary_file = fopen(\"name\", \"rb\");",
+    "concepts": [
+      "file opening modes"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "If a file containing text is opened as a binary file under MS-DOS/Windows, the carriage returns must be handled in the program.",
+    "concepts": [
+      "binary file handling"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "In UNIX, a file is a file and ASCII is no different from binary.",
+    "concepts": [
+      "UNIX",
+      "ASCII",
+      "binary"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The syntax for fread is: read_size = fread( data_ptr , 1, size, file);",
+    "concepts": [
+      "fread",
+      "binary I/O"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The second parameter to fread and fwrite is the size of the object and the third parameter is the number of objects.",
+    "concepts": [
+      "fread",
+      "fwrite",
+      "binary I/O"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "read_size = fread((char *)&rectangle, 1, sizeof(rectangle), in_file);",
+    "concepts": [
+      "fread",
+      "binary I/O",
+      "struct"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The data_ptr must be cast to a character pointer (char *) if the data is any type other than a character.",
+    "concepts": [
+      "fread",
+      "data_ptr",
+      "character pointer"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Buffered I/O does not write immediately to the file, instead the data is kept in a buffer until there is enough for a big write, or until it is flushed.",
+    "concepts": [
+      "buffered I/O",
+      "buffer"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "printf(\"Starting\"); fflush(stdout);",
+    "concepts": [
+      "printf",
+      "fflush",
+      "buffered I/O"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Unbuffered I/O is when the data is immediately sent to the file.",
+    "concepts": [
+      "unbuffered I/O",
+      "file"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Unbuffered I/O should be used only when reading or writing large amounts of binary data or when direct control of a device or file is required.",
+    "concepts": [
+      "unbuffered I/O",
+      "binary data",
+      "device control"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The open system call is used for opening an unbuffered file.",
+    "concepts": [
+      "open system call",
+      "unbuffered file"
+    ]
+  },
+  {
+    "type": "code",
+    "statement": "file_descriptor = open(name, flags);",
+    "concepts": [
+      "open function",
+      "file descriptor"
+    ]
+  },
+  {
+    "type": "code",
+    "statement": "file_descriptor = open(name, flags, mode);",
+    "concepts": [
+      "open function",
+      "file descriptor",
+      "mode"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "file_descriptor is an integer that is used to identify the file for the read, write, and close calls.",
+    "concepts": [
+      "file descriptor"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "If file descriptor is less than zero, an error occurred.",
+    "concepts": [
+      "file descriptor",
+      "error handling"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "flags are defined in the fcntl.h header file.",
+    "concepts": [
+      "flags",
+      "fcntl.h"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "data_fd = open(\"data.txt\", O_RDONLY);",
+    "concepts": [
+      "open function",
+      "O_RDONLY flag"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "out_fd = open(\"output.dat\", O_CREAT|O_WRONLY, 0644);",
+    "concepts": [
+      "open function",
+      "O_CREAT flag",
+      "O_WRONLY flag"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "When any program is initially run, three files are already opened: standard in, standard out, and standard error.",
+    "concepts": [
+      "standard input",
+      "standard output",
+      "standard error"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The symbolic names for standard files are defined in the header file unistd.h.",
+    "concepts": [
+      "symbolic names",
+      "unistd.h"
+    ]
+  },
+  {
+    "type": "code",
+    "statement": "read_size = read(file_descriptor, buffer, size);",
+    "concepts": [
+      "read function",
+      "file descriptor",
+      "buffer"
+    ]
+  },
+  {
+    "type": "code",
+    "statement": "write_size = write(file_descriptor, buffer, size);",
+    "concepts": [
+      "write function",
+      "file descriptor",
+      "buffer"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The close call closes the file with the given file descriptor and returns zero for success, negative for error.",
+    "concepts": [
+      "file descriptor",
+      "close call"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Unbuffered I/O is used for large buffer sizes because using buffered I/O to read 1K of data into a buffer and then transfer it into a 16K buffer makes no sense.",
+    "concepts": [
+      "unbuffered I/O",
+      "buffered I/O",
+      "buffer size"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The copy2.c program demonstrates how to copy one file to another using unbuffered I/O.",
+    "concepts": [
+      "copy2.c",
+      "unbuffered I/O",
+      "file copying"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The buffer size is defined as a constant, so it is easily modified.",
+    "concepts": [
+      "buffer size",
+      "constant definition"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The program reads data from the input file into a buffer, determines the number of bytes to write using read_size, and writes the data to the output file.",
+    "concepts": [
+      "file reading",
+      "file writing",
+      "buffer management"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The program checks the number of command-line arguments and prints an error message if the usage is incorrect.",
+    "concepts": [
+      "command-line arguments",
+      "error handling"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The O_BINARY flag is defined as 0 if it is not already defined.",
+    "concepts": [
+      "O_BINARY flag",
+      "file flags"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The BUFFER_SIZE constant is defined as 16 * 1024, which represents a 16K buffer size.",
+    "concepts": [
+      "BUFFER_SIZE",
+      "buffer size"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "A typical plotter configuration file contains fields such as height, width, x and y limits, and x and y scales.",
+    "concepts": [
+      "plotter configuration file",
+      "file format"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A magic number is an identification number placed in the first four bytes of a binary file to distinguish it from other types of files.",
+    "concepts": [
+      "magic number",
+      "binary file"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The magic number should be different for each type of file.",
+    "concepts": [
+      "magic number",
+      "file type"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To generate a magic number, start with the first four letters of the program name, convert them to hexadecimal, and then add a fixed value.",
+    "concepts": [
+      "magic number generation"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The high bit is set on each byte of a magic number to make it non-ASCII and avoid confusion between ASCII and binary files.",
+    "concepts": [
+      "magic number",
+      "ASCII",
+      "binary files"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When writing binary data, the file must be opened with the binary option to avoid output editing.",
+    "concepts": [
+      "binary data",
+      "file opening"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "On MS-DOS/Windows, the end-of-line is represented by a carriage return (0x0D) followed by a line feed (0x0A).",
+    "concepts": [
+      "end-of-line",
+      "MS-DOS/Windows"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code `name[strlen(name)-1] = '\\0';` is used to strip the newline character from a file name.",
+    "concepts": [
+      "string manipulation",
+      "file name"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A plot configuration file is a file that contains data and settings for generating a plot.",
+    "concepts": [
+      "plot configuration file"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A plot configuration file should have a version number to allow for backwards compatibility.",
+    "concepts": [
+      "plot configuration file",
+      "version number"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The `fgets` function includes the newline character in the input string.",
+    "concepts": [
+      "fgets",
+      "newline character"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code `out_file = fopen(\"test.out\", \"wb\");` is used to open a file in binary write mode.",
+    "concepts": [
+      "file opening",
+      "binary mode"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "Using a magic number at the beginning of each structure in a binary file can help detect errors when reading and writing the file.",
+    "concepts": [
+      "magic number",
+      "binary file",
+      "error detection"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The hardest part of creating a program is not its design and writing, but its debugging phase.",
+    "concepts": [
+      "debugging",
+      "program development"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In order to eradicate a bug, you need two things: a way of reproducing it and information from the program that lets you locate and correct the problem.",
+    "concepts": [
+      "debugging",
+      "bug fixing"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 15-1 is a short database lookup program that asks the user for input and checks the input against a hardcoded list of names.",
+    "concepts": [
+      "database program",
+      "interactive programs"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Debugging is the phase of creating a program where you find out how your program really works (instead of how you think it works).",
+    "concepts": [
+      "debugging",
+      "program development"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To debug a program, first reproduce the bug, then use information from the program to locate and correct the problem.",
+    "concepts": [
+      "debugging",
+      "bug fixing"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "A programmer needs a clear and easy test plan to display the bug in order to eradicate it.",
+    "concepts": [
+      "debugging",
+      "testing"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Interactive programs can be difficult to debug because reproducing the bug may be 90% of the problem.",
+    "concepts": [
+      "interactive programs",
+      "debugging"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The fgets function reads a line from the input file and stores it in the given array.",
+    "concepts": [
+      "fgets",
+      "input file",
+      "array"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The fgets function includes the newline character in the array if there is room.",
+    "concepts": [
+      "fgets",
+      "newline character",
+      "array"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The strcmp function returns 0 if the two strings are equal.",
+    "concepts": [
+      "strcmp",
+      "string comparison"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To get rid of the newline character at the end of a string, set the last character to '\\0'.",
+    "concepts": [
+      "newline character",
+      "string manipulation"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The lookup function returns 1 if the name is in the list and 0 if it is not.",
+    "concepts": [
+      "lookup function",
+      "return value"
+    ]
+  },
+  {
+    "type": "theorem",
+    "statement": "The extended_fgets function reads a line from the input file and records it in a save file if needed.",
+    "concepts": [
+      "extended_fgets",
+      "input file",
+      "save file"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The fgets function returns NULL on error or end-of-file.",
+    "concepts": [
+      "fgets",
+      "return value",
+      "error handling"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The code snippet 'char *extended_fgets(char *line, int size, FILE *file)' demonstrates how to create a function that reads a line from the input file and records it in a save file if needed.",
+    "concepts": [
+      "extended_fgets",
+      "code example"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The -S option specifies a save file for debugging purposes.",
+    "concepts": [
+      "debugging",
+      "save file"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "If the -S option is specified, the program will save the input in the specified file.",
+    "concepts": [
+      "debugging",
+      "save file"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The extended_fgets function returns NULL on error or end-of-file.",
+    "concepts": [
+      "extended_fgets",
+      "error handling"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "If the playback_file is not NULL, the extended_fgets function reads from the playback_file instead of the standard input.",
+    "concepts": [
+      "extended_fgets",
+      "playback file"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The -P option specifies a playback file for debugging or demonstration purposes.",
+    "concepts": [
+      "debugging",
+      "playback file"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The program will ask the user for a name and tell them if it is in the list.",
+    "concepts": [
+      "program functionality"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 15-4 contains the revised extended_fgets function with playback file support.",
+    "concepts": [
+      "extended_fgets",
+      "playback file"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The extended_fgets function gets a line from the input file and records it in a save file if needed.",
+    "concepts": [
+      "extended_fgets",
+      "input file",
+      "save file"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The program will terminate if a blank name is entered.",
+    "concepts": [
+      "program functionality"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "code: \"if (playback_file != NULL) { result = fgets(line, size, playback_file ); }\", reads from the playback_file if it is not NULL",
+    "concepts": [
+      "extended_fgets",
+      "playback file"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Use the divide-and-conquer method by putting in printf statements where you know the data is good and where the data is bad, and at several points in between, to zero in on the section of code that contains the error.",
+    "concepts": [
+      "debugging",
+      "divide-and-conquer"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Before you start debugging, save the old, 'working' copy of your program in a safe place.",
+    "concepts": [
+      "debugging",
+      "version control"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "A user sends a photocopy of a floppy disk to a programmer instead of the actual disk, illustrating the importance of clear communication in debugging.",
+    "concepts": [
+      "debugging",
+      "communication"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The divide-and-conquer method uses temporary printf statements that are put in as needed and taken out after they are used.",
+    "concepts": [
+      "debugging",
+      "divide-and-conquer"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Use preprocessor conditional compilation directives to put in and take out debugging code, such as #ifdef DEBUG.",
+    "concepts": [
+      "debugging",
+      "preprocessor directives"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The debug command-line switch method has the advantage that only a single version of the program exists, but has the disadvantage of a larger executable file.",
+    "concepts": [
+      "debugging",
+      "command-line switches"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Debugging is the process of determining what caused a problem to happen after it has been reproduced.",
+    "concepts": [
+      "debugging"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When using the debug command-line switch method, the debugging code must be permanently included in the program.",
+    "concepts": [
+      "debugging",
+      "command-line switches"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The runtime switch should always be used instead of conditional compilation unless there is some reason that you do not want the customer to be able to get at the debugging information.",
+    "concepts": [
+      "runtime switch",
+      "conditional compilation",
+      "debugging information"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A debug level is a concept where level outputs only minimal debugging information, level 1 more information, and so on up to level 9, which outputs everything.",
+    "concepts": [
+      "debug level",
+      "debugging information"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The ghostscript program implements the idea of debugging letters, where the command option -Zxxx sets the debugging flags for each type of diagnostic output wanted.",
+    "concepts": [
+      "ghostscript",
+      "debugging letters",
+      "diagnostic output"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The debug switch is implemented by the following code: /* ... */ char debug[128] = {0}; /* ... */",
+    "concepts": [
+      "debug switch",
+      "C code"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C will fill in the rest of the arrays with zeros if only one zero is used in the initialization.",
+    "concepts": [
+      "C programming",
+      "array initialization"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Ghostscript is a PostScript-like interpreter available from the Free Software Foundation for a minimal copying charge.",
+    "concepts": [
+      "ghostscript",
+      "PostScript",
+      "Free Software Foundation"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Enabling the debug printout is a nice way of getting information, but at many times, there is so much data that the information you want can easily get lost.",
+    "concepts": [
+      "debug printout",
+      "information overload"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "C allows you to redirect to a file what would normally go to the screen.",
+    "concepts": [
+      "C programming",
+      "output redirection"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "An interactive debugger is a tool that gives you the ability to stop the program at any point, examine and change variables, and single step through the program.",
+    "concepts": [
+      "interactive debugger",
+      "debugging"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The dbx debugger is available on many UNIX machines running the BSD versions of UNIX.",
+    "concepts": [
+      "dbx",
+      "UNIX",
+      "debugger"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Each MS-DOS/Windows compiler has its own debugger, and some compilers come with multiple debuggers.",
+    "concepts": [
+      "MS-DOS",
+      "Windows",
+      "compiler",
+      "debugger"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The basic list of dbx commands includes: run, stop at, stop in, cont, print, step, next, list, and where.",
+    "concepts": [
+      "dbx",
+      "debugger commands"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The C code snippet `#include <stdio.h> ...` demonstrates how to count the occurrences of the numbers 3 and 7 in a given dataset.",
+    "concepts": [
+      "C programming",
+      "data processing"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The command `stop in main` tells the debugger to set a breakpoint at the first instruction of the function main.",
+    "concepts": [
+      "debugging",
+      "breakpoints"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The `next` command in the debugger executes a single statement, treating function calls as one statement.",
+    "concepts": [
+      "debugging",
+      "command-line interface"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A breakpoint is a point in a program where the debugger will pause execution, allowing the user to inspect and modify variables.",
+    "concepts": [
+      "debugging",
+      "breakpoints"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When using the `fgets` function, the input buffer should be large enough to hold the input data, including the null-terminator.",
+    "concepts": [
+      "C programming",
+      "input validation"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The `sscanf` function returns the number of successful assignments, which can be used to validate the input data.",
+    "concepts": [
+      "C programming",
+      "input validation"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "Bounds checking is the process of verifying that a program is accessing an array within its declared bounds.",
+    "concepts": [
+      "bounds checking",
+      "array",
+      "programming"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "In C, bounds checking is time-consuming and difficult, which can lead to errors if not implemented properly.",
+    "concepts": [
+      "bounds checking",
+      "C programming",
+      "error handling"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The binary search algorithm works by repeatedly dividing the search interval in half until the desired number is found or the interval is empty.",
+    "concepts": [
+      "binary search",
+      "algorithm",
+      "searching"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The binary search algorithm requires the input list to be ordered.",
+    "concepts": [
+      "binary search",
+      "ordered list",
+      "algorithm"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Example 15-7 demonstrates a binary search algorithm implemented in C to search for a number in a file named numbers.dat.",
+    "concepts": [
+      "binary search",
+      "C programming",
+      "file input"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The binary search algorithm has a constraint that the input list must be ordered, and the search interval must be repeatedly divided in half until the desired number is found or the interval is empty.",
+    "concepts": [
+      "binary search",
+      "constraint",
+      "algorithm"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "There are specialized debugging tools such as Bounds-Checker by Nu-Mega (MS-DOS/Windows) and Purify by Pure Software (UNIX) that can help with bounds checking and error detection.",
+    "concepts": [
+      "debugging tools",
+      "bounds checking",
+      "error detection"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "A segmentation fault occurs when a program tries to read memory that isn't available.",
+    "concepts": [
+      "segmentation fault",
+      "memory access"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A core file is a snapshot of an executing program that is created when an error occurs.",
+    "concepts": [
+      "core file",
+      "program execution"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The debugger dbx can read a core file to help determine what happened when an error occurred.",
+    "concepts": [
+      "debugger",
+      "core file",
+      "error handling"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The where command in dbx tells you which function is calling which function, also known as a stack trace.",
+    "concepts": [
+      "dbx",
+      "where command",
+      "stack trace"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To find an error in a program, start the execution and single-step the program until the error occurs.",
+    "concepts": [
+      "debugging",
+      "single-stepping"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "When using sscanf, an ampersand (&) is required in front of the variable to store the result.",
+    "concepts": [
+      "sscanf",
+      "variable storage"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "sscanf(line, \"%d\", &data[max_count]);",
+    "concepts": [
+      "sscanf",
+      "variable storage",
+      "example code"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The standard library has usually been debugged, so errors are more likely to be in the user's code.",
+    "concepts": [
+      "standard library",
+      "debugging"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A break statement is needed after finding the target value in a search algorithm to exit the loop.",
+    "concepts": [
+      "search algorithm",
+      "break statement",
+      "loop exit"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To fix an infinite loop in a search algorithm, single-stepping through the code and examining key values can help identify the issue.",
+    "concepts": [
+      "infinite loop",
+      "single-stepping",
+      "debugging"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "If the low and high indices are equal in a binary search, and the target value is not found, the search should terminate.",
+    "concepts": [
+      "binary search",
+      "termination condition"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "If the search value is greater than the middle value, the low index should be updated to middle + 1, not middle, to avoid an infinite loop.",
+    "concepts": [
+      "binary search",
+      "infinite loop",
+      "index update"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The search algorithm should handle the case where the target value is not in the search space.",
+    "concepts": [
+      "search algorithm",
+      "target value",
+      "search space"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Using a debugger can help identify and fix issues in a search algorithm by allowing single-stepping and examination of variable values.",
+    "concepts": [
+      "debugger",
+      "search algorithm",
+      "single-stepping"
+    ]
+  }
+]

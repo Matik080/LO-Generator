@@ -1,0 +1,1446 @@
+[
+  {
+    "type": "definition",
+    "statement": "Pointers are a feature of C that allow for the creation of complex data structures like linked lists and trees.",
+    "concepts": [
+      "pointers",
+      "linked lists",
+      "trees"
+    ],
+    "normalized_concepts": [
+      "tree",
+      "link list",
+      "pointer"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Dynamic data structures can grow or shrink as needed.",
+    "concepts": [
+      "dynamic data structures"
+    ],
+    "normalized_concepts": [
+      "dynamic datum structure"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Pointers enable the creation and allocation of dynamic data structures.",
+    "concepts": [
+      "pointers",
+      "dynamic data structures"
+    ],
+    "normalized_concepts": [
+      "dynamic datum structure",
+      "pointer"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A structure can contain pointers, even a pointer to another instance of the same structure.",
+    "concepts": [
+      "structure",
+      "pointer"
+    ],
+    "normalized_concepts": [
+      "structure",
+      "pointer"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "struct node { struct node *next_ptr; int value; }",
+    "concepts": [
+      "structure",
+      "pointer",
+      "node"
+    ],
+    "normalized_concepts": [
+      "structure",
+      "node",
+      "pointer"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The procedure malloc allocates storage for a variable and returns a pointer.",
+    "concepts": [
+      "malloc",
+      "pointer",
+      "memory allocation"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "memory allocation",
+      "pointer"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Malloc is used to create new things out of an area of memory called the heap.",
+    "concepts": [
+      "malloc",
+      "heap",
+      "memory allocation"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "heap",
+      "memory allocation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To create a new node, use the malloc procedure to allocate storage for the node and return a pointer to it.",
+    "concepts": [
+      "malloc",
+      "node",
+      "pointer"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "node",
+      "pointer"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The things created by malloc can be referenced only through pointers, never by name.",
+    "concepts": [
+      "malloc",
+      "pointer"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "pointer"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The definition of malloc is: void *malloc(unsigned int);",
+    "concepts": [
+      "malloc",
+      "function declaration"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "function declaration"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The function malloc takes a single argument: the number of bytes to allocate.",
+    "concepts": [
+      "malloc",
+      "memory allocation"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "memory allocation"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "If malloc runs out of memory, it returns a null pointer.",
+    "concepts": [
+      "malloc",
+      "memory allocation"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "memory allocation"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "When used as a type in a function declaration, void indicates that the function returns no value.",
+    "concepts": [
+      "void",
+      "function declaration"
+    ],
+    "normalized_concepts": [
+      "function declaration",
+      "void"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "When used in a pointer declaration, void defines a generic pointer.",
+    "concepts": [
+      "void",
+      "pointer declaration"
+    ],
+    "normalized_concepts": [
+      "pointer declaration",
+      "void"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "char *string_ptr; string_ptr = malloc(80);",
+    "concepts": [
+      "malloc",
+      "memory allocation",
+      "pointer"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "memory allocation",
+      "pointer"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A struct is a collection of variables of different types that can be used to represent complex data structures.",
+    "concepts": [
+      "struct",
+      "data structure"
+    ],
+    "normalized_concepts": [
+      "struct",
+      "datum structure"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "struct person { char name[30]; char address[30]; char city_state_zip[30]; int age; float height; }",
+    "concepts": [
+      "struct",
+      "data structure",
+      "person"
+    ],
+    "normalized_concepts": [
+      "person",
+      "struct",
+      "datum structure"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "malloc is a function that allocates space on an as-needed basis.",
+    "concepts": [
+      "malloc",
+      "memory allocation"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "memory allocation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To allocate space for a new person, use the code: new_item_ptr = malloc(sizeof(struct person));",
+    "concepts": [
+      "malloc",
+      "memory allocation",
+      "struct person"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "struct person",
+      "memory allocation"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The size of the heap is finite.",
+    "concepts": [
+      "heap",
+      "memory allocation"
+    ],
+    "normalized_concepts": [
+      "heap",
+      "memory allocation"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Always check the return value of each malloc call to ensure that memory was allocated.",
+    "concepts": [
+      "malloc",
+      "error handling"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "error handling"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "To check the return value of malloc, use the code: if (new_item_ptr == NULL) { fprintf(stderr, \"Out of memory\n\"); exit (8); }",
+    "concepts": [
+      "malloc",
+      "error handling"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "error handling"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The free function is used to free memory allocated by malloc.",
+    "concepts": [
+      "free",
+      "memory deallocation"
+    ],
+    "normalized_concepts": [
+      "free",
+      "memory deallocation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To free memory, use the code: free(pointer); pointer = NULL;",
+    "concepts": [
+      "free",
+      "memory deallocation"
+    ],
+    "normalized_concepts": [
+      "free",
+      "memory deallocation"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "const int DATA_SIZE = (16 * 1024); void copy(void) { char *data_ptr; data_ptr = malloc(DATA_SIZE); /* Use the data buffer to copy a file */ free(data_ptr); data_ptr = NULL; }",
+    "concepts": [
+      "malloc",
+      "free",
+      "memory management"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "free",
+      "memory management"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Always free allocated memory when it is no longer needed to prevent memory leaks.",
+    "concepts": [
+      "memory management",
+      "free"
+    ],
+    "normalized_concepts": [
+      "free",
+      "memory management"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Using memory that has been freed can cause unexpected results or program crashes.",
+    "concepts": [
+      "memory management",
+      "free"
+    ],
+    "normalized_concepts": [
+      "free",
+      "memory management"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A linked list is a chain of items in which each item points to the next one in the chain.",
+    "concepts": [
+      "linked list",
+      "data structure"
+    ],
+    "normalized_concepts": [
+      "link list",
+      "datum structure"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Linked lists can grow dynamically as more items are added.",
+    "concepts": [
+      "linked list",
+      "dynamic memory allocation"
+    ],
+    "normalized_concepts": [
+      "dynamic memory allocation",
+      "link list"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The structure declarations for a linked list are: struct linked_list { char data[30]; struct linked_list *next_ptr; };",
+    "concepts": [
+      "linked list",
+      "structure declaration"
+    ],
+    "normalized_concepts": [
+      "link list",
+      "structure declaration"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The variable first_ptr points to the first element of the list and is initialized to NULL when the list is empty.",
+    "concepts": [
+      "linked list",
+      "first_ptr"
+    ],
+    "normalized_concepts": [
+      "first_ptr",
+      "link list"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To insert a new element into a linked list in C, create a structure for the item using new_item_ptr = malloc(sizeof(struct linked_list));",
+    "concepts": [
+      "linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "insertion",
+      "link list"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Store the item in the new element using (*new_item_ptr).data = item;",
+    "concepts": [
+      "linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "insertion",
+      "link list"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Make the first element of the list point to the new element using (*new_item_ptr).next_ptr = first_ptr;",
+    "concepts": [
+      "linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "insertion",
+      "link list"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Allocate memory for a new linked list item using malloc(sizeof(struct linked_list))",
+    "concepts": [
+      "linked list",
+      "dynamic memory allocation"
+    ],
+    "normalized_concepts": [
+      "dynamic memory allocation",
+      "link list"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Copy the item to be added into the new linked list item using strcpy((*new_item_ptr).data, item)",
+    "concepts": [
+      "linked list",
+      "string copying"
+    ],
+    "normalized_concepts": [
+      "link list",
+      "string copying"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To search for a name in a linked list, start at the first element and compare each element's data to the target name until a match is found or the end of the list is reached.",
+    "concepts": [
+      "linked list",
+      "search algorithm"
+    ],
+    "normalized_concepts": [
+      "search algorithm",
+      "link list"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The find function in Example 17-2 searches through the items in a linked list to find a specific name, returning 1 if the name is found and 0 if it is not.",
+    "concepts": [
+      "linked list",
+      "search function"
+    ],
+    "normalized_concepts": [
+      "search function",
+      "link list"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The find function uses a while loop to traverse the linked list, comparing each element's data to the target name using the strcmp function.",
+    "concepts": [
+      "linked list",
+      "while loop",
+      "strcmp function"
+    ],
+    "normalized_concepts": [
+      "loop",
+      "link list",
+      "strcmp function"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When searching a linked list, it is necessary to check for the end of the list (i.e., a null pointer) to avoid dereferencing a null pointer.",
+    "concepts": [
+      "linked list",
+      "null pointer"
+    ],
+    "normalized_concepts": [
+      "link list",
+      "null pointer"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The structure pointer (->) operator is a shorthand for accessing the field of a structure pointer.",
+    "concepts": [
+      "structure pointer operator",
+      "C programming"
+    ],
+    "normalized_concepts": [
+      "c programming",
+      "structure pointer operator"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The dot (.) operator indicates the field of a structure, while the -> operator indicates the field of a structure pointer.",
+    "concepts": [
+      "dot operator",
+      "structure pointer operator"
+    ],
+    "normalized_concepts": [
+      "structure pointer operator",
+      "dot operator"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The expressions (*current_ptr).data = value; and current_ptr->data = value; are equivalent.",
+    "concepts": [
+      "structure pointer operator",
+      "equivalent expressions"
+    ],
+    "normalized_concepts": [
+      "structure pointer operator",
+      "equivalent expression"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To insert an element into an ordered linked list, first locate the insert point by moving a variable along the list until the proper place for the insert is found.",
+    "concepts": [
+      "ordered linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "insertion",
+      "order link list"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "void enter(struct item *first_ptr, const int value) { ... }",
+    "concepts": [
+      "linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "insertion",
+      "link list"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "while (1) { if (after_ptr == NULL) break; if (after_ptr->value >= value) break; after_ptr = after_ptr->next_ptr; before_ptr = before_ptr->next_ptr; }",
+    "concepts": [
+      "linked list",
+      "traversal"
+    ],
+    "normalized_concepts": [
+      "link list",
+      "traversal"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "new_item_ptr = malloc(sizeof(struct item)); new_item_ptr->value = value; before_ptr->next_ptr = new_item_ptr; new_item_ptr->next_ptr = after_ptr;",
+    "concepts": [
+      "memory allocation",
+      "linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "insertion",
+      "memory allocation",
+      "link list"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The new element must be linked in between before_ptr and after_ptr",
+    "concepts": [
+      "linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "insertion",
+      "link list"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "before_ptr->next_ptr = new_item_ptr",
+    "concepts": [
+      "linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "insertion",
+      "link list"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A double-linked list contains two links, one pointing forward to the next element and the other pointing backward to the previous element",
+    "concepts": [
+      "double-linked list"
+    ],
+    "normalized_concepts": [
+      "double - link list"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A double-linked list is a data structure with two links: one forward and one backward.",
+    "concepts": [
+      "double-linked list",
+      "data structure"
+    ],
+    "normalized_concepts": [
+      "double - link list",
+      "datum structure"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The structure for a double-linked list is: struct double_list { int data; struct double_list *next_ptr; struct double_list *previous_ptr; };",
+    "concepts": [
+      "double-linked list",
+      "struct"
+    ],
+    "normalized_concepts": [
+      "double - link list",
+      "struct"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "The code to insert a new element in a double-linked list involves iterating through the list to find the correct position, as shown in the double_enter function: void double_enter(struct double_list *head_ptr, int item) { ... }",
+    "concepts": [
+      "double-linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "double - link list",
+      "insertion"
+    ]
+  },
+  {
+    "type": "constraint",
+    "statement": "The double_enter function does not handle the case where the element is inserted at the head or end of the list.",
+    "concepts": [
+      "double-linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "double - link list",
+      "insertion"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "if (item >= insert_ptr->data) break;",
+    "concepts": [
+      "linked list",
+      "insertion"
+    ],
+    "normalized_concepts": [
+      "insertion",
+      "link list"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "In a double-linked list, the previous pointer of a new node is set to the previous pointer of the insertion point node.",
+    "concepts": [
+      "double-linked list",
+      "node properties"
+    ],
+    "normalized_concepts": [
+      "double - link list",
+      "node property"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Unlike single-linked lists, double-linked lists do not require a before_ptr to point to the element in front of the insert point.",
+    "concepts": [
+      "single-linked list",
+      "double-linked list"
+    ],
+    "normalized_concepts": [
+      "double - link list",
+      "single - link list"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To adjust the links of the old elements in a double-linked list insert, start at insert_ptr and follow the link previous_ptr to the previous element, then update its next_ptr field to point to the new element using the code: insert_ptr->previous_ptr->next_ptr = new_ptr;",
+    "concepts": [
+      "double-linked list",
+      "insert operation",
+      "pointer adjustment"
+    ],
+    "normalized_concepts": [
+      "double - link list",
+      "insert operation",
+      "pointer adjustment"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A binary tree is a data type that can be used to create an alphabetized list of words, allowing for efficient searching and insertion.",
+    "concepts": [
+      "binary tree",
+      "alphabetized list"
+    ],
+    "normalized_concepts": [
+      "binary tree",
+      "alphabetize list"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Searching a linked list is slow because each element must be checked until the correct insertion point is found.",
+    "concepts": [
+      "linked list",
+      "searching"
+    ],
+    "normalized_concepts": [
+      "search",
+      "link list"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Using a tree data type can cut the number of compares down tremendously compared to a linked list.",
+    "concepts": [
+      "tree",
+      "linked list",
+      "comparing"
+    ],
+    "normalized_concepts": [
+      "compare",
+      "link list",
+      "tree"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A tree is a data structure where each box (node) contains two pointers, a left pointer and a right pointer, that point to the left and right subtrees.",
+    "concepts": [
+      "tree",
+      "node",
+      "left pointer",
+      "right pointer"
+    ],
+    "normalized_concepts": [
+      "right pointer",
+      "node",
+      "leave pointer",
+      "tree"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The structure for a tree is: struct node { char *data; struct node *left; struct node *right; };",
+    "concepts": [
+      "tree structure",
+      "node structure"
+    ],
+    "normalized_concepts": [
+      "node structure",
+      "tree structure"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Trees are often used for storing a symbol table, a list of variables used in a program.",
+    "concepts": [
+      "tree usage",
+      "symbol table"
+    ],
+    "normalized_concepts": [
+      "tree usage",
+      "symbol table"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The advantage of a tree over a linked list is that searching a tree takes considerably less time.",
+    "concepts": [
+      "tree advantage",
+      "searching efficiency"
+    ],
+    "normalized_concepts": [
+      "tree advantage",
+      "search efficiency"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To search for a word in a tree, start at the root and descend to the left or right subtree based on whether the word is less than or greater than the current word.",
+    "concepts": [
+      "tree search",
+      "word comparison"
+    ],
+    "normalized_concepts": [
+      "word comparison",
+      "tree search"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "For example, to find the word 'orange' in a tree, start at the root 'lemon', descend to the right link to 'pear', and then descend to the left link to 'orange'.",
+    "concepts": [
+      "tree search example",
+      "word search"
+    ],
+    "normalized_concepts": [
+      "word search",
+      "tree search example"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The function must make things simpler for recursion to be useful.",
+    "concepts": [
+      "recursion",
+      "simplification"
+    ],
+    "normalized_concepts": [
+      "recursion",
+      "simplification"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "There must be some endpoint for recursion to terminate.",
+    "concepts": [
+      "recursion",
+      "termination"
+    ],
+    "normalized_concepts": [
+      "recursion",
+      "termination"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "If the current tree (or subtree) is null, create a one-node tree with the given word.",
+    "concepts": [
+      "tree insertion",
+      "null tree"
+    ],
+    "normalized_concepts": [
+      "tree insertion",
+      "null tree"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "If the current node contains the word, do nothing during tree insertion.",
+    "concepts": [
+      "tree insertion",
+      "word match"
+    ],
+    "normalized_concepts": [
+      "tree insertion",
+      "word match"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Perform a recursive call to insert the word in the left or right subtree based on the word's value.",
+    "concepts": [
+      "tree insertion",
+      "recursive call"
+    ],
+    "normalized_concepts": [
+      "recursive",
+      "tree insertion"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "Inserting the word 'fig' into the tree involves comparing it with 'lemon', then 'apple', and finally 'grape', resulting in the creation of a new node.",
+    "concepts": [
+      "tree insertion",
+      "example"
+    ],
+    "normalized_concepts": [
+      "example",
+      "tree insertion"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "void enter(struct node **node, char *word) { ... }",
+    "concepts": [
+      "tree insertion function",
+      "code example"
+    ],
+    "normalized_concepts": [
+      "tree insertion function",
+      "code example"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "if ((*node) == NULL) { (*node) = malloc(sizeof(struct node)); }",
+    "concepts": [
+      "memory allocation",
+      "node creation"
+    ],
+    "normalized_concepts": [
+      "memory allocation",
+      "node creation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "if ((*node) == NULL)  memory_error();",
+    "concepts": [
+      "error handling",
+      "memory allocation"
+    ],
+    "normalized_concepts": [
+      "error handling",
+      "memory allocation"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "(*node)->left = NULL; (*node)->right = NULL; (*node)->word = save_string(word);",
+    "concepts": [
+      "node initialization",
+      "string saving"
+    ],
+    "normalized_concepts": [
+      "string saving",
+      "node initialization"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "result = strcmp((*node)->word, word);",
+    "concepts": [
+      "string comparison"
+    ],
+    "normalized_concepts": [
+      "string comparison"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "When changing the value of a pointer, we must pass a pointer to the pointer.",
+    "concepts": [
+      "pointer passing",
+      "function parameters"
+    ],
+    "normalized_concepts": [
+      "function parameter",
+      "pointer pass"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "if (result < 0)  enter(&(*node)->right, word); else  enter(&(*node)->left, word);",
+    "concepts": [
+      "tree traversal",
+      "recursive function calls"
+    ],
+    "normalized_concepts": [
+      "tree traversal",
+      "recursive function call"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The printing algorithm for a tree uses recursion.",
+    "concepts": [
+      "tree printing",
+      "recursion"
+    ],
+    "normalized_concepts": [
+      "recursion",
+      "tree print"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "Print the data that comes before this node (left tree), then print this node and print the data that comes after this node (right tree)",
+    "concepts": [
+      "tree traversal",
+      "node printing"
+    ],
+    "normalized_concepts": [
+      "tree traversal",
+      "node printing"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "void print_tree(struct node *top) { if (top == NULL) return; print_tree(top->left); printf(\"%s\\n\", top->word); print_tree(top->right); }",
+    "concepts": [
+      "tree traversal",
+      "recursive function"
+    ],
+    "normalized_concepts": [
+      "tree traversal",
+      "recursive function"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "The isalpha macro returns nonzero if its argument is a letter and otherwise",
+    "concepts": [
+      "isalpha macro",
+      "character classification"
+    ],
+    "normalized_concepts": [
+      "character classification",
+      "isalpha macro"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "The program handles the out-of-memory problem by writing an error message and quitting",
+    "concepts": [
+      "memory management",
+      "error handling"
+    ],
+    "normalized_concepts": [
+      "error handling",
+      "memory management"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The save_string function creates space for a string on the heap and returns the pointer to it",
+    "concepts": [
+      "string allocation",
+      "memory management"
+    ],
+    "normalized_concepts": [
+      "string allocation",
+      "memory management"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A struct node represents a tree node with a left child, a right child, and a word.",
+    "concepts": [
+      "struct node",
+      "tree node"
+    ],
+    "normalized_concepts": [
+      "tree node",
+      "struct node"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The struct node is defined as: struct node { struct node *left; struct node *right; char *word; };",
+    "concepts": [
+      "struct node",
+      "tree node"
+    ],
+    "normalized_concepts": [
+      "tree node",
+      "struct node"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To save a string on the heap, allocate memory using malloc and copy the string into it: new_string = malloc((unsigned) (strlen(string) + 1)); strcpy(new_string, string);",
+    "concepts": [
+      "malloc",
+      "string allocation"
+    ],
+    "normalized_concepts": [
+      "malloc",
+      "string allocation"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "The memory_error function writes an error message and exits the program: void memory_error(void) { fprintf(stderr, \"Error:Out of memory\n\"); exit(8); }",
+    "concepts": [
+      "memory_error",
+      "error handling"
+    ],
+    "normalized_concepts": [
+      "error handling",
+      "memory_error"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "If the current node is null, allocate memory for a new node using malloc(sizeof(struct node)) and initialize its left and right child pointers to NULL.",
+    "concepts": [
+      "node allocation",
+      "tree initialization"
+    ],
+    "normalized_concepts": [
+      "tree initialization",
+      "node allocation"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "If the comparison result is 0, the word is already in the tree, so no entry is necessary.",
+    "concepts": [
+      "tree search",
+      "duplicate detection"
+    ],
+    "normalized_concepts": [
+      "duplicate detection",
+      "tree search"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "If the comparison result is less than 0, recursively call the enter function on the right subtree.",
+    "concepts": [
+      "tree traversal",
+      "recursive function call"
+    ],
+    "normalized_concepts": [
+      "tree traversal",
+      "recursive function"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The enter function uses a recursive approach to traverse the tree and insert a new word.",
+    "concepts": [
+      "tree traversal",
+      "recursion"
+    ],
+    "normalized_concepts": [
+      "tree traversal",
+      "recursion"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "void scan(char *name) { ... }",
+    "concepts": [
+      "file scanning",
+      "C programming"
+    ],
+    "normalized_concepts": [
+      "c programming",
+      "file scanning"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "in_file = fopen(name, \"r\");",
+    "concepts": [
+      "file opening",
+      "fopen function"
+    ],
+    "normalized_concepts": [
+      "file opening",
+      "fopen function"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "while (1) { ... }",
+    "concepts": [
+      "looping",
+      "file scanning"
+    ],
+    "normalized_concepts": [
+      "loop",
+      "file scanning"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "ch = fgetc(in_file);",
+    "concepts": [
+      "character reading",
+      "fgetc function"
+    ],
+    "normalized_concepts": [
+      "character reading",
+      "fgetc function"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Always check if the file was opened successfully before proceeding.",
+    "concepts": [
+      "file handling",
+      "error checking"
+    ],
+    "normalized_concepts": [
+      "error checking",
+      "file handling"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The fscanf function returns EOF when the end of the file is reached.",
+    "concepts": [
+      "fscanf function",
+      "EOF"
+    ],
+    "normalized_concepts": [
+      "eof",
+      "fscanf function"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "The fopen function returns a NULL pointer if the file cannot be opened.",
+    "concepts": [
+      "fopen function",
+      "error handling"
+    ],
+    "normalized_concepts": [
+      "error handling",
+      "fopen function"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Trees are supposed to be fast for searching and other operations.",
+    "concepts": [
+      "tree data structure",
+      "searching"
+    ],
+    "normalized_concepts": [
+      "search",
+      "tree datum structure"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "A tree should be constructed in a way that minimizes search time, such as through balancing.",
+    "concepts": [
+      "tree construction",
+      "balancing"
+    ],
+    "normalized_concepts": [
+      "balance",
+      "tree construction"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To print a tree, recursively traverse the left subtree, print the current node's value, and then traverse the right subtree.",
+    "concepts": [
+      "tree traversal",
+      "recursion"
+    ],
+    "normalized_concepts": [
+      "tree traversal",
+      "recursion"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "int main(int argc, char *argv[]) { if (argc != 2) { fprintf(stderr, \"Error:Wrong number of parameters\n\"); ... } }",
+    "concepts": [
+      "command line arguments",
+      "error handling"
+    ],
+    "normalized_concepts": [
+      "error handling",
+      "command line argument"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A tree data structure is used to represent multiple possible moves and responses in a chess-playing program.",
+    "concepts": [
+      "tree data structure",
+      "chess-playing program"
+    ],
+    "normalized_concepts": [
+      "tree datum structure",
+      "chess - play program"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The number of branches for each node in the chess tree can be more than two.",
+    "concepts": [
+      "tree data structure",
+      "chess tree"
+    ],
+    "normalized_concepts": [
+      "chess tree",
+      "tree datum structure"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "struct chess { struct board board; struct next { struct move; struct *chess_ptr; } next[MAX_MOVES]; };",
+    "concepts": [
+      "chess data structure",
+      "tree data structure"
+    ],
+    "normalized_concepts": [
+      "tree datum structure",
+      "chess datum structure"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "The number of possible moves from any given position in a chess game can vary dramatically.",
+    "concepts": [
+      "chess game",
+      "possible moves"
+    ],
+    "normalized_concepts": [
+      "possible move",
+      "chess game"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "In the beginning of a chess game, there are many possible moves, while in the end game, the number of possible moves is greatly reduced.",
+    "concepts": [
+      "chess game",
+      "possible moves"
+    ],
+    "normalized_concepts": [
+      "possible move",
+      "chess game"
+    ]
+  },
+  {
+    "type": "definition",
+    "statement": "A linked list is a data structure that allocates storage on an on-demand basis.",
+    "concepts": [
+      "linked list",
+      "data structure"
+    ],
+    "normalized_concepts": [
+      "link list",
+      "datum structure"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "Using a linked list results in a more efficient use of storage.",
+    "concepts": [
+      "linked list",
+      "storage efficiency"
+    ],
+    "normalized_concepts": [
+      "storage efficiency",
+      "link list"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "In a chess program, a linked list can be used to store possible moves, where the list grows only as needed, resulting in a more efficient use of storage.",
+    "concepts": [
+      "chess program",
+      "linked list",
+      "storage efficiency"
+    ],
+    "normalized_concepts": [
+      "storage efficiency",
+      "chess program",
+      "link list"
+    ]
+  },
+  {
+    "type": "algorithm_step",
+    "statement": "To implement a linked list, define a struct with a pointer to the next element, and allocate storage for each element on an as-needed basis.",
+    "concepts": [
+      "linked list",
+      "struct",
+      "pointer"
+    ],
+    "normalized_concepts": [
+      "struct",
+      "link list",
+      "pointer"
+    ]
+  },
+  {
+    "type": "rule",
+    "statement": "Check if a pointer is valid (not NULL) before checking what it is pointing to.",
+    "concepts": [
+      "pointer validation",
+      "NULL pointer"
+    ],
+    "normalized_concepts": [
+      "pointer validation",
+      "null pointer"
+    ]
+  },
+  {
+    "type": "example",
+    "statement": "while (current_ptr != NULL) { if (strcmp(current_ptr->data, name) == 0) break; }",
+    "concepts": [
+      "pointer validation",
+      "linked list traversal"
+    ],
+    "normalized_concepts": [
+      "pointer validation",
+      "link list traversal"
+    ]
+  },
+  {
+    "type": "property",
+    "statement": "An ordered linked list can degenerate into a linked list, where only one branch is used.",
+    "concepts": [
+      "linked list",
+      "tree structure"
+    ],
+    "normalized_concepts": [
+      "tree structure",
+      "link list"
+    ]
+  },
+  {
+    "type": "fact",
+    "statement": "Balancing a binary tree can prevent it from degenerating into a linked list.",
+    "concepts": [
+      "binary tree",
+      "tree balancing"
+    ],
+    "normalized_concepts": [
+      "binary tree",
+      "tree balancing"
+    ]
+  }
+]

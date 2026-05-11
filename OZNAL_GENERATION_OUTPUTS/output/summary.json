@@ -1,0 +1,36 @@
+{
+  "faithfulness": {
+    "mean": 5,
+    "std": 0.0,
+    "min": 5,
+    "max": 5
+  },
+  "clarity": {
+    "mean": 4.922,
+    "std": 0.269,
+    "min": 4,
+    "max": 5
+  },
+  "hint_quality": {
+    "mean": 4.1,
+    "std": 0.302,
+    "min": 4,
+    "max": 5
+  },
+  "pedagogical_value": {
+    "mean": 4.889,
+    "std": 0.316,
+    "min": 4,
+    "max": 5
+  },
+  "atomicity": {
+    "count": 90,
+    "total": 90,
+    "rate": 1.0
+  },
+  "hallucination_rate": {
+    "count": 0,
+    "total": 90,
+    "rate": 0.0
+  }
+}

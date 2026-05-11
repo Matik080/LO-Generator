@@ -1,0 +1,565 @@
+======================================================================
+LO #1 | Type: fact | Source: Tutorial 3.2 - Lexical Scoping
+======================================================================
+QUESTION:
+What is the significance of environments in R, particularly in relation to function calls?
+
+OPTIONS:
+  [ ] Environments help reduce memory usage for functions
+  [ ] Environments help optimize function performance
+  [ ] Environments help share variables across function calls
+  [✓] Environments help keep variables local to each function call
+
+ANSWER:
+Environments help keep variables local to each function call
+
+HINT:
+Think about how variables are managed during function execution. [Source: Tutorial 3.2 - Lexical Scoping, p. 6]
+
+SOURCE:
+In R, environments are particularly important for function calls, as each function call creates a new environment that helps keep variables local to that function
+
+======================================================================
+LO #2 | Type: definition | Source: Tutorial 2.2 - Rectangular Data
+======================================================================
+QUESTION:
+How does the structure of a matrix reflect its definition as a homogeneous data structure?
+
+OPTIONS:
+  [ ] A matrix is a homogeneous data structure that contains elements of different data types in a table-like structure
+  [ ] A matrix is a homogeneous data structure that contains 1 dimension in a table-like structure
+  [ ] A matrix is a homogeneous data structure that contains 3 dimensions in a table-like structure
+  [✓] A matrix is a homogeneous data structure that contains 2 dimensions in a table-like structure, implying that all elements are of the same data type.
+
+ANSWER:
+A matrix is a homogeneous data structure that contains 2 dimensions in a table-like structure, implying that all elements are of the same data type.
+
+HINT:
+Consider the implications of a table-like structure on data consistency. [Source: Tutorial 2.2 - Rectangular Data, p. 6]
+
+SOURCE:
+A matrix is a homogeneous data structure that contains 2 dimensions in a table-like structure.
+
+======================================================================
+LO #3 | Type: example | Source: Practicum 2.2 - Predictive Modeling with Regression
+======================================================================
+QUESTION:
+What principle does the example of a player's passing accuracy affecting their ability to create goal-scoring opportunities, depending on their vision, demonstrate?
+
+
+ANSWER:
+The principle that the effect of one factor on an outcome can depend on another factor.
+
+HINT:
+Think about how different factors can interact to impact a specific result. [Source: Practicum 2.2 - Predictive Modeling with Regression, p. 6]
+
+SOURCE:
+The effect of player's passing accuracy on their ability to create goal-scoring opportunities might depend on their vision.
+
+======================================================================
+LO #4 | Type: fact | Source: Practicum 1.3 - Cleaning Raw Data
+======================================================================
+QUESTION:
+What is notable about the datasets offered by Kaggle?
+
+OPTIONS:
+  [ ] They are large and complex, requiring significant preprocessing
+  [ ] They are specialized for deep learning applications
+  [ ] They are limited to specific domains and industries
+  [✓] They are pristine and clean, ready for analysis and model building
+
+ANSWER:
+They are pristine and clean, ready for analysis and model building
+
+HINT:
+Consider the context of data sources. [Source: Practicum 1.3 - Cleaning Raw Data, p. 1]
+
+SOURCE:
+Kaggle offers pristine, clean datasets that are ready for analysis and model building.
+
+======================================================================
+LO #5 | Type: fact | Source: Module 1 - Fundamentals of Statistical Learning
+======================================================================
+QUESTION:
+What is the significance of typically using 5 and 10 folds in k-Fold CV?
+
+OPTIONS:
+  [ ] They are the only fold numbers that can be used in k-Fold CV
+  [ ] These fold numbers are used because they are the smallest and largest possible options
+  [✓] These fold numbers are commonly used because they provide a good balance between bias and variance
+  [ ] They provide the highest possible variance and lowest possible bias
+
+ANSWER:
+These fold numbers are commonly used because they provide a good balance between bias and variance
+
+HINT:
+Think about the practical considerations of cross-validation. [Source: Module 1 - Fundamentals of Statistical Learning, p. 36]
+
+SOURCE:
+Typically, 5 and 10 folds are used in k-Fold CV
+
+======================================================================
+LO #6 | Type: example | Source: Tutorial 2.1 - Atomic Vectors
+======================================================================
+QUESTION:
+What principle does the use of table(f) to count the number of cold and hot instances in f demonstrate?
+
+
+ANSWER:
+Data summarization
+
+HINT:
+Think about the purpose of summarizing data. [Source: Tutorial 2.1 - Atomic Vectors, p. 1]
+
+SOURCE:
+Use the table() function to summarize data counts for each level, such as table(f) to count the number of cold and hot instances in f.
+
+======================================================================
+LO #7 | Type: definition | Source: Module 1 - Fundamentals of Statistical Learning
+======================================================================
+QUESTION:
+How do models with easily understandable inner workings and decisions benefit human understanding?
+
+OPTIONS:
+  [ ] They allow humans to ignore the model's decisions and rely on intuition
+  [✓] They allow humans to easily understand the model's decisions
+  [ ] They require humans to have extensive technical knowledge to understand the model's decisions
+  [ ] They are only beneficial for models used in automated decision-making without human oversight
+
+ANSWER:
+They allow humans to easily understand the model's decisions
+
+HINT:
+Consider the context of human understanding and model decisions. [Source: Module 1 - Fundamentals of Statistical Learning, p. 46]
+
+SOURCE:
+Well Interpretable Model: Models whose inner workings and decisions can be easily understood by humans
+
+======================================================================
+LO #8 | Type: fact | Source: Tutorial 2.1 - Atomic Vectors
+======================================================================
+QUESTION:
+What is the significance of the order of coercion in R, and how does it relate to data types?
+
+
+ANSWER:
+The order of coercion determines how R converts between different data types, with higher types in the order being more general and able to encompass the information in lower types.
+
+HINT:
+Think about how different data types can be converted to each other. [Source: Tutorial 2.1 - Atomic Vectors, p. 6]
+
+SOURCE:
+The order of coercion in R is approximately: logical < integer < numeric < complex < character < list.
+
+======================================================================
+LO #9 | Type: fact | Source: Tutorial 2.2 - Rectangular Data
+======================================================================
+QUESTION:
+What is the significance of using the array() function to create arrays with a third dimension of 1, and how does it differ from using the matrix() function?
+
+
+ANSWER:
+The array() function can create arrays with more than 2 dimensions, while the matrix() function is limited to at most 2-dimensional arrays.
+
+HINT:
+Think about the purpose of different array creation functions. [Source: Tutorial 2.2 - Rectangular Data, p. 6]
+
+SOURCE:
+The array() function can be used to create arrays by specifying the third dimension to be 1, while the matrix() function can be used to create at most 2-dimensional arrays.
+
+======================================================================
+LO #10 | Type: fact | Source: Module 1 - Fundamentals of Statistical Learning
+======================================================================
+QUESTION:
+What is the consequence of Poorly Interpretable Models having lower bias and higher variance?
+
+OPTIONS:
+  [✓] They are powerful but at risk of overfitting
+  [ ] They have higher bias and lower variance
+  [ ] They are at risk of underfitting
+  [ ] They are less powerful but more stable
+
+ANSWER:
+They are powerful but at risk of overfitting
+
+HINT:
+Think about the tradeoffs of bias and variance in models. [Source: Module 1 - Fundamentals of Statistical Learning, p. 46]
+
+SOURCE:
+Poorly Interpretable Models have lower bias and higher variance, making them powerful but risk of overfitting
+
+======================================================================
+LO #11 | Type: example | Source: Module 1 - Fundamentals of Statistical Learning
+======================================================================
+QUESTION:
+What principle do models like linear regression, logistic regression, shallow decision trees, and Naïve Bayes demonstrate?
+
+
+ANSWER:
+They demonstrate the principle of being Well Interpretable Models
+
+HINT:
+Consider the characteristics of these models. [Source: Module 1 - Fundamentals of Statistical Learning, p. 46]
+
+SOURCE:
+Well Interpretable Models include linear regression, logistic regression, shallow decision trees, Naïve Bayes
+
+======================================================================
+LO #12 | Type: algorithm_step | Source: Practicum 1.3 - Cleaning Raw Data
+======================================================================
+QUESTION:
+Write a function to remove unnecessary newline characters from a list of records. The function should take a list of strings as input and return the cleaned list. What steps would you take and how would you implement this in code?
+
+
+ANSWER:
+def clean_records(records): return [record.replace('\n', '') for record in records]
+
+HINT:
+Consider using string methods to process each record. [Source: Practicum 1.3 - Cleaning Raw Data, p. 6]
+
+SOURCE:
+Remove unnecessary newline characters from records that have them.
+
+======================================================================
+LO #13 | Type: fact | Source: Module 2 - Sculpturing The Feature Space
+======================================================================
+QUESTION:
+What is the significance of normality not being required in certain regression models?
+
+OPTIONS:
+  [ ] Normality is required for all types of regression models
+  [ ] Non-normal data can only be handled by poisson regression
+  [✓] Normality is not required in linear regression, polynomial regression, and poisson regression, which means that these models can handle non-normal data.
+  [ ] Normality is only not required in linear regression
+
+ANSWER:
+Normality is not required in linear regression, polynomial regression, and poisson regression, which means that these models can handle non-normal data.
+
+HINT:
+Consider the assumptions of different regression models. [Source: Module 2 - Sculpturing The Feature Space, p. 16]
+
+SOURCE:
+Normality is not required for linear regression, polynomial regression, and poisson regression.
+
+======================================================================
+LO #14 | Type: example | Source: Tutorial 2.4 - Loading Data into R
+======================================================================
+QUESTION:
+What does the function slice(data, c(1:3, 10, 20)) likely do?
+
+
+ANSWER:
+Selects specific rows from a data frame
+
+HINT:
+Consider data subset selection. [Source: Tutorial 2.4 - Loading Data into R, p. 11]
+
+SOURCE:
+slice(data, c(1:3, 10, 20))
+
+======================================================================
+LO #15 | Type: fact | Source: Tutorial 1.1 - Machine Learning Toolbox
+======================================================================
+QUESTION:
+What is significant about the ggplot2 system for creating graphics?
+
+OPTIONS:
+  [ ] It is based on data mining techniques
+  [ ] It is based on machine learning algorithms
+  [✓] It is based on The Grammar of Graphics.
+  [ ] It is based on statistical modeling
+
+ANSWER:
+It is based on The Grammar of Graphics.
+
+HINT:
+Think about the basis of a graphics system. [Source: Tutorial 1.1 - Machine Learning Toolbox, p. 6]
+
+SOURCE:
+ggplot2 is a powerful system for creating graphics based on The Grammar of Graphics.
+
+======================================================================
+LO #16 | Type: rule | Source: Practicum 2.2 - Predictive Modeling with Regression
+======================================================================
+QUESTION:
+Why is polynomial fitting preferred over simple linear regression in certain cases?
+
+OPTIONS:
+  [ ] Because it provides a more detailed visualization
+  [ ] Because it reduces the impact of outliers
+  [ ] Because it assumes a normal distribution of errors
+  [✓] Because it can handle nonlinear relationships.
+
+ANSWER:
+Because it can handle nonlinear relationships.
+
+HINT:
+Think about the limitations of simple linear regression in modeling complex relationships. [Source: Practicum 2.2 - Predictive Modeling with Regression, p. 6]
+
+SOURCE:
+Use polynomial fitting instead of simple linear regression in cases where relationships are nonlinear.
+
+======================================================================
+LO #17 | Type: algorithm_step | Source: Tutorial 2.4 - Loading Data into R
+======================================================================
+QUESTION:
+Write the steps to import a CSV file into R using the readr package, and what function would you use?
+
+
+ANSWER:
+Use the read_csv() function from the readr package, and ensure the file path is correctly specified.
+
+HINT:
+Consider the functions available in the readr package for data import. [Source: Tutorial 2.4 - Loading Data into R, p. 1]
+
+SOURCE:
+To import data into R, use the readr package and its functions, such as read_delim(), read_csv(), and read_tsv().
+
+======================================================================
+LO #18 | Type: property | Source: Tutorial 2.3 - Recursive Vectors and Data Frames
+======================================================================
+QUESTION:
+What happens when the single bracket operator [ is used to subset an object, and what are the consequences of this for the resulting object type?
+
+OPTIONS:
+  [ ] The single bracket operator [ returns a different object type than the one being subset, which means that the resulting object will have a different structure than the original object
+  [ ] The single bracket operator [ returns the same object type as the one being subset, but it always drops the dimensionality of the object
+  [ ] The single bracket operator [ returns the same object type as the one being subset, but it always returns a vector
+  [✓] The single bracket operator [ returns the same object type as the one being subset, which means that the resulting object will have the same structure as the original object.
+
+ANSWER:
+The single bracket operator [ returns the same object type as the one being subset, which means that the resulting object will have the same structure as the original object.
+
+HINT:
+Think about how subsetting affects data structure. [Source: Tutorial 2.3 - Recursive Vectors and Data Frames, p. 6]
+
+SOURCE:
+The single bracket operator [ returns the same object type as the one being subset.
+
+======================================================================
+LO #19 | Type: definition | Source: Module 1 - Fundamentals of Statistical Learning
+======================================================================
+QUESTION:
+Why is a predictor variable important in data analysis?
+
+OPTIONS:
+  [ ] It is a type of outcome variable used in regression analysis
+  [✓] It is a feature used to predict the dependent variable.
+  [ ] It is a characteristic of the data that is not used in modeling
+  [ ] It is a feature used to predict the independent variable
+
+ANSWER:
+It is a feature used to predict the dependent variable.
+
+HINT:
+Consider the role of variables in predicting outcomes. [Source: Module 1 - Fundamentals of Statistical Learning, p. 11]
+
+SOURCE:
+In data analysis, a predictor variable is a feature used to predict the dependent variable.
+
+======================================================================
+LO #20 | Type: property | Source: Module 4 - Classification Problems
+======================================================================
+QUESTION:
+What does the value of each point indicate in relation to the separating hyperplane?
+
+OPTIONS:
+  [✓] How far the point lies from the hyperplane
+  [ ] How far the point lies from the origin
+  [ ] The density of points around the hyperplane
+  [ ] The confidence of the point's classification
+
+ANSWER:
+How far the point lies from the hyperplane
+
+HINT:
+Consider the geometric interpretation. [Source: Module 4 - Classification Problems, p. 74]
+
+SOURCE:
+The value of each point gives us some idea how far from the separating hyperplane the point lies.
+
+======================================================================
+LO #21 | Type: example | Source: Tutorial 3.3 - Grammar of Data Manipulation
+======================================================================
+QUESTION:
+What principle does the code data%>%select(short_name, dob, skill_moves, skill_dribbling, skill_curve, skill_fk_accuracy, skill_long_passing, skill_ball_control)%>%print(n=3) demonstrate?
+
+
+ANSWER:
+The principle of selecting specific columns from a data frame and printing the results.
+
+HINT:
+Think about data frame operations. [Source: Tutorial 3.3 - Grammar of Data Manipulation, p. 6]
+
+SOURCE:
+data%>%select(short_name, dob, skill_moves, skill_dribbling, skill_curve, skill_fk_accuracy, skill_long_passing, skill_ball_control)%>%print(n=3)
+
+======================================================================
+LO #22 | Type: algorithm_step | Source: Tutorial 3.1 - Functions
+======================================================================
+QUESTION:
+Write a function in R that takes two parameters and returns their product. What should the function body contain?
+
+
+ANSWER:
+result <- x * y
+
+HINT:
+Consider how mathematical operations are performed in a programming context. [Source: Tutorial 3.1 - Functions, p. 1]
+
+SOURCE:
+To define a custom function in R, use the function() call followed by a set of parameters and a function body, such as my_function <- function(x, y) { result <- x + y }
+
+======================================================================
+LO #23 | Type: definition | Source: Tutorial 1.2 - R Programming Language
+======================================================================
+QUESTION:
+How does the definition of a statement in R relate to its execution?
+
+OPTIONS:
+  [ ] a statement is not related to execution
+  [✓] a statement is a unit of execution without a return type
+  [ ] a statement is a unit of execution with a fixed return type
+  [ ] a statement is a unit of execution that always returns a value
+
+ANSWER:
+a statement is a unit of execution without a return type
+
+HINT:
+Think about the purpose of statements in programming. [Source: Tutorial 1.2 - R Programming Language, p. 1]
+
+SOURCE:
+A statement in R is a unit of execution that does not have a return type.
+
+======================================================================
+LO #24 | Type: fact | Source: Practicum 2.4 - Unsupervised Learning
+======================================================================
+QUESTION:
+What is the significance of dimensionality reduction methods such as PCA or LDA?
+
+OPTIONS:
+  [ ] Dimensionality reduction methods such as PCA or LDA increase complex data for better analysis
+  [✓] Dimensionality reduction methods such as PCA or LDA simplify complex data for easier visualization
+  [ ] Dimensionality reduction methods such as PCA or LDA are used for predictive modeling
+  [ ] Dimensionality reduction methods such as PCA or LDA enhance data security
+
+ANSWER:
+Dimensionality reduction methods such as PCA or LDA simplify complex data for easier visualization
+
+HINT:
+Consider the importance of data visualization in machine learning. [Source: Practicum 2.4 - Unsupervised Learning, p. 1]
+
+SOURCE:
+Dimensionality reduction methods such as PCA or LDA simplify complex data for easier visualization
+
+======================================================================
+LO #25 | Type: definition | Source: Tutorial 1.1 - Machine Learning Toolbox
+======================================================================
+QUESTION:
+Why is the Caret package useful for building predictive models?
+
+OPTIONS:
+  [ ] The Caret package is used for data mining tasks
+  [ ] The Caret package provides tools for data visualization
+  [✓] The Caret package offers a unified interface for building, tuning, and evaluating predictive models
+  [ ] The Caret package offers a wide range of machine learning algorithms
+
+ANSWER:
+The Caret package offers a unified interface for building, tuning, and evaluating predictive models
+
+HINT:
+Consider the challenges of building predictive models. [Source: Tutorial 1.1 - Machine Learning Toolbox, p. 6]
+
+SOURCE:
+The Caret package in R offers a unified interface for building, tuning, and evaluating predictive models.
+
+======================================================================
+LO #26 | Type: definition | Source: Module 3 - Linear Regression
+======================================================================
+QUESTION:
+Why is the coefficient of determination important in regression analysis, and what does it measure?
+
+OPTIONS:
+  [ ] The coefficient of determination measures the proportion of the variance in the predictor variable that is explained by the dependent variable
+  [✓] The coefficient of determination measures the proportion of the variance in the dependent variable that is explained by the predictor variable.
+  [ ] The coefficient of determination measures the proportion of the variance in the dependent variable that is explained by the residual variable
+  [ ] The coefficient of determination measures the proportion of the variance in the dependent variable that is explained by the sample size
+
+ANSWER:
+The coefficient of determination measures the proportion of the variance in the dependent variable that is explained by the predictor variable.
+
+HINT:
+Think about the concept of explained variance. [Source: Module 3 - Linear Regression, p. 26]
+
+SOURCE:
+The coefficient of determination (R²) measures the proportion of the variance in the dependent variable that is explained by the predictor variable.
+
+======================================================================
+LO #27 | Type: fact | Source: Module 3 - Linear Regression
+======================================================================
+QUESTION:
+How did Karl Pearson contribute to the development of statistical concepts?
+
+OPTIONS:
+  [ ] Karl Pearson developed the first statistical software package
+  [✓] He formalized regression and introduced the correlation coefficient
+  [ ] He discovered the method of maximum likelihood estimation
+  [ ] He introduced the concept of confidence intervals and p-values
+
+ANSWER:
+He formalized regression and introduced the correlation coefficient
+
+HINT:
+Consider the importance of formalizing concepts in a field of study. [Source: Module 3 - Linear Regression, p. 1]
+
+SOURCE:
+Karl Pearson formalized regression and introduced the correlation coefficient.
+
+======================================================================
+LO #28 | Type: algorithm_step | Source: Module 4 - Classification Problems
+======================================================================
+QUESTION:
+Write a step-by-step procedure for refining a machine learning model, including when and why refinement is necessary.
+
+
+ANSWER:
+1. Evaluate the model's performance. 2. Identify areas for improvement. 3. Adjust the model parameters or features and retrain the model.
+
+HINT:
+Think about the process of improving a model's performance. [Source: Module 4 - Classification Problems, p. 12]
+
+SOURCE:
+Refine model if necessary
+
+======================================================================
+LO #29 | Type: algorithm_step | Source: Tutorial 1.1 - Machine Learning Toolbox
+======================================================================
+QUESTION:
+Write the R command to install a package named 'package_name'.
+
+
+ANSWER:
+install.packages("package_name")
+
+HINT:
+Think about the basic steps for package installation. [Source: Tutorial 1.1 - Machine Learning Toolbox, p. 6]
+
+SOURCE:
+To install a package in R, use the command install.packages("package_name").
+
+======================================================================
+LO #30 | Type: fact | Source: Module 1 - Fundamentals of Statistical Learning
+======================================================================
+QUESTION:
+What is the significance of predicting outcomes and classifying data in the context of a field that automates decisions?
+
+
+ANSWER:
+It enables the field to make accurate predictions and informed decisions
+
+HINT:
+Consider the role of data analysis in informed decision making. [Source: Module 1 - Fundamentals of Statistical Learning, p. 11]
+
+SOURCE:
+Machine learning focuses on predicting outcomes, classifying data, and automating decisions.
+

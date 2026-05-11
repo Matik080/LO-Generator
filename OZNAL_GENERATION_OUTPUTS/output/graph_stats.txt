@@ -1,0 +1,5 @@
+nodes:	110
+edges:	115
+density:	0.019182652210175146
+avg_degree:	2.090909090909091
+connected_components:	20

@@ -1,0 +1,272 @@
+[
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object is useful for learning assessment and tests one clear idea."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object is useful for learning assessment and tests a single idea."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint provides guidance without revealing the answer."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 4,
+    "hint_quality": 5,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, and the hint guides without revealing the answer. The learning object is well-formed and tests a clear idea about structures in programming."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question is clear, the answer is fully supported by the source, and the hint guides without revealing the answer. The learning object is well-formed and tests one clear idea."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object is useful for learning assessment and tests one clear idea."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object is useful for learning assessment and tests a single concept."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question accurately reflects the source statement, is clear and well-formed, and the hint provides guidance without revealing the answer. The learning object is atomic, testing the definition of the malloc function."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object has high pedagogical value as it assesses understanding of a fundamental concept in programming."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint is helpful without giving away the answer."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object is useful for learning assessment and tests a single concept."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly relates to the source statement, is clear and well-formed, and the hint is relevant without giving away the answer. The learning object effectively assesses understanding of the concept of void * in the context of malloc."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question accurately reflects the source statement, is clear and well-formed, and the hint provides guidance without revealing the answer. The learning object is atomic, testing a single concept, and has high pedagogical value for learning assessment."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 4,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly references the source statement, and the hint guides without revealing the answer. The learning object is well-formed and tests a clear idea."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 4,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, and the hint provides a relevant context without giving away the answer."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 4,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear, and the hint is helpful without giving away the answer. The learning object is focused on a single concept."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question and answer directly reflect the source statement, the hint is relevant without giving away the answer, and the object tests a clear idea about array memory usage."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object is useful for learning assessment and tests a single concept."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question is clear, the hint is helpful without revealing the answer, and the answer is directly supported by the source statement."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly relates to the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object is useful for learning assessment and tests a single concept."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question and answer are directly supported by the source statement, the hint is helpful without revealing the answer, and the object tests a single clear idea about good programming practice with malloc."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question is clear, the answer is fully supported by the source, and the hint is helpful without revealing the answer."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly references the source statement, is clear and well-formed, and the hint is helpful without revealing the answer."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint provides guidance without revealing the answer. The learning object is focused on a single concept and is useful for learning assessment."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object tests a single concept of memory management."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 4,
+    "hint_quality": 5,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, and the hint is helpful without giving away the answer. The learning object is focused on a single concept."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question directly reflects the source statement, is clear and well-formed, and the hint guides without revealing the answer. The learning object is atomic as it tests one clear idea about the fundamental structure of a linked list."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question is clear, the hint is helpful without revealing the answer, and the learning object is faithful to the source statement, testing a single concept."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question is clear, the answer is fully supported by the source statement, and the hint guides without revealing the answer. The learning object tests one clear idea about memory management."
+  },
+  {
+    "faithfulness": 5,
+    "clarity": 5,
+    "hint_quality": 4,
+    "pedagogical_value": 5,
+    "hallucination_detected": "no",
+    "atomic": "yes",
+    "justification": "The question is clear, the answer is fully supported by the source statement, and the hint guides without revealing the answer. The learning object tests one clear idea related to memory management and its impact on program stability."
+  }
+]

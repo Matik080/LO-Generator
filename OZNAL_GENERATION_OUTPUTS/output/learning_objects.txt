@@ -1,0 +1,5 @@
+count:	30
+mean_overlap:	0.9737851037851037
+std_overlap:	0.05123487705842069
+min_overlap:	0.8333333333333334
+max_overlap:	1.0
