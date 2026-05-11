@@ -38,7 +38,7 @@ def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
 
 def semantic_similarity(text_a: str, text_b: str) -> float:
     """
-    Convenience function — embeds two texts and returns their similarity.
+    Convenience function - embeds two texts and returns their similarity.
     For bulk operations use get_embeddings_batch instead.
     """
     vec_a = get_embedding(text_a)

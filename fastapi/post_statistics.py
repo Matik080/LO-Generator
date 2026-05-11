@@ -163,7 +163,8 @@ def evaluate_learning_paths(KG, output_dir):
 
     plt.figure()
     plt.hist(list(depths.values()), bins=20)
-    plt.style.use("seaborn-v0_8-whitegrid")  # cleaner background
+    # cleaner background
+    plt.style.use("seaborn-v0_8-whitegrid")
     plt.title("Learning Path Depth Distribution")
     plt.xlabel("Depth")
     plt.ylabel("Frequency")
@@ -412,9 +413,7 @@ def print_binary_agreement(evaluation_file: str):
                 print(f"  {model.split('/')[-1]:<25} mean={vals.mean():.3f} n={len(vals)}")
 
 
-def generate_combined_boxplots(evaluation_file: str,
-                                output_path="./output/evaluation_boxplots.png",
-                                metrics: list = None):
+def generate_combined_boxplots(evaluation_file: str, output_path="./output/evaluation_boxplots.png", metrics: list = None):
     with open(evaluation_file) as f:
         data = json.load(f)
     df = pd.DataFrame(data)
@@ -452,7 +451,7 @@ def generate_combined_boxplots(evaluation_file: str,
     print(f"[Saved] {output_path}")
 
 if __name__ == "__main__":
-    # --- New metrics evaluations
+    # New metrics evaluations
     new_eval_file = "./output/evaluations_new_metrics.json"
     #new_eval_file = "./output/evaluations_sample_30.json"
     new_metrics = ["faithfulness", "question_clarity", "hint_quality"]

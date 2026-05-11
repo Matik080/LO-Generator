@@ -164,7 +164,7 @@ def clean_atomic_units(units: List[Dict[str, Any]],
     if not units:
         return []
 
-    # Embed all statements in one batch — much faster than one by one
+    # Embed all statements in one batch
     statements = [u["statement"] for u in units]
     print(f"[Dedup] Computing embeddings for {len(statements)} units...")
     embeddings = get_embeddings_batch(statements)

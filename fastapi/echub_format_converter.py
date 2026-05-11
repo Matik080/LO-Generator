@@ -4,15 +4,10 @@ from collections import defaultdict
 from utilities import load_json, export_json
 from llm_service import call_llm
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
-
 def _source_prefix(source_title: str) -> str:
     """
-    'Module 1 - Fundamentals of Statistical Learning' → 'Module 1'
-    'Tutorial 2.1 - Atomic Vectors'                  → 'Tutorial 2.1'
-    'Practicum 1.2 - EDA and Hypothesis Testing'     → 'Practicum 1.2'
+    'Module 1 - Fundamentals of Statistical Learning' -> 'Module 1'
     Falls back to the full title if the pattern doesn't match.
     """
     if " - " in source_title:
@@ -38,10 +33,7 @@ def _split_hint_and_source(hint: str):
     return hint.strip(), None
 
 
-# ---------------------------------------------------------------------------
-# LLM batch: generate name + time estimates for a batch of LOs
-# ---------------------------------------------------------------------------
-
+# LLM batch: generate name and time estimates for a batch of LOs
 def _enrich_batch(los: list) -> list:
     """
     For each LO in the batch, ask the LLM to produce:
@@ -149,10 +141,7 @@ def enrich_learning_objects(learning_objects: list, batch_size: int = 10) -> lis
     return learning_objects
 
 
-# ---------------------------------------------------------------------------
 # Conversion
-# ---------------------------------------------------------------------------
-
 def lo_to_question(lo: dict) -> dict:
     """Convert a single enriched LO to the EChub question format."""
     has_mc = bool(lo.get("mc_options"))
@@ -222,9 +211,7 @@ def convert_by_source(learning_objects: list) -> dict:
     return {"units": units}
 
 
-def convert_los_to_units(learning_objects: list,
-                          unit_title: str,
-                          unit_description: str) -> dict:
+def convert_los_to_units(learning_objects: list, unit_title: str, unit_description: str) -> dict:
     """Convert all LOs into a single unit."""
     questions = [lo_to_question(lo) for lo in learning_objects]
     return {

@@ -50,7 +50,7 @@ def visualize_graph(G, output_path="concept_graph.png"):
     max_w = max(weights) if weights else 1
     edge_widths = [0.2 + 1.5 * (w / max_w) for w in weights]
 
-    # Tiny nodes — just enough to show degree difference
+    # Tiny nodes, just enough to show degree difference
     node_sizes = [20 + degrees[n] * 10 for n in G.nodes()]
 
     nx.draw_networkx_edges(G, pos, width=edge_widths, alpha=0.25, edge_color="gray")
@@ -134,7 +134,7 @@ def build_prerequisite_edges(learning_objects, centrality):
     for lo, emb in zip(learning_objects, embeddings):
         lo["_embedding"] = emb
 
-    # Stage 1: embedding filter — find candidate pairs
+    # Stage 1: embedding filter -find candidate pairs
     candidates = []
     for i in range(len(learning_objects)):
         for j in range(len(learning_objects)):
@@ -183,11 +183,11 @@ def build_layered_learning_paths(learning_objects, centrality):
     """
     Builds prerequisite edges based on a layered type hierarchy.
 
-    Layer 1: definition, theorem        (introduce concepts)
-    Layer 2: rule, constraint           (govern correct usage)
-    Layer 3: property, fact             (describe behavior)
-    Layer 4: algorithm_step             (apply procedurally)
-    Layer 5: example                    (concrete instances)
+    Layer 1: definition, theorem (introduce concepts)
+    Layer 2: rule, constraint (govern correct usage)
+    Layer 3: property, fact (describe behavior)
+    Layer 4: algorithm_step (apply procedurally)
+    Layer 5: example (concrete instances)
 
     Edges are drawn from lower layers to higher layers when
     learning objects share at least one concept keyword.
@@ -247,7 +247,7 @@ def build_layered_learning_paths(learning_objects, centrality):
             # Same-layer edges: require stronger semantic similarity
             sim = cosine_similarity(lo_a["_embedding"], lo_b["_embedding"])
             if sim >= 0.6:
-                # Only add edge in one direction — from more central to less
+                # Only add edge in one direction, from more central to less
                 cent_a = centrality.get(lo_a.get("anchor", ""), 0)
                 cent_b = centrality.get(lo_b.get("anchor", ""), 0)
                 if cent_a > cent_b:
@@ -302,8 +302,7 @@ def print_graph_summary(KG, learning_objects):
 
 def verify_prerequisites_batched(candidate_edges, learning_objects, batch_size=10):
     """
-    Takes candidate edges from the layered approach and verifies
-    each one with an LLM. Returns only confirmed prerequisite edges.
+    Takes candidate edges from the layered approach and verifies each one with an LLM. Returns only confirmed prerequisite edges.
     """
     lo_map = {lo["id"]: lo for lo in learning_objects}
     verified_edges = []
@@ -393,7 +392,7 @@ def store_prerequisites(KG, learning_objects):
         if lo["id"] in KG:
             prereqs = [pred for pred in KG.predecessors(lo["id"])]
         else:
-            # isolated - not in graph
+            # isolated, not in graph
             prereqs = []
         lo["prerequisite_ids"] = prereqs
     return learning_objects
@@ -449,7 +448,7 @@ if __name__ == "__main__":
     for lo in learning_objects:
         if lo["id"] not in KG:
             KG.add_node(lo["id"])
-    # Remove isolated nodes — LOs with no prerequisite relationships
+    # Remove isolated nodes - LOs with no prerequisite relationships
     isolated = list(nx.isolates(KG))
     KG.remove_nodes_from(isolated)
     print(f"[Graph] Removed {len(isolated)} isolated nodes. "
@@ -461,7 +460,7 @@ if __name__ == "__main__":
 
     H = nx.Graph()
     for u, v, data in G.edges(data=True):
-        if data["weight"] >= 3:  # try 2 or 3
+        if data["weight"] >= 3:
             H.add_edge(u, v, weight=data["weight"])
 
     visualize_graph(H, "concept_graph_filtered.png")

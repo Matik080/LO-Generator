@@ -35,7 +35,7 @@
     min-height: 100vh;
   }
 
-  /* ── Header ── */
+  /* Header */
   header {
     border-bottom: 1px solid var(--border);
     padding: 16px 32px;
@@ -72,14 +72,14 @@
   }
   #api-url-input:focus { outline: none; border-color: var(--accent); }
 
-  /* ── Layout ── */
+  /* Layout */
   .layout {
     display: grid;
     grid-template-columns: 260px 1fr;
     min-height: calc(100vh - 57px);
   }
 
-  /* ── Sidebar / pipeline steps ── */
+  /* Sidebar / pipeline steps */
   aside {
     border-right: 1px solid var(--border);
     padding: 24px 0;
@@ -140,7 +140,7 @@
   }
   .sidebar-stats .stat-row span:last-child { color: var(--accent); }
 
-  /* ── Main content ── */
+  /* Main content */
   main {
     padding: 32px;
     max-width: 900px;
@@ -161,7 +161,7 @@
     line-height: 1.5;
   }
 
-  /* ── Upload zone ── */
+  /* Upload zone */
   .upload-zone {
     border: 1.5px dashed var(--border2);
     border-radius: 8px;
@@ -189,7 +189,7 @@
   }
   .file-chip .remove { cursor: pointer; color: var(--error); margin-left: 4px; }
 
-  /* ── Buttons ── */
+  /* Buttons */
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 9px 18px; border-radius: 5px; border: none;
@@ -210,7 +210,7 @@
 
   .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 
-  /* ── Progress / log ── */
+  /* Progress / log */
   .log-box {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -238,7 +238,7 @@
     width: 0%;
   }
 
-  /* ── Stats cards ── */
+  /* Stats cards */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -265,7 +265,7 @@
     letter-spacing: 0.06em;
   }
 
-  /* ── LO table / cards ── */
+  /* LO table / cards */
   .lo-controls {
     display: flex; gap: 10px; margin-bottom: 16px; align-items: center; flex-wrap: wrap;
   }
@@ -340,7 +340,7 @@
   .pagination .btn { padding: 5px 12px; font-size: 12px; }
   .pagination span { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 
-  /* ── Export panel ── */
+  /* Export panel */
   .export-options { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
   .export-card {
     background: var(--surface); border: 1px solid var(--border);
@@ -352,17 +352,17 @@
   .export-card p { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .export-card .btn { margin-left: auto; flex-shrink: 0; }
 
-  /* ── Checkbox ── */
+  /* Checkbox */
   .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
   .checkbox-row input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
   .checkbox-row label { font-size: 13px; cursor: pointer; }
 
-  /* ── Scrollbar ── */
+  /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-  /* ── Spinner ── */
+  /* Spinner */
   .spinner {
     display: inline-block; width: 14px; height: 14px;
     border: 2px solid rgba(74,222,128,0.2);
@@ -374,10 +374,10 @@
 
   .hidden { display: none !important; }
 
-  /* ── Divider ── */
+  /* Divider */
   hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
-  /* ── Add source section ── */
+  /* Add source section */
   .add-source-section {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 8px; padding: 20px; margin-top: 20px;
@@ -440,7 +440,7 @@
 
   <main>
 
-    <!-- ── Panel 1: Upload ── -->
+    <!-- Panel 1: Upload -->
     <div class="panel active" id="panel-upload">
       <h2>Upload Source Materials</h2>
       <p class="panel-desc">Upload one or more PDF, HTML, or PPTX files. These will be processed together into atomic units.</p>
@@ -464,15 +464,15 @@
 
       <div class="btn-row">
         <button class="btn btn-primary" onclick="startExtraction()" id="btn-extract">
-          Run Extraction →
+          Run Extraction
         </button>
       </div>
     </div>
 
-    <!-- ── Panel 2: Extract ── -->
+    <!-- Panel 2: Extract -->
     <div class="panel" id="panel-extract">
       <h2>Extract Atomic Units</h2>
-      <p class="panel-desc">Each file is parsed, split into sections, and atomic knowledge units are extracted by the LLM. Near-duplicate units (≥90% embedding similarity) are merged.</p>
+      <p class="panel-desc">Each file is parsed, split into sections, and atomic knowledge units are extracted by the LLM.</p>
 
       <div class="progress-bar-wrap"><div class="progress-bar" id="extract-progress"></div></div>
       <div class="log-box" id="extract-log"><div class="log-line">Waiting to start…</div></div>
@@ -481,12 +481,12 @@
 
       <div class="btn-row">
         <button class="btn btn-primary hidden" id="btn-goto-generate" onclick="gotoStep('generate')">
-          Generate LOs →
+          Generate LOs
         </button>
       </div>
     </div>
 
-    <!-- ── Panel 3: Generate ── -->
+    <!-- Panel 3: Generate -->
     <div class="panel" id="panel-generate">
       <h2>Generate Learning Objects</h2>
       <p class="panel-desc">Each atomic unit is transformed into a structured learning object (question, answer, hint, multiple-choice options).</p>
@@ -498,15 +498,15 @@
 
       <div class="btn-row">
         <button class="btn btn-primary" onclick="startGeneration()" id="btn-run-generate">
-          Run Generation →
+          Run Generation
         </button>
         <button class="btn btn-primary hidden" id="btn-goto-evaluate" onclick="gotoStep('evaluate')">
-          Evaluate &amp; Filter →
+          Evaluate &amp; Filter
         </button>
       </div>
     </div>
 
-    <!-- ── Panel 4: Graph ── -->
+    <!-- Panel 4: Graph -->
     <div class="panel" id="panel-graph">
       <h2>Build Knowledge Graph</h2>
       <p class="panel-desc">Constructs a concept co-occurrence graph and a directed prerequisite knowledge graph over all learning objects.</p>
@@ -518,19 +518,19 @@
 
       <div class="btn-row">
         <button class="btn btn-primary" onclick="startGraph()" id="btn-run-graph">
-          Build Graph →
+          Build Graph
         </button>
         <button class="btn btn-primary hidden" id="btn-goto-view" onclick="gotoStep('view')">
-          View &amp; Edit LOs →
+          View &amp; Edit LOs
         </button>
       </div>
     </div>
 
 
-    <!-- ── Panel 5: Evaluate & Filter ── -->
+    <!-- Panel 5: Evaluate & Filter -->
     <div class="panel" id="panel-evaluate">
       <h2>Evaluate &amp; Filter</h2>
-      <p class="panel-desc">Evaluates LOs with LLM judges, flags failures by consensus, and regenerates low-quality LOs from their source units. Mirrors the quality gate in <code>ems.py</code>.</p>
+      <p class="panel-desc">Evaluates LOs with LLM judges, flags failures by consensus, and regenerates low-quality LOs from their source units.</p>
 
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:16px;">
         <div class="lo-field" style="margin-bottom:12px">
@@ -545,7 +545,7 @@
               <input type="checkbox" id="eval-model-gpt" checked>
               <label for="eval-model-gpt" style="font-family:var(--mono);font-size:12px">openai/gpt-oss-120b</label>
             </div>
-            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:6px 0 2px">OpenRouter (requires key)</div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:6px 0 2px">OpenRouter</div>
             <div class="checkbox-row">
               <input type="checkbox" id="eval-model-kimi">
               <label for="eval-model-kimi" style="font-family:var(--mono);font-size:12px">moonshotai/kimi-k2-instruct</label>
@@ -572,18 +572,18 @@
 
       <div class="btn-row">
         <button class="btn btn-primary" onclick="startEvaluate()" id="btn-run-evaluate">
-          Run Evaluation →
+          Run Evaluation
         </button>
         <button class="btn btn-secondary" id="btn-skip-evaluate" onclick="gotoStep('view')">
           Skip (view LOs as-is)
         </button>
         <button class="btn btn-primary hidden" id="btn-goto-graph2" onclick="gotoStep('graph')">
-          Build Knowledge Graph →
+          Build Knowledge Graph
         </button>
       </div>
     </div>
 
-    <!-- ── Panel 6: View & Edit ── -->
+    <!-- Panel 6: View & Edit -->
     <div class="panel" id="panel-view">
       <h2>Learning Objects</h2>
       <p class="panel-desc">Browse, search, filter, and edit generated learning objects.</p>
@@ -613,7 +613,7 @@
         <div id="add-file-list"></div>
         <div class="btn-row">
           <button class="btn btn-secondary" onclick="processAdditionalSources()" id="btn-add-sources">
-            Extract &amp; Merge New Sources →
+            Extract &amp; Merge New Sources
           </button>
         </div>
         <div class="log-box hidden" id="add-log"></div>
@@ -621,7 +621,7 @@
     </div>
 
 
-    <!-- ── Panel 7: ECHub Export ── -->
+    <!-- Panel 7: ECHub Export -->
     <div class="panel" id="panel-echub">
       <h2>Export to ECHub</h2>
       <p class="panel-desc">Enriches each LO with an LLM-generated name and time estimates, then converts to the EChub JSON format ready for upload.</p>
@@ -654,7 +654,7 @@
 
       <div class="btn-row">
         <button class="btn btn-primary" onclick="startEchubExport()" id="btn-run-echub">
-          Run ECHub Export →
+          Run ECHub Export
         </button>
         <button class="btn btn-secondary hidden" id="btn-download-echub" onclick="downloadEchub()">
           ⬇ Download JSON
@@ -662,7 +662,7 @@
       </div>
     </div>
 
-    <!-- ── Panel 8: Export ── -->
+    <!-- Panel 8: Export -->
     <div class="panel" id="panel-export">
       <h2>Export</h2>
       <p class="panel-desc">Download your learning objects in various formats.</p>
@@ -707,7 +707,7 @@
 </div>
 
 <script>
-// ── State ─────────────────────────────────────────────────────────────────────
+// State
 const state = {
   files: [],
   addFiles: [],
@@ -722,7 +722,7 @@ function apiBase() {
   return '';
 }
 
-// ── Navigation ────────────────────────────────────────────────────────────────
+// Navigation
 function gotoStep(name) {
   document.querySelectorAll('.step').forEach(s => s.classList.toggle('active', s.dataset.panel === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
@@ -733,7 +733,7 @@ function markStepDone(name) {
   document.querySelector(`.step[data-panel="${name}"]`).classList.add('done');
 }
 
-// ── File management ───────────────────────────────────────────────────────────
+// File management
 function addFiles(fileList) {
   for (const f of fileList) {
     if (!state.files.find(x => x.name === f.name)) state.files.push(f);
@@ -775,7 +775,7 @@ function addMoreFiles(fileList) {
   });
 });
 
-// ── Logging ───────────────────────────────────────────────────────────────────
+// Logging
 // activeLogBox: the log box currently receiving server-side print() output
 let activeLogBox = null;
 let sseSource = null;
@@ -857,7 +857,7 @@ window.addEventListener('load', () => {
 
 
 
-// ── Sidebar stats ─────────────────────────────────────────────────────────────
+// Sidebar stats
 function updateSidebarStats() {
   document.getElementById('ss-units').textContent = state.units.length || '—';
   document.getElementById('ss-los').textContent = state.los.length || '—';
@@ -867,7 +867,7 @@ function updateSidebarStats() {
   }
 }
 
-// ── Stage 1 → 2: Extraction ───────────────────────────────────────────────────
+// Stage 1->2: Extraction
 async function startExtraction() {
   if (!state.files.length) { alert('Please add at least one file.'); return; }
   gotoStep('extract');
@@ -918,7 +918,7 @@ async function startExtraction() {
     markStepDone('extract');
 }
 
-// ── Stage 3: Generation ───────────────────────────────────────────────────────
+// Stage 3: Generation
 async function startGeneration() {
   if (!state.units.length) { alert('No units — run extraction first.'); return; }
     setActiveLog('gen-log');
@@ -974,7 +974,7 @@ async function startGeneration() {
   saveLOsToServer();
 }
 
-// ── Stage 4: Graph ────────────────────────────────────────────────────────────
+// Stage 4: Graph
 async function startGraph() {
   if (!state.los.length) { alert('No LOs — run generation first.'); return; }
     setActiveLog('graph-log');
@@ -1018,7 +1018,7 @@ async function startGraph() {
   document.getElementById('btn-run-graph').disabled = false;
 }
 
-// ── Panel 5: View & Edit LOs ──────────────────────────────────────────────────
+// Panel 5: View & Edit LOs
 function getFilteredLOs() {
   const search = document.getElementById('lo-search').value.toLowerCase();
   const typeFilter = document.getElementById('lo-filter-type').value;
@@ -1059,7 +1059,7 @@ function renderLOs() {
     pgEl.innerHTML = `
       <button class="btn btn-secondary" onclick="changePage(-1)" ${state.loPage === 0 ? 'disabled' : ''}>← Prev</button>
       <span>Page ${state.loPage + 1} / ${maxPage + 1}</span>
-      <button class="btn btn-secondary" onclick="changePage(1)" ${state.loPage >= maxPage ? 'disabled' : ''}>Next →</button>
+      <button class="btn btn-secondary" onclick="changePage(1)" ${state.loPage >= maxPage ? 'disabled' : ''}>Next</button>
     `;
   } else {
     pgEl.innerHTML = '';
@@ -1193,7 +1193,7 @@ function deleteLO(idx) {
   saveLOsToServer();
 }
 
-// ── Add more sources ──────────────────────────────────────────────────────────
+// Add more sources
 async function processAdditionalSources() {
   if (!state.addFiles.length) { alert('No new files added.'); return; }
   const logEl = document.getElementById('add-log');
@@ -1247,7 +1247,7 @@ async function processAdditionalSources() {
   }
 }
 
-// ── Export ────────────────────────────────────────────────────────────────────
+// Export
 function exportJSON(type) {
   let data, filename;
   if (type === 'los') { data = state.los; filename = 'learning_objects.json'; }
@@ -1286,7 +1286,7 @@ function downloadJSON(data, filename) {
   a.click();
 }
 
-// ── Start extraction when clicking the button from panel 1 ────────────────────
+// Start extraction when clicking the button from panel 1
 function escHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -1295,7 +1295,7 @@ function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-// ── Stage 5: Evaluate & Filter ────────────────────────────────────────────────
+// Stage 5: Evaluate & Filter
 async function startEvaluate() {
   if (!state.los.length) { alert('No LOs — run generation first.'); return; }
 
@@ -1309,7 +1309,7 @@ async function startEvaluate() {
     setActiveLog('eval-log');
   clearLog('eval-log');
   setProgress('eval-progress', 0);
-    document.getElementById('eval-stats').classList.add('hidden');
+  document.getElementById('eval-stats').classList.add('hidden');
   document.getElementById('btn-goto-graph2').classList.add('hidden');
   document.getElementById('btn-run-evaluate').disabled = true;
   document.getElementById('btn-skip-evaluate').classList.add('hidden');
@@ -1354,7 +1354,7 @@ async function startEvaluate() {
   document.getElementById('btn-run-evaluate').disabled = false;
 }
 
-// ── Load existing LOs from JSON ───────────────────────────────────────────────
+// Load existing LOs from JSON
 function loadExistingLOs(input) {
   const file = input.files[0];
   if (!file) return;
@@ -1396,7 +1396,7 @@ async function cancelOperation() {
       const box = document.getElementById(_activeCancelBtn);
       if (box) box.disabled = true;
     }
-    // activeLogBox is set by setActiveLog — log the cancel there
+    // activeLogBox is set by setActiveLog - log the cancel there
     if (activeLogBox) log(activeLogBox, '⏹ Cancellation requested — waiting for current batch to finish…', 'warn');
   } catch(e) {
     if (activeLogBox) log(activeLogBox, `Cancel request failed: ${e.message}`, 'err');
@@ -1407,8 +1407,7 @@ async function clearCancel() {
   try { await fetch(`${apiBase()}/cancel/clear`, { method: 'POST' }); } catch(_) {}
 }
 
-
-// ── ECHub export mode toggle ──────────────────────────────────────────────────
+// ECHub export mode toggle
 document.addEventListener('DOMContentLoaded', () => {
   const modeEl = document.getElementById('echub-mode');
   if (modeEl) {
@@ -1475,7 +1474,7 @@ function downloadEchub() {
 }
 
 
-// ── Save LOs to server ────────────────────────────────────────────────────────
+// Save LOs to server
 async function saveLOsToServer() {
   if (!state.los.length) { alert('No LOs to save.'); return; }
   const statusEl = document.getElementById('save-status');

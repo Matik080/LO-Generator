@@ -3,7 +3,7 @@ import re
 from utilities import load_json, export_json
 from llm_service import call_llm
 
-# Per-model batch sizes — GPT OSS truncates on long prompts, Kimi rate limits
+# Per-model batch sizes, GPT OSS truncates on long prompts, Kimi rate limits
 MODEL_BATCH_SIZES = {
     "openai/gpt-oss-120b": 2,
     "moonshotai/kimi-k2-instruct": 3,
@@ -12,8 +12,8 @@ DEFAULT_BATCH_SIZE = 8
 
 # Extra delay between batches for models that struggle with back-to-back calls
 MODEL_INTER_BATCH_DELAY = {
-    "moonshotai/kimi-k2-instruct": 1,  # seconds — rate limit
-    "openai/gpt-oss-120b": 1,          # seconds — avoids empty responses
+    "moonshotai/kimi-k2-instruct": 1,
+    "openai/gpt-oss-120b": 1,
 }
 
 # Max chars per field to avoid blowing context on code-heavy LOs
@@ -28,8 +28,7 @@ def _truncate(text, max_len=MAX_FIELD_LEN):
 
 def _recover_partial_json(raw: str) -> list:
     """
-    If the response is a truncated JSON array, recover whatever complete
-    objects were returned before the truncation point.
+    If the response is a truncated JSON array, recover whatever complete objects were returned before the truncation point.
     """
     objects = []
     # Find all complete {...} blocks at the top level

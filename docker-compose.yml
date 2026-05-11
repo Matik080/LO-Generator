@@ -6,8 +6,8 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - ./fastapi/.env        # GROQ_API_KEY, GITHUB_TOKEN, etc.
+      - ./fastapi/.env                # GROQ_API_KEY, GITHUB_TOKEN, etc.
     volumes:
-      - ./fastapi/input:/app/input       # mount input files
-      - ./fastapi/output:/app/output     # persist outputs
+      - ./fastapi/input:/app/input    # mount input files
+      - ./fastapi/output:/app/output  # persist outputs
     restart: unless-stopped

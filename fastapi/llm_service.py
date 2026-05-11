@@ -22,7 +22,7 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 # Optional: add a base delay (in seconds) between ALL calls to stay under rate limits
 INTER_CALL_DELAY = float(os.getenv("INTER_CALL_DELAY", "0"))
 
-# ── Provider selection ─────────────────────────────────────────────────────────
+# Provider selection
 # Priority: GROQ > OpenRouter > GitHub > OpenAI
 if GROQ_API_KEY:
     print("[Config] Primary provider: Groq")
@@ -44,7 +44,7 @@ else:
     print("ERROR: No API key found. Set GROQ_API_KEY, OPENROUTER_API_KEY, GITHUB_TOKEN, or OPENAI_API_KEY.")
     exit(1)
 
-# ── Secondary client for OpenRouter-only models (e.g. Kimi K2) ─────────────────
+# Secondary client for OpenRouter-only models (e.g. Kimi K2)
 # If primary is already OpenRouter, we reuse that client.
 # If primary is Groq/GitHub/OpenAI but OPENROUTER_API_KEY is also present,
 # a second client is created so Kimi K2 evaluations can still run.
@@ -64,7 +64,7 @@ def _get_openrouter_client():
 
 # Models that must always route through OpenRouter
 # Note: openai/gpt-oss-120b is available on BOTH Groq and OpenRouter
-# using the same model string — it routes through whichever is the primary provider
+# using the same model string, it routes through whichever is the primary provider
 OPENROUTER_MODELS = {
     "moonshotai/kimi-k2-instruct",
 }
@@ -82,11 +82,7 @@ def _client_for_model(model: str):
 
 
 def call_llm(
-        messages: List[Dict[str, str]],
-        model: str | None = None,
-        temperature: float = 0.2,
-        max_retries: int = 6,
-        rate_limit_backoff: float = 60.0,
+        messages: List[Dict[str, str]], model: str | None = None, temperature: float = 0.2, max_retries: int = 6, rate_limit_backoff: float = 60.0,
 ) -> str | None:
     """
     Stable LLM call wrapper with retries and rate limit handling.

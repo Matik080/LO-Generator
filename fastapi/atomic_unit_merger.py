@@ -17,7 +17,8 @@ import numpy as np
 from embedding_service import get_embeddings_batch, cosine_similarity
 from llm_service import call_llm
 
-MERGE_THRESHOLD = 0.90  # cosine similarity threshold for merging
+# Cosine similarity threshold for merging
+MERGE_THRESHOLD = 0.90
 
 
 def _find_merge_pairs(units: List[Dict[str, Any]], threshold: float = MERGE_THRESHOLD) -> List[Tuple[int, int]]:
@@ -45,7 +46,7 @@ def _find_merge_pairs(units: List[Dict[str, Any]], threshold: float = MERGE_THRE
             if sim >= threshold:
                 pairs.append((i, j))
                 merged_indices.add(j)  # j will be absorbed into i
-                break  # i merges with the first match only; re-scan after merge
+                break # i merges with the first match only, re-scan after merge
 
     return pairs
 
@@ -155,7 +156,7 @@ def merge_similar_units(
             if idx in absorbed:
                 continue
             if idx in merge_map.values():
-                # This is the 'i' side — find its partner and merge
+                # This is the 'i' side, find its partner and merge
                 partner_idx = next(j for i, j in pairs if i == idx)
                 merged = _merge_pair_with_llm(unit, current[partner_idx])
                 result.append(merged)

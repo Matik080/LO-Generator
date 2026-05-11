@@ -376,13 +376,11 @@ async def export_echub_endpoint(body: ExportEchubInput):
     return result
 
 # Manual save
-
 class SaveLOsInput(BaseModel):
     learning_objects: List[Dict[str, Any]]
     filename: str = "learning_objects_saved.json"
 
 @app.post("/save-los")
 def save_los_endpoint(body: SaveLOsInput):
-    """Saves the current LO list (including any edits) to /app/output/."""
     _save(body.filename, body.learning_objects)
     return {"saved": len(body.learning_objects), "filename": body.filename}

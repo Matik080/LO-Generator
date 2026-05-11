@@ -11,8 +11,7 @@ import json
 
 def _aggregate_evals(evals):
     """
-    Given a list of eval dicts (one per model per LO), return a dict keyed by
-    lo_id with aggregated scores across all models.
+    Given a list of eval dicts (one per model per LO), return a dict keyed by lo_id with aggregated scores across all models.
     """
     by_lo = defaultdict(list)
     for e in evals:
@@ -23,20 +22,18 @@ def _aggregate_evals(evals):
 
 def _lo_fails_threshold(model_evals, faithfulness_threshold=3.0, hint_quality_threshold=2.0):
     """
-    Returns (fails: bool, reasons: list[str]) for a single LO given
-    evaluations from one or more models.
+    Returns (fails: bool, reasons: list[str]) for a single LO given evaluations from one or more models.
 
-    Failure conditions (conservative — require consensus where possible):
+    Failure conditions (conservative, require consensus where possible):
       - Faithfulness: average across models < faithfulness_threshold
       - Atomic: ALL models say 'no'
       - Self-contained: ALL models say 'no'
 
-    Hint quality is intentionally excluded — a weak hint doesn't fail students,
-    it just doesn't help them. Not worth regenerating an otherwise good LO.
+    Hint quality is intentionally excluded, a weak hint doesn't fail students, it just doesn't help them. Not worth regenerating an otherwise good LO.
     """
     reasons = []
 
-    # Faithfulness — average across models
+    # Faithfulness, average across models
     faith_vals = [e["faithfulness"] for e in model_evals
                   if e.get("faithfulness") is not None]
     if faith_vals:
@@ -44,19 +41,19 @@ def _lo_fails_threshold(model_evals, faithfulness_threshold=3.0, hint_quality_th
         if avg_faith < faithfulness_threshold:
             reasons.append(f"faithfulness avg={avg_faith:.2f} < {faithfulness_threshold}")
 
-    # Atomic — all models must agree
+    # Atomic - all models must agree
     atomic_vals = [e["atomic"] for e in model_evals
                    if e.get("atomic") is not None]
     if len(atomic_vals) >= 1 and all(v == "no" for v in atomic_vals):
         reasons.append(f"not atomic ({len(atomic_vals)} model(s) agree)")
 
-    # Self-contained — all models must agree
+    # Self-contained - all models must agree
     sc_vals = [e["self_contained"] for e in model_evals
                if e.get("self_contained") is not None]
     if len(sc_vals) >= 1 and all(v == "no" for v in sc_vals):
         reasons.append(f"not self-contained ({len(sc_vals)} model(s) agree)")
 
-    # Hint quality — average across models must be above minimum threshold
+    # Hint quality - average across models must be above minimum threshold
     # Only scored when a hint exists (null = open question with no hint, skip)
     # Threshold is 2: score of 1 means actively misleading, which harms students
     hint_vals = [e["hint_quality"] for e in model_evals
@@ -98,22 +95,14 @@ def _question_is_self_contained(question: str):
             return False, f"references external context: '{m.group()}'"
     return True, None
 
-def filter_and_regenerate(learning_objects, output_dir,
-                           eval_models=None,
-                           faithfulness_threshold=3.0,
-                           hint_quality_threshold=2.0,
-                           max_attempts=2):
+def filter_and_regenerate(learning_objects, output_dir, eval_models=None, faithfulness_threshold=3.0, hint_quality_threshold=2.0, max_attempts=2):
     """
-    Evaluates all LOs with one or more models, flags those that fail the
-    quality threshold by consensus, and regenerates them from source units.
+    Evaluates all LOs with one or more models, flags those that fail the quality threshold by consensus, and regenerates them from source units.
 
     Failure logic (conservative):
       - Faithfulness average across models < faithfulness_threshold
       - ALL models agree the LO is not atomic
       - ALL models agree the LO is not self-contained
-
-    Using multiple models avoids single-model bias: Llama is lenient on
-    faithfulness, Kimi is strict on atomic — together they catch more real failures.
     """
     from learning_object_evaluator import evaluate_learning_objects_batch
 
@@ -122,9 +111,7 @@ def filter_and_regenerate(learning_objects, output_dir,
 
     print(f"[Filter] Evaluating {len(learning_objects)} LOs with {eval_models}...")
 
-    # On the first attempt evaluate everything; on subsequent attempts
-    # evaluate only the newly regenerated LOs — no point re-scoring ones
-    # that already passed.
+    # On the first attempt evaluate everything, on subsequent attempts evaluate only the newly regenerated LOs, no point re-scoring ones that already passed.
     los_to_eval = learning_objects
     passed_evals = {}  # lo_id -> eval results, carried over between attempts
 
@@ -156,7 +143,7 @@ def filter_and_regenerate(learning_objects, output_dir,
                 continue
             fails, reasons = _lo_fails_threshold(model_evals, faithfulness_threshold, hint_quality_threshold)
 
-            # Rule-based self-containment check — catches what LLM evaluators miss
+            # Rule-based self-containment check
             sc_ok, sc_reason = _question_is_self_contained(lo.get("question", ""))
             if not sc_ok:
                 reasons = list(reasons) + [sc_reason]
@@ -218,8 +205,7 @@ def filter_and_regenerate(learning_objects, output_dir,
         print(f"[Filter] Regenerated {len(failing_units)} LOs. Total now: {len(learning_objects)}")
 
         # Next attempt: only evaluate the newly regenerated LOs.
-        # Since regenerated LOs come from the same source statements, their IDs
-        # will be identical to the failed ones — so track by source_statement instead.
+        # Since regenerated LOs come from the same source statements, their IDs will be identical to the failed ones, so track by source_statement instead.
         regen_source_statements = {u["statement"] for u in failing_units}
         los_to_eval = [lo for lo in learning_objects
                        if lo.get("source_statement") in regen_source_statements]
@@ -234,10 +220,9 @@ def filter_and_regenerate(learning_objects, output_dir,
 
 def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, generation_batch_size=5):
     """
-    sources: list of dicts: [{"path": "...", "title": "..."}]
-    OR a single string path for backwards compatibility.
+    sources: list of dicts: [{"path": "...", "title": "..."}] OR a single string path for backwards compatibility.
     """
-    # Backwards compatibility — single path string
+    # Backwards compatibility, single path string
     if isinstance(sources, str):
         sources = [{"path": sources, "title": os.path.basename(sources)}]
 
@@ -363,30 +348,8 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
 if __name__ == "__main__":
     sources = [
         # Lecture modules
-        {"path": "./input/BVI_1_Infrastruktura_verejneho_kluca.pdf",
-         "title": "Module 1 - Infraštruktúra verejného kľúča",},
-        {"path": "./input/BVI_2_Certifikacna_autorita.pdf",
-         "title": "Module 2 - Certifikačná autorita", },
-        {"path": "./input/BVI_3_Bezpecnostne_vlastnosti_DNS.pdf",
-         "title": "Module 3 - Bezpečnostné vlastnosti DNS", },
-        {"path": "./input/BVI_4_Elektronicka_posta_MIME_SMIME.pdf",
-         "title": "Module 4 - Elektronická pošta MIME SMIME", },
-        {"path": "./input/BVI_5_Pripojenie_koncoveho_pouzivatela_k_ISP_a_siete_VPN.pdf",
-         "title": "Module 5 - Pripojenie koncového používateľa k ISP a siete VPN", },
-        {"path": "./input/BVI_6_Bezpecnost_protokolu_HTTP.pdf",
-         "title": "Module 6 - Bezpečnosť protokolu HTTP", },
-        {"path": "./input/BVI_7_Bezpecnost_webu.pdf",
-         "title": "Module 7- Bezpečnost webu", },
-        {"path": "./input/BVI_8_Webove_sluzby_a_bezpecnost_1.pdf",
-         "title": "Module 8 - Webové služby a bezpečnosť 1", },
-        {"path": "./input/BVI_9_Webove_sluzby_a_bezpecnost_2.pdf",
-         "title": "Module 9 - Webové služby a bezpečnosť 2", },
-        {"path": "./input/BVI_10_Bezpecnost_IoT.pdf",
-         "title": "Module 10 - Bezpečnosť IoT", },
-        {"path": "./input/BVI_11_Penetracne_testovanie.pdf",
-         "title": "Module 11 - Penetračné testovanie", },
-        {"path": "./input/BVI_12_Utoky_DoS_a_ich_detekcia.pdf",
-         "title": "Module 12 - Útoky DoS a ich detekcia", },
+        {"path": "./input/Example.pdf",
+         "title": "Module 7 - Example Module", },
     ]
     output_dir = os.path.join(os.path.dirname(__file__), "output")
     os.makedirs(output_dir, exist_ok=True)

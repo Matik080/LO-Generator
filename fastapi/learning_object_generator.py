@@ -173,9 +173,9 @@ def generate_learning_object(unit: Dict[str, Any]) -> Dict[str, Any]:
 
 def generate_learning_object_batch(units, batch_size=5):
     """
-        Generate learning objects for multiple atomic units in a single API call.
-        Returns list of learning objects in same order as input units.
-        """
+    Generate learning objects for multiple atomic units in a single API call.
+    Returns list of learning objects in same order as input units.
+    """
     results = []
 
     # Process in batches
@@ -321,7 +321,7 @@ def generate_mc_variants(lo: Dict[str, Any]) -> Dict[str, Any]:
     """
     Takes an existing LO and generates multiple choice variants.
     Adds mc_options (list of 4 strings) and mc_correct_index (int) to the LO.
-    Only makes sense for non-code types — skip algorithm_step.
+    Only makes sense for non-code types, skipping algorithm_step.
     """
     import random
 
@@ -371,7 +371,7 @@ Return JSON only:
         lo["mc_options"] = options
         lo["mc_correct_index"] = correct_index
     except (json.JSONDecodeError, ValueError):
-        pass  # MC generation failed silently — LO still usable without it
+        pass  # MC generation failed silently, LO still usable without it
 
     return lo
 

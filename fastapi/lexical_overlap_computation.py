@@ -2,12 +2,9 @@ import re
 from utilities import export_json
 from embedding_service import get_embeddings_batch, cosine_similarity
 
-
-
 def compute_semantic_similarities(learning_objects):
     """
-    Computes embedding-based similarity between each learning object's
-    answer and its source statement. Adds 'semantic_similarity' field.
+    Computes embedding-based similarity between each learning object's answer and its source statement. Adds 'semantic_similarity' field.
     """
     statements = [lo["source_statement"] for lo in learning_objects]
     answers = [lo["answer"] for lo in learning_objects]

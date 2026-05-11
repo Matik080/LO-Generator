@@ -129,7 +129,7 @@ def extract_text_from_pptx(pptx_path: str, document_title: str = None) -> str:
 
 
 def extract_text_from_source(path: str, document_title: str = None) -> str:
-    """Unified text extraction — dispatches based on file extension."""
+    """Unified text extraction, dispatches based on file extension."""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".pdf":
         return extract_text_from_pdf(path, document_title)
