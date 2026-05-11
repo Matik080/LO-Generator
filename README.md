@@ -219,14 +219,14 @@ curl -X POST http://localhost:8000/build-graph \
     ├── requirements.txt                <- all Python dependencies
     ├── pipeline_ui.html                <- single-page web UI served at http://localhost:8000
     ├── main.py                         <- FastAPI app: all endpoints, SSE log streaming, auto-save to output/
-    ├── llm_service.py                  <- LLM call wrapper with retries and rate limit handling (Groq / OpenRouter / GitHub / OpenAI)
+    ├── llm_service.py                  <- LLM call wrapper with retries and rate limit handling
     ├── atomic_unit_extractor.py        <- extracts atomic knowledge units from text sections and semantic deduplication
     ├── concept_normalizer.py           <- normalises concept strings for consistent graph node naming
     ├── echub_format_converter.py       <- enriches LOs and converts them to ECEH JSON format for platform upload
     ├── embedding_service.py            <- sentence-transformers wrapper (all-MiniLM-L6-v2) for cosine similarity
     ├── ems.py                          <- offline pipeline runner with checkpoint support
     ├── graph_builder.py                <- builds concept co-occurrence graph, generates and LLM-verifies prerequisite edges, enforces DAG
-    ├── learning_object_evaluator.py    <- batched LLM evaluation of LOs: faithfulness, relevance, self-containment scoring
+    ├── learning_object_evaluator.py    <- batched LLM evaluation of LOs
     ├── learning_object_generator.py    <- batched LO generation and multiple-choice variant generation
     ├── lexical_overlap_computation.py  <- computes lexical overlap between source statements and generated answers
     ├── post_statistics.py              <- aggregates and analyses evaluation scores across LO batches
