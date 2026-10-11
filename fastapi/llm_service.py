@@ -22,12 +22,21 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 # Optional: add a base delay (in seconds) between ALL calls to stay under rate limits
 INTER_CALL_DELAY = float(os.getenv("INTER_CALL_DELAY", "0"))
 
+# Optional: override the default generation model without touching code
+GEN_MODEL = os.getenv("GEN_MODEL")
+
+# Optional: reasoning effort for GPT-OSS models on Groq ("low" | "medium" | "high")
+REASONING_EFFORT = os.getenv("REASONING_EFFORT")
+
 # Provider selection
 # Priority: GROQ > OpenRouter > GitHub > OpenAI
+# Groq shut down llama-3.3-70b-versatile for non-enterprise tiers on 2026-08-16.
+# The legacy name is still accepted everywhere and routed to OpenRouter's Llama 3.3 70B (see LEGACY_ROUTES below).
+# Default generator: Llama 3.3 70B (thesis model) when OpenRouter is available, otherwise GPT-OSS 120B on Groq.
 if GROQ_API_KEY:
     print("[Config] Primary provider: Groq")
     client = OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
-    DEFAULT_MODEL = "llama-3.3-70b-versatile"
+    DEFAULT_MODEL = "llama-3.3-70b-versatile" if OPENROUTER_API_KEY else "openai/gpt-oss-120b"
 elif OPENROUTER_API_KEY:
     print("[Config] Primary provider: OpenRouter")
     client = OpenAI(api_key=OPENROUTER_API_KEY, base_url="https://openrouter.ai/api/v1")
@@ -43,6 +52,11 @@ elif OPENAI_API_KEY:
 else:
     print("ERROR: No API key found. Set GROQ_API_KEY, OPENROUTER_API_KEY, GITHUB_TOKEN, or OPENAI_API_KEY.")
     exit(1)
+
+if GEN_MODEL:
+    DEFAULT_MODEL = GEN_MODEL
+
+print(f"[Config] Default generation model: {DEFAULT_MODEL}")
 
 # Secondary client for OpenRouter-only models (e.g. Kimi K2)
 # If primary is already OpenRouter, we reuse that client.
@@ -62,23 +76,35 @@ def _get_openrouter_client():
         return _openrouter_client
     return None
 
+# Legacy / logical model names used throughout the codebase -> the provider model ID that actually serves them now.
+# Callers keep passing the old names (eval lists, batch-size tables, saved results all key on them).
+LEGACY_ROUTES = {
+    # Groq shut this down 2026-08-16 (non-enterprise); same weights still served on OpenRouter
+    "llama-3.3-70b-versatile": "meta-llama/llama-3.3-70b-instruct",
+    # OpenRouter retired the "-instruct" ID; "moonshotai/kimi-k2" is the live one
+    "moonshotai/kimi-k2-instruct": "moonshotai/kimi-k2",
+}
+
 # Models that must always route through OpenRouter
 # Note: openai/gpt-oss-120b is available on BOTH Groq and OpenRouter
 # using the same model string, it routes through whichever is the primary provider
 OPENROUTER_MODELS = {
-    "moonshotai/kimi-k2-instruct",
+    "meta-llama/llama-3.3-70b-instruct",
+    "moonshotai/kimi-k2",
 }
 
 def _client_for_model(model: str):
-    """Return the correct OpenAI-compatible client for the given model string."""
-    if model in OPENROUTER_MODELS:
+    """Return (client, provider_model_id) for a logical or provider model name."""
+    target = LEGACY_ROUTES.get(model, model)
+    if target in OPENROUTER_MODELS:
         c = _get_openrouter_client()
         if c is None:
             raise ValueError(
-                f"Model '{model}' requires OpenRouter but OPENROUTER_API_KEY is not set."
+                f"Model '{model}' is now served via OpenRouter ('{target}') but OPENROUTER_API_KEY is not set. "
+                f"Add OPENROUTER_API_KEY to .env, or use a Groq model such as 'openai/gpt-oss-120b'."
             )
-        return c
-    return client
+        return c, target
+    return client, target
 
 
 def call_llm(
@@ -95,8 +121,11 @@ def call_llm(
     if INTER_CALL_DELAY > 0:
         time.sleep(INTER_CALL_DELAY)
 
-    resolved_model = model or DEFAULT_MODEL
-    selected_client = _client_for_model(resolved_model)
+    selected_client, resolved_model = _client_for_model(model or DEFAULT_MODEL)
+
+    extra = {}
+    if REASONING_EFFORT and resolved_model.startswith("openai/gpt-oss") and selected_client is client and GROQ_API_KEY:
+        extra["reasoning_effort"] = REASONING_EFFORT
 
     for attempt in range(max_retries):
         try:
@@ -104,6 +133,7 @@ def call_llm(
                 model=resolved_model,
                 messages=messages,
                 temperature=temperature,
+                **extra,
             )
             if not response.choices:
                 raise Exception("No choices returned.")
