@@ -331,7 +331,8 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
         output_dir,
         #eval_models=["llama-3.3-70b-versatile"],
         #eval_models=["llama-3.3-70b-versatile", "moonshotai/kimi-k2-instruct"],
-        eval_models=["llama-3.3-70b-versatile", "openai/gpt-oss-120b"],
+        #eval_models=["llama-3.3-70b-versatile", "openai/gpt-oss-120b"],
+        eval_models=["qwen/qwen3.8-27b", "openai/gpt-oss-120b"],
         faithfulness_threshold=3.0,
         max_attempts=2
     )

@@ -177,7 +177,7 @@ async def generate_los_endpoint(body: UnitsInput):
 class EvalInput(BaseModel):
     learning_objects: List[Dict[str, Any]]
     units: List[Dict[str, Any]] = []
-    models: List[str] = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b"]
+    models: List[str] = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b"]
     faithfulness_threshold: float = 3.0
     max_attempts: int = 2
 

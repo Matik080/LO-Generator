@@ -259,7 +259,7 @@ if __name__ == "__main__":
 
     models = [
         "openai/gpt-oss-120b",
-        "llama-3.3-70b-versatile",
+        "qwen/qwen3.8-27b",
     ]
 
     evaluations = []

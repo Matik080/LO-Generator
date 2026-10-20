@@ -538,14 +538,18 @@
           <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px">Groq</div>
             <div class="checkbox-row">
-              <input type="checkbox" id="eval-model-llama" checked>
-              <label for="eval-model-llama" style="font-family:var(--mono);font-size:12px">llama-3.3-70b-versatile</label>
+              <input type="checkbox" id="eval-model-qwen" checked>
+              <label for="eval-model-qwen" style="font-family:var(--mono);font-size:12px">qwen/qwen3.8-27b</label>
             </div>
             <div class="checkbox-row">
               <input type="checkbox" id="eval-model-gpt" checked>
               <label for="eval-model-gpt" style="font-family:var(--mono);font-size:12px">openai/gpt-oss-120b</label>
             </div>
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:6px 0 2px">OpenRouter</div>
+            <div class="checkbox-row">
+              <input type="checkbox" id="eval-model-llama">
+              <label for="eval-model-llama" style="font-family:var(--mono);font-size:12px">llama-3.3-70b-versatile</label>
+            </div>
             <div class="checkbox-row">
               <input type="checkbox" id="eval-model-kimi">
               <label for="eval-model-kimi" style="font-family:var(--mono);font-size:12px">moonshotai/kimi-k2-instruct</label>
@@ -1300,6 +1304,7 @@ async function startEvaluate() {
   if (!state.los.length) { alert('No LOs — run generation first.'); return; }
 
   const models = [];
+  if (document.getElementById('eval-model-qwen').checked) models.push('qwen/qwen3.8-27b');
   if (document.getElementById('eval-model-llama').checked) models.push('llama-3.3-70b-versatile');
   if (document.getElementById('eval-model-gpt').checked) models.push('openai/gpt-oss-120b');
   if (document.getElementById('eval-model-kimi').checked) models.push('moonshotai/kimi-k2-instruct');
