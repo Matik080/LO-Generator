@@ -1,620 +1,420 @@
-# LO Generator (mlynček B) as a Docker API service: design
+# Mlynček B - Martin Demčák
 
-| | |
-|---|---|
-| **Status** | Draft for review |
-| **Scope** | Design only, no code changes yet |
-| **Repo** | `LO-Generator` (`fastapi/`) |
-| **Date** | 2026-10-23 |
+| **Osoba** | **Úloha** | **Task** |
+| --- | --- | --- |
+| @Martin Demčák | Zodpovedá za splnenie špecifikácie Mlynčeku B | [SCRUM-34](https://stuba-team-bxgehtkq.atlassian.net/browse/SCRUM-34) |
 
 ---
 
-## 1. Summary
+| **Product overview** | |
+| --- | --- |
+| **Target date** | 24.10.2026 |
+| **Document status** | IN-PROGRESS |
+| **Team members** | @Martin Demčák |
+| **Quick links** | [Prílohy: technické podrobnosti](api-design-appendix.md) |
+| **Work tracker** | [SCRUM-34](https://stuba-team-bxgehtkq.atlassian.net/browse/SCRUM-34) |
+| **Repository** | <https://github.com/Matik080/LO-Generator/tree/integration> |
 
-The LO Generator (mlynček B) takes PDF/HTML/PPTX study material. It extracts atomic knowledge units, generates question/answer/hint learning objects (LOs) with multiple-choice options, filters them by quality, and builds a prerequisite graph. All of this is done with LLM calls.
+## Objective
 
-The ticket assumes a Streamlit app. **The tool is already a FastAPI server** with a static HTML page (`fastapi/pipeline_ui.html`). The HTML page drives the pipeline step by step. So the API layer exists, but it can't serve a backend yet:
+Cieľom je navrhnúť, ako zo súčasného nástroja (Mlynček B, LO Generator, len obrovský wrapper, it's terrible) spraviť samostatnú službu v Docker kontajneri s REST API.
 
-- every step is a **blocking HTTP request that runs for minutes**,
-- the **browser holds the state** between steps,
-- logs, progress and output files are **global**, shared by all users.
+**Rovnaký API kontrakt ako Mlynček A.** Stránka, ktorá službu volá, pošle jeden alebo viac dokumentov a spôsob rozdelenia: buď "všetko do jednej hodiny", alebo podľa čoho sa má obsah rozdeliť (počet hodín, dĺžka hodiny, tematické celky, sylabus). Služba potom sama spustí všetky kroky:
 
-**Recommendation**
+- extrakciu textu,
+- extrakciu atomických jednotiek,
+- generovanie vzdelávacích objektov (LO),
+- hodnotenie kvality a opätovné generovanie,
+- graf prerekvizít,
+- generovanie otázok (MCQ nesprávne varianty),
+- rozdelenie do hodín.
 
-- One container with an **asynchronous job API**: `POST /v1/jobs` → `job_id` → poll status → fetch the result.
-- One **background worker thread** inside the container, with job state in **SQLite** and files on a mounted `/data` volume.
-- LLMs stay **external** (Groq/OpenRouter or any OpenAI-compatible server, set through env variables), so **no GPU is needed**.
-- New feature: **course split**, where the backend sends `hours` and `split_criterion` and gets LOs grouped into lessons.
+**Rovnaký kontrakt a rovnaký výstup ako Mlynček A:** Mlynček B používa rovnaký kontrakt ako Mlynček A, teda rovnaké endpointy, rovnaký parameter `split` a rovnaký výstupný formát. Backend môže volať oba nástroje rovnako a prepínať medzi nimi.
 
-**Estimated effort:** about 12–16 person-days (see [section 8](#8-effort-estimate)).
+**Výstup:** Výstupom je JSON vo formáte `units`. Každý unit je jedna vyučovacia hodina s názvom, popisom a otázkami daného typu: `choice`, `open` a `no_answer` (s nápovedami, možnosťami a časmi). Pri voľbe "všetko do jednej hodiny" má výstup práve jeden unit.
 
----
+**Poskytovateľ modelu:** Služba nie je viazaná na jedného poskytovateľa LLM. Tool B už dnes volá modely cez OpenAI kompatibilné API (Groq, OpenRouter, GitHub Models, OpenAI). Rovnaké API by mohol poskytovať aj lokálny model. Potom by to bola len otázka konfigurácie.
 
-## 2. Current state analysis
+**Nezávislosť od používateľa:** Spracovanie nezávisí od toho, či je používateľ na stránke. Používateľ môže stránku zavrieť a po návrate uvidí hotový výsledok. Služba výsledok uchová, stránka si ho prevezme kedykoľvek a žiadne upozornenia sa neposielajú.
 
-### 2.1 Pipeline steps
+## Success metrics
 
-| # | Step | Code | LLM? | Input → Output |
-|---|---|---|---|---|
-| 1 | Text extraction | `utilities.extract_text_from_source` (PyPDF2 / BeautifulSoup / python-pptx) | no | file → text with `--- Page N \| Source: X ---` markers |
-| 2 | Sectioning | `utilities.split_into_sections` | no | text → `[{page, source, content}]` (1 section = 1 PDF page / slide / HTML h1–h3 block) |
-| 3a | Unit extraction | `atomic_unit_extractor.extract_atomic_units_batch` (batches of 3 sections) | yes | sections → raw units |
-| 3b | Deduplication | `atomic_unit_extractor.clean_atomic_units` (MiniLM embeddings, `embedding_service.py`) | no (local model) | raw units → unique units |
-| 3c | Concept normalization | `concept_normalizer.normalize_units` (spaCy lemmas) | no | adds `normalized_concepts` |
-| 4a | LO generation | `learning_object_generator.generate_learning_object_batch` (batches of 5) | yes | units → LOs |
-| 4b | MC variants | `learning_object_generator.generate_mc_variants_batch` | yes | adds `mc_options`, `mc_correct_index` |
-| 5 | Quality filter | `ems.filter_and_regenerate` → `learning_object_evaluator.evaluate_learning_objects_batch` | yes (2+ models) | LOs → filtered LOs; failing ones regenerated up to `max_attempts` times |
-| 6 | Knowledge graph | `graph_builder.build_concept_graph`, `assign_anchor`, `build_layered_learning_paths`, `verify_prerequisites_batched`, `store_prerequisites` | yes (edge check) | units + LOs → concept graph, prerequisite DAG, `prerequisite_ids` on each LO |
-| 7 | ECHub export | `echub_format_converter.enrich_learning_objects` → `convert_by_source` / `convert_los_to_units` | yes (names, times) | LOs → ECHub `{units: [{title, description, questions}]}` |
+| **Goal** | **Metric** |
+| --- | --- |
+| Služba sa dá spustiť jedným príkazom. | `docker compose up` na čistom stroji (iba Docker + `.env`) spustí službu. `GET /health` vráti 200 do 60 s po štarte. |
+| Stránke stačí jedno volanie. | Jeden `POST /v1/jobs` (dokumenty + spôsob rozdelenia) spustí všetky kroky. Stránka potom iba číta stav a výsledok (žiadny krok nespúšťa sama). |
+| Spracovanie nezávisí od používateľa. | Úloha sa dokončí aj po zatvorení stránky alebo prerušení spojenia. Výsledok je dostupný cez `job_id` alebo `external_ref` počas celej doby uchovania (7 dní). Reštart kontajnerov nespôsobí stratu hotových výsledkov. Nedokončená úloha sa spustí znova. |
+| Výstup má presne požadovaný formát. | 100% výstupov prejde validáciou voči JSON formátu `units`, teda bez polí navyše (automatické testy pre toto). |
+| Otázky sú použiteľné. | Každá `choice` otázka má aspoň 2 možnosti a aspoň 1 správnu (správnych môže byť viac), bez duplicít. `open` má práve 1 vzorovú odpoveď. `no_answer` nemá možnosti. Nápovedy neprezrádzajú odpoveď (overí hodnotenie LLM). |
+| Rozdelenie do hodín je korektné. | Súčet `time_to_handle + time_to_explain` v jednom unite (hodine) je v rozmedzí ±20% zadanej dĺžky hodiny. 0 porušení prerekvizít (Tool B už dnes vytvára graf prerekvizít). Žiadna prázdna hodina. |
+| Kvalita sa nezhorší. | V referenčnom dokumente je priemerné skóre `Faithfulness` voči zdroju a podiel LO, ktoré prejdú filtrom kvality, aspoň taký ako dnes (východisková hodnota sa zmeria v M1 - Míľniku 1). |
+| Model sa dá vymeniť konfiguráciou. | Zmena poskytovateľa LLM alebo embeddingov (cloud alebo lokálny server) je iba zmena premenných prostredia. |
+| API odpovedá rýchlo. | Endpointy stavu a výsledku odpovedajú do 200 ms, dlhé spracovanie beží asynchrónne. |
 
-Optional/analysis only: `post_statistics.analyze_evaluations`, `lexical_overlap_computation.lexical_overlap` (`/statistics` endpoint).
+## Assumptions
 
-### 2.2 Data shapes (as produced today)
+- Cieľový formát výstupu (`units.json`) je stanovený a musí sa dodržať presne, bez extra fields. Jeden unit = jedna vyučovacia hodina s názvom (`title`), popisom (`description`) a otázkami. Tool B už dnes vytvára LO v tomto formáte.
+- `time_to_handle` (čas na vypracovanie študentom) a `time_to_explain` (čas na vysvetlenie) sú v sekundách a odhaduje ich LLM. Tool B to už dnes robí v `enrich_learning_objects`.
+- Pole `hints[].url` obsahuje HTML text nápovedy (napr. `<p>…</p>`), nie webovú adresu.
+- Vstupom sú dokumenty PDF, HTML a PPTX (jeden alebo viac). Tool B už dnes podporuje všetky tri. OCR zostáva voliteľný krok, o jeho predvolenom použití sa rozhodne neskôr.
+- Generovanie ide cez OpenAI-kompatibilné API. Embeddingy predvolene počíta lokálny model MiniLM (malý, beží na CPU, bez nákladov na API). Voliteľne môžu ísť cez API poskytovateľa.
+- Stránka si sama pamätá, ktoré úlohy patria ktorému používateľovi (cez `job_id` alebo vlastný `external_ref`). Služba používateľov nepozná a neposiela im upozornenia.
 
-**Atomic unit**
-```json
-{
-  "type": "definition",
-  "statement": "malloc returns a pointer to the allocated memory block.",
-  "concepts": ["malloc", "pointer"],
-  "normalized_concepts": ["malloc", "pointer"],
-  "source_title": "Module 1 - C Basics",
-  "source_page": 12
-}
-```
-`type` ∈ `definition | rule | property | algorithm_step | constraint | theorem | fact | example`.
+## Milestones
 
-**Learning object**
-```json
-{
-  "id": "3f9a1c2b",
-  "type": "definition",
-  "question": "What does malloc return?",
-  "answer": "A pointer to the start of the allocated memory block, or NULL on failure.",
-  "hint": "Think about how you access the memory afterwards. [Source: Module 1 - C Basics, p. 12]",
-  "source_statement": "malloc returns a pointer to the allocated memory block.",
-  "source_title": "Module 1 - C Basics",
-  "source_page": 12,
-  "keywords": ["malloc", "pointer", "memory"],
-  "mc_options": ["An int", "A pointer to the block", "The block size", "void"],
-  "mc_correct_index": 1,
-  "anchor": "malloc",
-  "prerequisite_ids": ["a81c09de"]
-}
-```
-`algorithm_step`/`example` LOs can also carry `expected_output`. After ECHub enrichment, an LO also gets `generated_name`, `time_to_handle` and `time_to_explain` (in seconds).
+| **Miľník** | **Obsah** |
+| --- | --- |
+| M0 - Návrh | Tento dokument, schválenie návrhu, uzavretie otvorených otázok. Kontrakt zosúladený s Mlynčekom A. |
+| M1 - Refaktor jadra htool | Oddelenie pipeline od HTML stránky a od globálneho stavu do funkcie `run_pipeline`; odstránenie globálnych logov a zdieľaných výstupných súborov, oprava nájdených chýb, meranie východiskovej kvality. |
+| M2 - LLM vrstva a konfigurácia | Centrálna konfigurácia z prostredia, nastaviteľné adresy (base URL) a modely, rozhranie `Embedder` (lokálne / API). |
+| M3 - API a úlohy | FastAPI `/v1`, `POST /v1/jobs`, queue úloh (Redis + RQ), stav a priebeh, chybové odpovede. |
+| M4 - Nové otázky a formát units | Generovanie `choice` (viac správnych) / `open` / `no_answer`, nápovedy, časy, mapovanie do `units`, JSON schéma. |
+| M5 - Rozdelenie do hodín | Režimy `single` / `lessons` / `topics` / `syllabus` alebo ako si to nastavíme, jedna hodina = jeden unit, validácia. |
+| M6 - Docker a dokončenie | Dockerfile, docker-compose, README, example volania, testy. |
 
-**Evaluation record** (one per LO per model): `lo_id`, `model`, `faithfulness` (1–5), `question_clarity` (1–5), `hint_quality` (1–5 / null), `self_contained` (yes/no), `atomic` (yes/no), `distractor_plausibility` (1–3 / null).
+## Requirements
 
-### 2.3 Current endpoints (`fastapi/main.py`)
+Označenia a znenie požiadaviek zodpovedajú stránke Mlynčeka A, takže sa obe stránky dajú porovnať 1:1. Stĺpec **"Tool B"** hovorí, koľko z toho už existuje v took B.
 
-| Method | Path | What it does |
-|---|---|---|
-| GET | `/` | serves `pipeline_ui.html` |
-| GET | `/logs` | SSE stream of **all** stdout lines (global) |
-| POST | `/extract-units` | one file → units (steps 1–3) |
-| POST | `/generate-los` | `{units}` → LOs + MC (step 4) |
-| POST | `/evaluate` | `{learning_objects, units, models, faithfulness_threshold, max_attempts}` → filtered LOs (step 5) |
-| POST | `/build-graph` | `{units, learning_objects}` → LOs with prerequisites + graphs as **pickled base64** (step 6) |
-| POST | `/statistics` | overlap + evaluation stats |
-| POST | `/add-sources` | adds new units to an existing set, rebuilds the graph |
-| POST | `/export-echub` | LOs → ECHub JSON (step 7) |
-| POST | `/save-los` | writes LOs to `/app/output/` |
+| **Requirement** | **User Story** | **Importance** | **Jira Issue** | **Tool B** | **Notes** |
+| --- | --- | --- | --- | --- | --- |
+| R1 Docker image | Ako správca chcem službu spustiť cez Docker, aby som nemusel inštalovať Python, Torch a ďalšie knižnice. | HIGH | | Čiastočne (Dockerfile existuje, modely sa sťahujú za behu) | Python 3.11-slim, torch CPU, modely zabalené v image. |
+| R2 Jedno volanie spustí všetko | Ako stránka chcem poslať dokument a spôsob rozdelenia a nič viac. Všetky kroky nech služba spustí sama. | HIGH |  | Nie (HTML stránka volá kroky jeden po druhom) | `POST /v1/jobs`, FastAPI, prefix `/v1`. |
+| R3 Asynchrónne úlohy | Ako stránka chcem sledovať stav, lebo spracovanie trvá rádovo minúty. | HIGH |  | Nie (synchrónne requesty) | 202 + `job_id`, stav, priebeh, zrušenie. |
+| R4 Spracovanie bez prítomnosti používateľa | Ako používateľ chcem odísť zo stránky a po návrate vidieť hotový výsledok. | HIGH |  | Nie | Výsledok sa uchová v `/data`, stav úloh prežije reštart. |
+| R5 Vlastný identifikátor stránky | Ako stránka chcem k úlohe pripojiť svoj identifikátor (napr. používateľa alebo kurzu) a podľa neho úlohy neskôr nájsť. | MEDIUM | - | Nie | `external_ref`, `GET /v1/jobs?external_ref=…` |
+| R6 Výstup vo formáte units | Ako stránka chcem dostať JSON presne v dohodnutom formáte `units`. | HIGH |  | Čiastočne (`echub_format_converter`) | JSON schéma, validácia pred odoslaním. |
+| R7 Hodina = unit | Ako učiteľ chcem, aby bol výstup rozdelený na vyučovacie hodiny, každá s názvom a popisom. | HIGH |  | Nie (súčasne 1 unit = 1 zdrojový dokument) | `units[]`: `title`, `description`, `questions`. |
+| R8 Spôsob rozdelenia | Ako učiteľ chcem dať všetko do jednej hodiny alebo určiť, podľa čoho sa má obsah rozdeliť. | HIGH |  | Nie | `single`, `lessons`, `topics`, `syllabus` alebo podľa neskôr dohodnutého rozdelenia tímom |
+| R9 Nové typy otázok | Ako učiteľ chcem otázky s možnosťami, otvorené otázky a úlohy bez vyhodnotenia, s nápovedami a časmi. | HIGH |  | Čiastočne (`choice` s 1 správnou odpoveďou, `open`, 1 nápoveda, časy) | `choice` (aj viac správnych), `open`, `no_answer` (nevyhodnocuje sa), 1 až 2 nápovedy, časy odhaduje LLM. |
+| R10 Nezávislosť od poskytovateľa LLM | Ako správca chcem použiť model iného výrobcu alebo lokálny model bez zmeny kódu. | HIGH | | Čiastočne (OpenAI-kompatibilné API, ale pevné adresy a poskytovatelia) | OpenAI-kompatibilný adaptér pokrýva Groq, OpenRouter, OpenAI, Mistral, Gemini (OpenAI-kompatibilný endpoint), Ollama, vLLM; adaptér pre Anthropic iba v prípade potreby. |
+| R11 Embeddingy cez API alebo lokálnym modelom | Ako správca chcem embeddingy počítať cez API zvoleného poskytovateľa alebo lokálnym modelom. | MEDIUM | - | Čiastočne (iba lokálny MiniLM) | Rozhranie `Embedder`: lokálny MiniLM (predvolený) alebo API, prahy podľa modelu. |
+| R12 Konfigurácia cez prostredie | Ako správca chcem meniť modely, prahy a limity bez úpravy kódu. | MEDIUM | - | Čiastočne (`GEN_MODEL`, `INTER_CALL_DELAY`, `REASONING_EFFORT` v .env) | pydantic-settings, `.env.example` (premenovaný z `env_template`), prefix `LOGEN_`. |
+| R13 Chyby a limity | Ako stránka chcem jasné chybové odpovede (zlý súbor, veľký súbor, chyba LLM). | MEDIUM | - | Čiastočne (iba nepodporovaný typ súboru) | Jednotný formát chyby. |
+| R14 OpenAPI dokumentácia | Ako vývojár stránky chcem vidieť popis API a vyskúšať ho v prehliadači. | MEDIUM | - | Áno (FastAPI `/docs`) | `/docs` a `/openapi.json`. |
+| R15 Voliteľné OCR | Ako správca chcem OCR zapnúť alebo vypnúť podľa typu dokumentov. | LOW | - | Nie | Parameter `extraction.ocr`, samostatný variant obrazu. |
 
-The HTML page calls these one by one and sends the whole JSON from one step into the next.
+## Out of Scope
 
-### 2.4 What blocks use from a backend
+- Samotná implementácia (SCRUM-34 je iba návrh a dokument).
+- HTML stránka (`pipeline_ui.html`) ako klient služby. Môže zostať ako nástroj pre vývojárov nad starými endpointmi, ale nie je súčasťou kontraktu.
+- Súčasné pomocné endpointy `/statistics`, `/add-sources`, `/save-los`. Pridanie zdrojov k hotovému výsledku = nová úloha.
+- Preusporiadanie hotových výsledkov do iného počtu hodín bez nového spracovania. Nové rozdelenie = nová úloha.
+- Správa používateľov a roly. Stačí jednoduchý API kľúč.
+- Upozornenia používateľovi o dokončení (e-mail, notifikácie, webhook). Stránka si stav zistí sama.
+- Trénovanie alebo dolaďovanie (fine-tuning) vlastného modelu.
+- GPU akcelerácia, horizontálne škálovanie a Kubernetes.
 
-This is the real "UI coupling". There is no Streamlit to remove, but the browser acts as the orchestrator and the state store.
+## Design
 
-1. **Orchestration lives in the browser.** No endpoint runs the whole pipeline. The backend would have to reimplement the sequence the HTML page does and carry megabytes of JSON between calls.
-2. **Synchronous long requests.** `/extract-units`, `/generate-los`, `/evaluate` and `/build-graph` each run for minutes. Proxies and HTTP clients time out, and a dropped connection loses the work.
-3. **Global progress and logs.** `sys.stdout` is replaced by `_LogCapture`, which feeds one global `_log_queue`. `_current_stage` is a global variable. Two parallel runs mix their logs, and there is no per-run progress.
-4. **Shared output files.** `_save()` writes to fixed paths like `/app/output/atomic_units.json`. Every run overwrites the previous one, so runs aren't isolated.
-5. **Steps depend on disk.** `filter_and_regenerate` reads `atomic_units.json` from a directory (`/evaluate` works around this with a temp dir).
-6. **Pickled graphs.** `concept_graph_b64` / `knowledge_graph_b64` are Python pickles. A non-Python backend can't read them, and unpickling untrusted data is unsafe. They should be node-link JSON.
-7. **Config is fixed at import time.** `llm_service.py` picks the provider when it is imported, hard-codes the base URLs (the `*_BASE_URL` values in `env_template` are never read) and calls `exit(1)` when no key is set. `concept_normalizer.py` loads spaCy at import time.
-8. **Duplicated logic.** The LO post-processing (id, keywords, source hint) is copy-pasted in three places: `main.py` `/generate-los`, `main.py` `/add-sources` and `ems.filter_and_regenerate`. The graph build is duplicated between `/build-graph` and `/add-sources`.
-9. **Shared worker pool.** `ThreadPoolExecutor(max_workers=2)` has no queue limit and no cancellation.
+### 1. Súčasný stav
 
-### 2.5 Bugs found during the analysis (separate tickets)
+Súčasne proces riadi HTML stránka `fastapi/pipeline_ui.html`, ktorá postupne volá `/extract-units` → `/generate-los` → `/evaluate` → `/build-graph` → `/export-echub` (v `fastapi/main.py`). Každý endpoint vráti výsledok prehliadaču a prehliadač ho pošle do ďalšieho kroku. Pri prerábaní treba vyriešiť tieto problémy:
 
-| Bug | Effect |
-|---|---|
-| `beautifulsoup4` and `python-pptx` are missing from `requirements.txt` / `requirements.lock.txt` | HTML and PPTX uploads fail inside the Docker image |
-| `/extract-units` never sets `source_title` / `source_page` on units (only `ems.process_book_with_checkpoints` does) | LOs from the web flow lose their source reference in hints and in ECHub grouping |
-| The UI calls `POST /cancel` and `POST /cancel/clear`, which don't exist | the Cancel button does nothing |
-| README says the MiniLM model is downloaded at build time, but the Dockerfile doesn't do it | first request downloads ~90 MB at runtime; fails without internet |
-| DAG cycle removal deletes `cycle[-1]→cycle[0]` for every cycle from one `simple_cycles` list | can raise when two cycles share that edge, and doesn't guarantee a DAG |
-| `requirements.lock.txt` is UTF-16 encoded | awkward for diffs and tooling; should be UTF-8 |
+| Problém v súčasnom kóde | Dôsledok | Riešenie v návrhu |
+| --- | --- | --- |
+| Kroky riadi prehliadač a drží aj stav (megabajty JSON medzi volaniami). | Pipeline sa nedá spustiť jedným volaním, ale na backende táto postupnosť existuje, len bude musieť byť prerobená, aby sedela na endpoints | Jedna funkcia `run_pipeline(params, progress_callback)`, všetko spustí worker. |
+| Každý endpoint beží synchrónne niekoľko minút (zdieľaný `ThreadPoolExecutor(max_workers=2)`). | HTTP request vyprší, pri výpadku spojenia sa práca stratí. | Asynchrónne úlohy cez queue a worker. |
+| Logy a priebeh sú globálne: `sys.stdout` je presmerovaný do jednej `_log_queue` a `_current_stage` je globálna premenná. | Súbežné úlohy si miešajú logy, priebeh za jednotlivú úlohu neexistuje. | `progress_callback` pre každú úlohu, uložený v Redise, logovanie po úlohách. |
+| Výstupy sa zapisujú na pevné cesty `/app/output/*.json` (`_save`). | Súbežné úlohy by si prepisovali súbory. | Kroky vracajú dáta, zápis rieši vrstva úloh do `/data/jobs/{id}/`. |
+| `filter_and_regenerate` (`ems.py`) číta `atomic_units.json` z disku. | Skrytá závislosť na disku (`/evaluate` to obchádza dočasným priečinkom). | Jednotky sa odovzdávajú v pamäti. |
+| Grafy sa vracajú ako gpickle v base64. | Klienti mimo Pythonu ich neprečítajú, rozbaľovanie pickle nie je bezpečné. | Graf ako JSON (node-link) a iba v `/report`. |
+| `llm_service.py` vyberá poskytovateľa pri importe, má pevné adresy (hodnoty `*_BASE_URL` v `env_template` sa ignorujú) a bez kľúča zavolá `exit(1)`. | Zmena poskytovateľa = zmena kódu, služba spadne namiesto toho, aby nahlásila chybu. | Konfigurácia z prostredia pri štarte (pydantic-settings), problém nahlási `/health` a `/v1/info`. |
+| Výstup: `choice` má iba jednu správnu odpoveď (`mc_correct_index`), 1 nápovedu, chýba `no_answer`, 1 unit = 1 zdrojový dokument. | Nezodpovedá dohodnutému formátu `units` ani rozdeleniu do hodín. | Nové typy otázok, 1–2 nápovedy, krok `split` (kap. 8). |
+| Dodatočné spracovanie LO (id, kľúčové slová, zdroj v nápovede) je skopírované 3× (`main.py` dvakrát, `ems.py`). | Opravy treba robiť na troch miestach. | Jedna spoločná pomocná funkcia.
 
-### 2.6 Keep vs. change
+### 2. Typický scenár volania
 
-- **Keep as is:** the domain modules (`atomic_unit_extractor`, `learning_object_generator`, `learning_object_evaluator`, `graph_builder`, `echub_format_converter`, `embedding_service`, `utilities`). Their prompts and logic are the thesis work and stay untouched.
-- **Change:** `main.py` gets split into an API layer, a job layer and a pipeline runner. `llm_service.py` gets env-based configuration. A new module adds the course split.
+Scenár je rovnaký ako pri Mlynčeku A. Stránka nepozná jednotlivé kroky spracovania, pošle jeden request a služba spraví zvyšok sama.
 
----
-
-## 3. Target architecture
-
-### 3.1 Pipeline
-
-```mermaid
-flowchart TD
-    A[/"Upload: PDF / HTML / PPTX"/] --> B["1 · Text extraction<br/>PyPDF2 · BeautifulSoup · python-pptx<br/>(+ optional OCR fallback)"]
-    B --> C["2 · Split into sections<br/>page / slide / heading"]
-    C --> D["3a · Extract atomic units 🤖"]
-    D --> E["3b · Deduplicate (MiniLM embeddings)<br/>3c · Normalize concepts (spaCy)"]
-    E --> F["4a · Generate LOs 🤖<br/>4b · MC distractors 🤖"]
-    F --> G{"5 · Evaluate 🤖🤖<br/>faithfulness · atomic · self-contained"}
-    G -- "fails, attempts left" --> H["Regenerate from source unit 🤖"]
-    H --> G
-    G -- "passes / attempts used up" --> I["6 · Knowledge graph<br/>concept graph → candidate edges → LLM check 🤖 → DAG"]
-    I --> J["7 · Enrich 🤖<br/>names, time_to_handle, time_to_explain"]
-    J --> K["8 · Course split (NEW)<br/>hours + split_criterion → lessons"]
-    K --> L["ECHub export"]
-    L --> M[("result.json<br/>/data/jobs/{id}/")]
-
-    classDef new fill:#fff3cd,stroke:#d39e00;
-    class K new;
-```
-🤖 = LLM call (external provider). Everything else runs locally on CPU.
-
-### 3.2 Components
-
-```mermaid
-flowchart LR
-    BE["Team backend"] -- "HTTPS + X-API-Key" --> API
-
-    subgraph SVC["LO Service container (port 8000)"]
-        API["FastAPI /v1 API"] --> STORE[("SQLite job store")]
-        API --> Q["Job queue"]
-        Q --> W["Worker thread<br/>(MAX_CONCURRENT_JOBS)"]
-        W --> P["Pipeline runner<br/>run_pipeline(params, progress)"]
-        P --> STORE
-        P --> EMB["MiniLM + spaCy<br/>(baked into image)"]
-    end
-
-    P -- "OpenAI-compatible API" --> LLM["LLM provider<br/>Groq · OpenRouter · vLLM/Ollama"]
-    SVC --- VOL[("/data volume<br/>jobs.db, inputs, checkpoints, results")]
-    W -. "optional webhook" .-> BE
-```
-
-### 3.3 Request flow
+1. Stránka pošle `POST /v1/jobs` s dokumentmi a parametrom `split`, napr. "všetko do jednej hodiny" (`mode: single`) alebo "rozdeľ podľa tematických celkov na hodiny po 45 minút" (`mode: topics`).
+2. Služba hneď odpovie `202 Accepted` a vráti `job_id`.
+3. Worker sám spustí všetky kroky: extrakcia → jazyk → atomické jednotky → LO → hodnotenie LO a opätovné generovanie → graf prerekvizít → otázky → odhad časov → rozdelenie do hodín → zostavenie výsledného JSON.
+4. Stránka si `job_id` uloží k používateľovi. Používateľ môže stránku zavrieť; spracovanie beží ďalej.
+5. Keď je používateľ na stránke (hneď alebo po návrate), stránka sa pýta na stav (`GET /v1/jobs/{id}`). Ak `job_id` nemá, nájde úlohy podľa svojho identifikátora (`GET /v1/jobs?external_ref=…`).
+6. Stránka stiahne výsledok (`GET /v1/jobs/{id}/result`): JSON presne vo formáte `units`, kde každý unit je jedna hodina. Údaje navyše (zdroje, skóre hodnotenia, graf) sú na `GET /v1/jobs/{id}/report`.
 
 ```mermaid
 sequenceDiagram
-    participant BE as Backend
-    participant API as LO Service API
-    participant W as Worker
-    participant LLM as LLM provider
+    participant P as Stránka (backend)
+    participant API as api
+    participant R as redis
+    participant W as worker
+    participant LLM as Poskytovateľ LLM
 
-    BE->>API: POST /v1/jobs (files + params)
-    API->>API: validate, save files, insert job (pending)
-    API-->>BE: 202 {job_id}
-    API->>W: enqueue job_id
-    W->>W: status = running
-    loop each stage / batch
+    P->>API: POST /v1/jobs (dokumenty + split + external_ref)
+    API->>API: validácia, uloženie do /data/jobs/{id}/
+    API->>R: zaradenie úlohy do fronty
+    API-->>P: 202 {job_id}
+    R->>W: úloha
+    loop každý krok / batch
         W->>LLM: chat completion
         LLM-->>W: JSON
-        W->>W: update progress, checkpoint
+        W->>R: priebeh (krok, %)
     end
-    W->>W: write result.json, status = done
-    opt callback_url set
-        W-->>BE: POST callback {job_id, status}
+    W->>W: result.json + report.json
+    W->>R: stav = completed
+    loop každých 5–10 s (kým je používateľ na stránke)
+        P->>API: GET /v1/jobs/{id}
+        API-->>P: {status, progress}
     end
-    loop every 5–10 s
-        BE->>API: GET /v1/jobs/{id}
-        API-->>BE: {status, progress}
+    P->>API: GET /v1/jobs/{id}/result
+    API-->>P: 200 {units: [...]}
+```
+
+### 3. Architektúra
+
+Služba sa skladá z troch kontajnerov, rovnako ako Mlynček A: API, worker a Redis. API prijíma requesty a vracia stav a výsledky. Dlhé spracovanie robí worker, ktorý si úlohy berie z fronty v Redise. LLM volá worker cez API zvoleného poskytovateľa. Ak sa nasadí lokálny model, beží ako ďalší voliteľný kontajner.
+
+| Komponent | Technológia | Zodpovednosť |
+| --- | --- | --- |
+| api | FastAPI + Uvicorn, Pydantic v2 | Validácia vstupu, nahratie dokumentov, vytvorenie úlohy, stav, výsledky, OpenAPI dokumentácia, API kľúč |
+| worker | RQ (Redis Queue), rovnaký obraz ako api | Spustí všetky kroky pipeline, hlási priebeh, uloží výsledný JSON a report do `/data`. Obsahuje lokálne modely MiniLM a spaCy. |
+| redis | `redis:7-alpine` (appendonly) | Fronta úloh, stav úlohy, priebeh (krok, progress). |
+| /data (volume) | Docker volume | Nahraté dokumenty, výsledky a reporty, mazanie po TTL (7 dní alebo ako to budeme chcieť nastaviť). |
+| llm (voliteľné) | Ollama alebo vLLM, GPU | Lokálny model s OpenAI-kompatibilným API. Zapne sa profilom `local-llm`. |
+
+```mermaid
+flowchart LR
+    P["Stránka / backend"] -- "HTTPS + X-API-Key" --> API
+
+    subgraph SVC["docker compose"]
+        API["api<br/>FastAPI /v1"] -- "zaradenie úlohy, čítanie stavu" --> R[("redis<br/>fronta + stav")]
+        R -- "úloha" --> W["worker (RQ)<br/>run_pipeline<br/>MiniLM + spaCy"]
+        W -- "priebeh, stav" --> R
+        API --- D[("/data volume<br/>jobs/{id}/")]
+        W --- D
+        L["llm (voliteľné)<br/>Ollama / vLLM"]
     end
-    BE->>API: GET /v1/jobs/{id}/result
-    API-->>BE: 200 result JSON
+
+    W -- "OpenAI-kompatibilné API" --> EXT["Poskytovateľ LLM<br/>Groq · OpenRouter · OpenAI · …"]
+    W -. "profil local-llm" .-> L
 ```
 
----
+**Spracovanie bez prítomnosti používateľa**
 
-## 4. API
+- **Úloha nie je viazaná na spojenie.** Worker spracúva úlohu z queue a o stránke ani o prehliadači nevie. Zatvorenie stránky alebo výpadok spojenia spracovanie nezastaví.
+- **Trvalé uloženie.** Každá úloha má priečinok `/data/jobs/{id}/`, v ktorom sú:
+  - `job.json`: stav, parametre, `external_ref`, čas vytvorenia;
+  - nahraté dokumenty;
+  - `result.json` a `report.json`.
 
-All new endpoints sit under `/v1`. Requests need the `X-API-Key: <SERVICE_API_KEY>` header (service-to-service auth), except `/health` and `/ready`. FastAPI generates the OpenAPI spec at `/docs` and `/openapi.json`, so the backend team can generate a client from it.
+  Redis ukladá dáta na disk (appendonly), takže queue prežije reštart.
+- **Reštart počas spracovania.** Ak worker spadne alebo sa reštartuje, nedokončená úloha sa vráti do queue a spustí sa znova od začiatku: max. 2 pokusy, potom `failed`. *Neskôr:* pokračovanie od posledného dokončeného kroku, keďže B už má mechanizmus checkpointov v `ems.process_book_with_checkpoints`. Hotové výsledky sa nestrácajú.
+- **Doba uchovania.** Výsledky sú dostupné 7 (alebo koľko dohodneme) dní (`LOGEN_RESULT_TTL_DAYS`), potom ich služba zmaže.
 
-### 4.1 Endpoints
+### 4. Kroky spracovania
 
-| Method | Path | Purpose | Success |
-|---|---|---|---|
-| POST | `/v1/jobs` | Create a job: files + parameters | `202` + `job_id` |
-| GET | `/v1/jobs/{job_id}` | Status and progress | `200` |
-| GET | `/v1/jobs/{job_id}/result` | Result JSON (`?format=full` default, `?format=echub` only the ECHub export) | `200`, or `409` if not finished |
-| DELETE | `/v1/jobs/{job_id}` | Cancel a running/pending job; for a finished one, delete its data | `202` (cancel) / `204` (deleted) |
-| GET | `/v1/jobs/{job_id}/events` | Optional SSE stream of this job's log lines and progress | `200 text/event-stream` |
-| GET | `/v1/jobs` | Optional list (`?status=running&limit=20`) | `200` |
-| GET | `/health` | Liveness: the process is up | `200 {"status":"ok"}` |
-| GET | `/ready` | Readiness: LLM key configured, embedding model loaded, `/data` writable | `200` / `503` |
+Prvé kroky zostávajú ako sú v súčasnej verzii (prompty a logika pochádzajú z bakalárskej práce). Mení sa generovanie otázok (nové typy) a pribudnú kroky `split` a `output`. LO, graf prerekvizít a hodnotenia zostávajú interné: slúžia na generovanie otázok a na určenie poradia a tém. Vo výstupnom formáte nie sú, nájdu sa iba v `/report`.
 
-**Single steps ("only extraction", "only LOs", "only questions").** These go through the same `POST /v1/jobs` with a `stages` parameter, not through separate endpoints. Every step takes minutes, so every step needs the same async handling, status and errors anyway. One endpoint keeps that in one place. Examples:
+```mermaid
+flowchart TD
+    A[/"Dokumenty: PDF · HTML · PPTX"/] --> B["1 · Extrakcia textu<br/>PyPDF2 · BeautifulSoup · python-pptx<br/>(+ voliteľné OCR)"]
+    B --> LG["1b · Jazyk<br/>auto · sk · en"]
+    LG --> C["2 · Sekcie<br/>strana / snímka / nadpis"]
+    C --> D["3 · Atomické jednotky 🤖<br/>+ deduplikácia (MiniLM) + normalizácia pojmov (spaCy)"]
+    D --> E["4 · Generovanie LO 🤖"]
+    E --> F{"5 · Hodnotenie LO 🤖🤖<br/>vernosť · atomickosť · samostatnosť"}
+    F -- "nevyhovuje, zostávajú pokusy" --> G["Opätovné generovanie 🤖"]
+    G --> F
+    F -- "OK / pokusy minuté" --> H["6 · Graf prerekvizít<br/>graf pojmov → kandidáti → kontrola LLM 🤖 → DAG"]
+    H --> I["7 · Otázky 🤖 (NOVÉ TYPY)<br/>choice · open · no_answer, 1–2 nápovedy"]
+    I --> J["8 · Názvy a časy 🤖<br/>name, time_to_handle, time_to_explain"]
+    J --> K["9 · Rozdelenie do hodín (NOVÉ)<br/>single · lessons · topics · syllabus"]
+    K --> L["10 · Výstup (units) + validácia voči JSON schéme"]
+    L --> M[("result.json + report.json")]
 
-- `"stages": ["extract"]` → returns only units.
-- `"stages": ["generate", "evaluate"]` with `"input": {"units": [...]}` → starts from units the backend already has.
-- `"stages": ["export"]` with `"input": {"learning_objects": [...]}` → re-export edited LOs.
-
-Allowed stage names, in order: `extract`, `generate`, `evaluate`, `graph`, `enrich`, `course`, `export`. A request must pick a continuous range. The inputs a stage needs must come either from an earlier stage in the same job or from `input`. Default: all stages.
-
-The old synchronous endpoints (`/extract-units`, …) stay for the HTML page during the transition. Later the page can move to `/v1` as well.
-
-### 4.2 `POST /v1/jobs`
-
-`multipart/form-data`:
-
-- `files`: one or more files (`.pdf`, `.html`, `.htm`, `.pptx`), max `MAX_UPLOAD_MB` each
-- `params`: JSON string (schema below)
-- optional `titles`: JSON array of display titles, one per file (default: the file name). The title is used as `source_title`.
-
-**`params`**
-
-| Field | Type | Default | Meaning |
-|---|---|---|---|
-| `hours` | int ≥ 1 | `null` | Course length: how many lessons to split the LOs into. `null` = no course split |
-| `split_criterion` | enum | `by_prerequisites` | How LOs are spread over lessons (see 4.3) |
-| `gen_model` | string | env `GEN_MODEL` | Model for extraction, generation and the graph check (must be in `ALLOWED_MODELS`) |
-| `eval_models` | string[] | env `EVAL_MODELS` | Models for the quality filter |
-| `faithfulness_threshold` | float 1–5 | `3.0` | Minimum average faithfulness |
-| `max_attempts` | int 1–5 | `2` | Evaluate/regenerate rounds |
-| `mc` | bool | `true` | Generate multiple-choice options |
-| `echub_mode` | `by_source` \| `single_unit` \| `by_lesson` | `by_lesson` if `hours` set, else `by_source` | ECHub grouping |
-| `unit_title`, `unit_description` | string | — | For `single_unit` mode |
-| `stages` | string[] | all | See 4.1 |
-| `input` | object | — | `{units?, learning_objects?}` when starting mid-pipeline (JSON-only request: send `application/json` with no files) |
-| `callback_url` | URL | — | Called with `{job_id, status}` when the job ends |
-
-**Example**
-```json
-{
-  "hours": 6,
-  "split_criterion": "by_prerequisites",
-  "gen_model": "openai/gpt-oss-120b",
-  "eval_models": ["qwen/qwen3.8-27b", "openai/gpt-oss-120b"],
-  "faithfulness_threshold": 3.0,
-  "max_attempts": 2,
-  "callback_url": "https://backend.example/api/lo-jobs/callback"
-}
+    classDef new fill:#fff3cd,stroke:#d39e00;
+    class I,K,L new;
 ```
+🤖 = volanie LLM (externý poskytovateľ). Všetko ostatné beží lokálne na CPU.
 
-**Response `202 Accepted`** (plus a `Location: /v1/jobs/7d1e…` header)
-```json
-{
-  "job_id": "7d1e4b2c-8f0a-4c51-9b7e-2a6f3e9d1c40",
-  "status": "pending",
-  "created_at": "2026-10-23T09:14:02Z",
-  "links": {
-    "self": "/v1/jobs/7d1e4b2c-8f0a-4c51-9b7e-2a6f3e9d1c40",
-    "result": "/v1/jobs/7d1e4b2c-8f0a-4c51-9b7e-2a6f3e9d1c40/result"
-  }
-}
-```
+| # | Krok | Kód dnes | Zmena |
+| --- | --- | --- | --- |
+| 1 | Extrakcia textu | `utilities.extract_text_from_source` | voliteľné OCR pre strany bez textu |
+| 1b | Jazyk | – | nové: `options.language` (`auto` = rozpoznanie `sk`/`en` z textu), pričom prompty dostanú jazyk výstupu. Normalizáciu pojmov v slovenčine treba overiť (spaCy je dnes iba anglický) |
+| 2 | Sekcie | `utilities.split_into_sections` | bez zmeny |
+| 3 | Atomické jednotky | `atomic_unit_extractor.extract_atomic_units_batch`, `clean_atomic_units`, `concept_normalizer.normalize_units` | nastaviť `source_title`/`source_page`, embeddingy cez `Embedder` |
+| 4 | LO | `learning_object_generator.generate_learning_object_batch` | spoločná funkcia na dodatočné spracovanie |
+| 5 | Hodnotenie LO | `ems.filter_and_regenerate`, `learning_object_evaluator.evaluate_learning_objects_batch` | jednotky v pamäti namiesto z disku |
+| 6 | Graf | `graph_builder.build_concept_graph`, `build_layered_learning_paths`, `verify_prerequisites_batched`, `store_prerequisites` | bezpečnejšie odstraňovanie cyklov, JSON namiesto pickle |
+| 7 | Otázky | `generate_mc_variants_batch` (choice s 1 správnou odpoveďou) | nové prompty pre `choice` s viacerými správnymi / `no_answer` (kap. 7) |
+| 8 | Názvy a časy | `echub_format_converter.enrich_learning_objects` | orezanie časov na rozsah podľa typu |
+| 9 | Rozdelenie do hodín | – | nový modul (kap. 8) |
+| 10 | Výstup | `echub_format_converter.lo_to_question`, `convert_by_source` | mapovanie do hodín, validácia voči JSON schéme |
 
-### 4.3 Course split (new feature)
+Každá funkcia pipeline dostane voliteľný parameter `progress_callback(stage, done, total)`. Cykly cez batche už vedia, pri ktorom batchi sú (dnes to iba vypisujú). Worker zapisuje priebeh do Redisu, takže stránka vidí napríklad "questions, 62%".
 
-`hours` = number of lessons N. Each lesson becomes one ECHub unit. `split_criterion` decides which LOs go together:
+### 5. LLM vrstva - iní providers a lokálny model
 
-| Criterion | Rule | Good for |
-|---|---|---|
-| `by_prerequisites` *(default)* | Topologically sort the prerequisite DAG, then cut it into N consecutive chunks balanced by estimated time. A lesson never needs a later lesson | Courses where order matters |
-| `by_topic` | Find communities in the concept graph (networkx `louvain_communities`), assign each LO by its `anchor`, then merge/split communities until there are N | Topic-based modules |
-| `by_source` | Keep the document and page order and cut it into N parts balanced by time. If N equals the number of files, use 1 file = 1 lesson | Material that is already a lecture series |
-| `even_time` | Ignore structure and balance the total `time_to_handle + time_to_explain` per lesson | Exam pools, revision sets |
+Tool B volá modely na jednom mieste: `call_llm` v `llm_service.py`, cez SDK `openai`. Funkcia už obsahuje opakovanie pokusov, čakanie pri limite požiadaviek (`RateLimitError`) a smerovanie niektorých modelov cez OpenRouter (`LEGACY_ROUTES`, `OPENROUTER_MODELS`). To pokrýva väčšinu práce, chýba len konfigurovateľnosť.
 
-The time-based criteria need the `enrich` stage (time estimates), so `course` always runs after `enrich`. Each lesson gets a title from the LLM, made from its LOs' names (one extra short call per lesson). The doc proposes no target minutes per hour. The service only reports `estimated_minutes` per lesson, and the backend decides whether a lesson is too full. *(Open question: should one hour also mean a time budget, so LOs get trimmed to fit? See section 9.)*
+| Adaptér | Pokrýva | Generovanie / embeddingy |
+| --- | --- | --- |
+| OpenAICompatibleAdapter (existuje už dnes, dostane nastaviteľnú `base_url`) | Groq, OpenRouter, OpenAI, Mistral, GitHub Models, Gemini (OpenAI-kompatibilný endpoint), lokálny server (Ollama, vLLM, LM Studio) | áno / áno (`/v1/chat/completions`, `/v1/embeddings`) |
+| LocalEmbedder (existuje už dnes: `embedding_service.py`) | `all-MiniLM-L6-v2` na CPU vo workeri | – / áno (predvolený) |
+| AnthropicAdapter (iba v prípade potreby) | Claude modely | áno / nie (embeddingy od iného poskytovateľa) |
 
-### 4.4 `GET /v1/jobs/{job_id}`
+**Zásady**
 
-**Running**
-```json
-{
-  "job_id": "7d1e4b2c-8f0a-4c51-9b7e-2a6f3e9d1c40",
-  "status": "running",
-  "created_at": "2026-10-23T09:14:02Z",
-  "started_at": "2026-10-23T09:14:03Z",
-  "finished_at": null,
-  "progress": {
-    "stage": "evaluate",
-    "stage_index": 3,
-    "stages_total": 7,
-    "stage_done": 14,
-    "stage_total": 40,
-    "percent": 47,
-    "message": "Evaluating batch 14/40 with openai/gpt-oss-120b"
-  },
-  "error": null
-}
-```
+- **Výber cez konfiguráciu.** Poskytovateľ a model sa dajú nastaviť zvlášť pre generovanie, hodnotenie (`LOGEN_LLM_MODEL_EVAL`, dnes napevno v `main.py` a `ems.py`) a embeddingy.
+- **Embeddingy.** Predvolene zostáva lokálny MiniLM: malý model (~90 MB), beží na CPU, nič nestojí a nepotrebuje sieť. Cez `LOGEN_EMBED_PROVIDER=openai_compatible` + `LOGEN_EMBED_BASE_URL` sa dajú počítať cez API poskytovateľa (R11) bez zmeny kódu.
+- **Opakovanie a chyby** zostávajú v `call_llm`. Pribudne časový limit volania a namiesto `exit(1)` funkcia vyhodí zrozumiteľnú výnimku, ktorú úloha nahlási ako `llm_auth` / `llm_error`.
+- **JSON výstup.** Adaptér zapne JSON režim, ak ho poskytovateľ má. `utilities.parse_json` (vrátane opráv escape sekvencií) a čiastočná obnova JSON v hodnotiacom module zostávajú.
+- **Prahy podľa embedding modelu.** Prah deduplikácie (`similarity_threshold = 0.82` v `clean_atomic_units`) platí pre MiniLM. Pri inom modeli sa nakalibruje na referenčnom dokumente a uloží v konfigurácii.
+- **Batche a kontextové okno.** Veľkosti batchov (dnes 3 sekcie pri extrakcii, 5 jednotiek pri generovaní, veľkosti podľa modelu v `MODEL_BATCH_SIZES` v hodnotiacom module) sa presunú do konfigurácie.
+- **Jazyk.** Prompty a model spaCy sú dnes v angličtine. Slovenské zdroje treba overiť (otvorená otázka).
 
-**Done:** `"status": "done"`, `"percent": 100`, `finished_at` set, plus `"summary": {"units": 112, "learning_objects": 98, "lessons": 6}`.
+### 6. Výstupný formát (units)
 
-**Failed**
-```json
-{
-  "job_id": "7d1e4b2c-8f0a-4c51-9b7e-2a6f3e9d1c40",
-  "status": "failed",
-  "finished_at": "2026-10-23T09:31:40Z",
-  "progress": { "stage": "extract", "stage_index": 1, "stages_total": 7, "percent": 9 },
-  "error": {
-    "code": "LLM_RATE_LIMIT",
-    "message": "Rate limit persisted after 6 attempts for model openai/gpt-oss-120b.",
-    "stage": "extract"
-  }
-}
-```
+Výstup je jeden JSON presne podľa dohodnutého formátu, rovnako ako pri Mlynčeku A. Pole `units` obsahuje vyučovacie hodiny, každá hodina má názov, popis a zoznam otázok. Do formátu nepridávame žiadne ďalšie polia. Údaje navyše sú v samostatnom endpointe `GET /v1/jobs/{id}/report`: zdroje a strany, typy LO, prerekvizity, skóre hodnotenia, graf a varovania.
 
-Statuses: `pending → running → done | failed | cancelled`. `percent` is a weighted estimate. Stages are weighted by how many LLM calls they usually make (extract ~20 %, generate ~25 %, evaluate ~30 %, graph ~15 %, the rest ~10 %).
+| Pole | Význam | Ako ho vyplníme |
+| --- | --- | --- |
+| `units[]` | Vyučovacie hodiny | Výsledok rozdelenia (kap. 8). Pri `single` práve jeden unit. |
+| `units[].title` | Názov hodiny | LLM podľa LO v hodine. V režime `topics` názov témy, v režime `syllabus` názov od učiteľa. |
+| `units[].description` | Popis hodiny | 1-2 vety z LLM, v režime `syllabus` popis od učiteľa, ak ho poslal. |
+| `questions[].name` | Krátky názov otázky | `generated_name` z `enrich_learning_objects` (5-8 slov). Dnes sa pridáva prefix `[Module X]` podľa zdroja, ten sa presunie do reportu, aby sa v rámci hodiny neopakoval. |
+| `questions[].description` | Zadanie otázky alebo úlohy | Pole `question` z LO, pri `no_answer` zadanie úlohy. |
+| `questions[].type` | `choice` \| `open` \| `no_answer` | Podľa typu otázky (kap. 7). |
+| `questions[].time_to_handle` | Čas na vypracovanie (s) | Odhad LLM, orezaný na rozsah podľa typu. |
+| `questions[].time_to_explain` | Čas na vysvetlenie (s) | Odhad LLM, orezaný na rozsah podľa typu. |
+| `questions[].hints[]` | Nápovedy `{name, url}` | `name` = úroveň (napr. "Ľahká nápoveda"), `url` = HTML text nápovedy (`<p>…</p>`). |
+| `questions[].choices[]` | Možnosti `{text, is_correct}` | `choice`: možnosti, správnych môže byť viac, `open`: 1 vzorová odpoveď, `no_answer`: prázdne. |
 
-### 4.5 `GET /v1/jobs/{job_id}/result`
+Celý príklad je v [Prílohách](api-design-appendix.md#výsledok-get-v1jobsidresult).
 
-```json
-{
-  "job_id": "7d1e4b2c-8f0a-4c51-9b7e-2a6f3e9d1c40",
-  "schema_version": "1.0",
-  "params": { "hours": 6, "split_criterion": "by_prerequisites" },
-  "sources": [
-    { "file": "module1.pdf", "title": "Module 1 - C Basics", "sections": 34, "units": 61 }
-  ],
-  "units": [
-    { "type": "definition", "statement": "malloc returns a pointer to the allocated memory block.", "concepts": ["malloc", "pointer"], "normalized_concepts": ["malloc", "pointer"], "source_title": "Module 1 - C Basics", "source_page": 12 }
-  ],
-  "learning_objects": [
-    { "id": "3f9a1c2b", "type": "definition", "question": "What does malloc return?", "answer": "A pointer to the allocated block, or NULL on failure.", "hint": "Think about how you access the memory afterwards.", "mc_options": ["An int", "A pointer to the block", "The block size", "void"], "mc_correct_index": 1, "source_title": "Module 1 - C Basics", "source_page": 12, "prerequisite_ids": ["a81c09de"], "generated_name": "Malloc Return Value and Pointer Use", "time_to_handle": 45, "time_to_explain": 30, "lesson_index": 2 }
-  ],
-  "knowledge_graph": {
-    "nodes": [ { "id": "3f9a1c2b" }, { "id": "a81c09de" } ],
-    "edges": [ { "source": "a81c09de", "target": "3f9a1c2b" } ],
-    "is_dag": true
-  },
-  "concept_graph": {
-    "nodes": [ { "id": "malloc", "centrality": 0.21 } ],
-    "edges": [ { "source": "malloc", "target": "pointer", "weight": 4 } ]
-  },
-  "course": {
-    "hours": 6,
-    "split_criterion": "by_prerequisites",
-    "lessons": [
-      { "index": 1, "title": "Variables and Basic Types", "lo_ids": ["a81c09de"], "estimated_minutes": 38 },
-      { "index": 2, "title": "Pointers and Dynamic Memory", "lo_ids": ["3f9a1c2b"], "estimated_minutes": 41 }
-    ]
-  },
-  "echub": {
-    "units": [
-      { "title": "Pointers and Dynamic Memory", "description": "Lesson 2", "questions": [
-        { "name": "[Module 1] Malloc Return Value and Pointer Use", "description": "What does malloc return?", "type": "choice", "time_to_handle": 45, "time_to_explain": 30,
-          "hints": [ { "name": "Hint", "url": "<p>Think about how you access the memory afterwards</p>" }, { "name": "Source", "url": "<p>[Source: Module 1 - C Basics]</p>" } ],
-          "choices": [ { "text": "An int", "is_correct": false }, { "text": "A pointer to the block", "is_correct": true }, { "text": "The block size", "is_correct": false }, { "text": "void", "is_correct": false } ] }
-      ] }
-    ]
-  },
-  "stats": {
-    "total_units": 112,
-    "total_los": 98,
-    "type_distribution": { "definition": 31, "rule": 18, "example": 22, "fact": 27 },
-    "regenerated_los": 9,
-    "knowledge_graph_edges": 74,
-    "llm_calls": 412,
-    "duration_seconds": 1058
-  }
-}
-```
+**Mapovanie zo súčasného výstupu B**
 
-Changes against today's output:
+| Dnes (`learning_objects.json`, ECHub export) | Formát units |
+| --- | --- |
+| ECHub: 1 unit = 1 zdrojový dokument (`convert_by_source`) | `units[]` = hodiny z rozdelenia; `title`, `description` z LLM |
+| `question` | `description` |
+| `generated_name` (+ prefix `[Module X]`) | `name` (bez prefixu) |
+| `mc_options` + `mc_correct_index` (práve 1 správna) | `type: choice`, `choices[{text, is_correct}]`, správnych môže byť viac |
+| `answer` (LO bez `mc_options`) | `type: open`, `choices: [{text: answer, is_correct: true}]` |
+| – (neexistuje) | `type: no_answer` (úloha bez vyhodnotenia) |
+| `hint` (1 reťazec + `[Source: …]`) | `hints: [{name, url: "<p>…</p>"}]`, 1-2 úrovne. Zdroj sa presunie do reportu |
+| `time_to_handle`, `time_to_explain` | rovnaké, fitnuté na rozsah |
+| `id`, `type` (definition, rule…), `source_statement`, `source_title`, `source_page`, `keywords`, `anchor`, `prerequisite_ids`, `expected_output`, hodnotenia | nie sú vo formáte, dostupné v `/v1/jobs/{id}/report` |
+| `concept_graph_b64`, `knowledge_graph_b64` (gpickle) | graf ako JSON v `/report` |
 
-- graphs are node-link JSON (`networkx.node_link_data`) instead of pickles;
-- the source note is no longer glued into `hint` (it is still in `source_title`/`source_page`, and ECHub still gets its "Source" hint);
-- `schema_version` is new;
-- the course split adds `lesson_index` on each LO.
+### 7. Generovanie nových typov otázok
 
-`?format=echub` returns only the `echub` object, ready to upload.
+Generovanie otázok (`learning_object_generator.py`) sa upraví tak, aby LLM rovno vracalo polia potrebné pre formát `units`. Vstup zostáva rovnaký: LO a jeho atomická jednotka (zdrojová pasaž). Pri `no_answer` aj susedné jednotky tej istej témy.
 
-### 4.6 Errors
+| Typ | Čo LLM vygeneruje | Kontrola |
+| --- | --- | --- |
+| `choice` | Zadanie, 3-5 možností z toho istého učiva, správnych môže byť jedna alebo viac, 1-2 nápovedy. Dnešné distraktory (`generate_mc_variants_batch`) sa rozšíria o viac správnych odpovedí. Iba pre typy LO, kde to dáva zmysel (dnes `MC_ELIGIBLE_TYPES`: definition, rule, property, fact, constraint, theorem). | Aspoň 2 možnosti a aspoň 1 správna, bez duplicít. Hodnotenie overí, že `is_correct` pri každej možnosti zodpovedá textu (rozšíri sa dnešné kritérium `distractor_plausibility`). |
+| `open` | Zadanie, vzorová odpoveď (dnešné `answer` z LO, pri `algorithm_step`/`example` aj `expected_output` v odpovedi), 1-2 nápovedy. | Práve 1 položka v `choices` s `is_correct: true`. Faithfulness, Atomicity a Self-Contained ako dnes (`filter_and_regenerate`). |
+| `no_answer` (nové) | Úloha, ktorá sa nevyhodnocuje. Téma vychádza zo skupiny LO/jednotiek s rovnakým pojmom `anchor`. Nápovedy sú voliteľné. | Prázdne `choices`. Zadanie je jasné a súvisí s učivom (nové kritérium hodnotenia). |
 
-Every error uses one shape:
-```json
-{
-  "error": {
-    "code": "UNSUPPORTED_FILE_TYPE",
-    "message": "File 'notes.docx' is not supported. Allowed: .pdf, .html, .htm, .pptx",
-    "details": { "file": "notes.docx" }
-  }
-}
-```
+- **Nápovedy** majú úrovne (ľahká a ťažšia) a nesmú prezradiť odpoveď. Hodnotiaci modul ich už dnes hodnotí (`hint_quality`). LO so zavádzajúcou nápovedou sa vygenerujú znova.
+- **Časy** odhadne LLM (`enrich_learning_objects`) podľa náročnosti otázky. Hodnota sa oreže na povolený rozsah podľa typu (tabuľka nižšie); ak chýba, použije sa predvolená.
+- **Hodnotenie** (vernosť, zrozumiteľnosť, atomickosť, samostatnosť, kvalita nápovedy) zostáva a filtruje otázky ako dnes. Prahy (`faithfulness_threshold`, `hint_quality_threshold`, `max_attempts`) sa presunú do konfigurácie.
 
-**HTTP errors on requests**
+| Typ | time_to_handle (s) | time_to_explain (s) | Predvolené |
+| --- | --- | --- | --- |
+| `choice` | 30 – 180 | 0 – 90 | 120 / 30 |
+| `open` | 120 – 900 | 0 – 180 | 300 / 0 |
+| `no_answer` | 0 – 1800 | 0 – 600 | 300 / 0 |
 
-| HTTP | `code` | When |
-|---|---|---|
-| 400 | `INVALID_PARAMS` | `params` is not valid JSON, the stage range has gaps, or required `input` is missing |
-| 401 | `UNAUTHORIZED` | `X-API-Key` missing or wrong |
-| 404 | `JOB_NOT_FOUND` | unknown or expired `job_id` |
-| 409 | `JOB_NOT_FINISHED` | result requested while `pending`/`running` (`details.status` says which) |
-| 409 | `JOB_FAILED` | result requested for a failed/cancelled job |
-| 413 | `FILE_TOO_LARGE` | file over `MAX_UPLOAD_MB` |
-| 415 | `UNSUPPORTED_FILE_TYPE` | extension not allowed |
-| 422 | `VALIDATION_ERROR` | field out of range, model not in `ALLOWED_MODELS` (FastAPI validation, rewrapped into the envelope) |
-| 429 | `QUEUE_FULL` | more than `MAX_QUEUED_JOBS` waiting; `Retry-After` header set |
-| 500 | `INTERNAL_ERROR` | unexpected exception |
-| 503 | `NOT_READY` | `/ready` failed: no LLM key, model not loaded, disk full |
+Rozsahy sú rovnaké ako pri Mlynčeku A, takže oba nástroje dávajú porovnateľné hodiny.
 
-**Job failure codes** (in `error.code` of a failed job)
+### 8. Rozdelenie do hodín
 
-| `code` | Meaning |
-|---|---|
-| `NO_TEXT_EXTRACTED` | no text in any file (e.g. a scanned PDF without OCR) |
-| `LLM_RATE_LIMIT` | the provider kept rate-limiting after all retries in `call_llm` |
-| `LLM_ERROR` | the provider failed or returned unusable output after retries |
-| `LLM_AUTH` | API key rejected |
-| `NO_UNITS` | extraction produced zero units |
-| `INTERRUPTED` | the container restarted while the job was running |
-| `CANCELLED` | cancelled via `DELETE` (status `cancelled`) |
-| `INTERNAL_ERROR` | any other exception; the message has the exception text, the job log has the traceback |
+Stránka v parametri `split` určí, či sa má všetko dať do jednej hodiny, alebo podľa čoho sa má obsah rozdeliť. Výsledkom je vždy jeden JSON s N položkami v `units` (N hodín), v režime `single` je N = 1. Režimy a parametre sú rovnaké ako pri Mlynčeku A. Algoritmus využíva to, čo tool B už má (graf prerekvizít, graf pojmov, zdrojové strany).
 
----
+| Režim | Vstup | Výsledok |
+| --- | --- | --- |
+| `single` (predvolený) | – | Všetko do jednej hodiny - jeden unit. |
+| `lessons` | `lesson_count` a/alebo `lesson_minutes` | Zadaný počet hodín s vyváženou dĺžkou, v poradí podľa prerekvizít. |
+| `topics` | voliteľne `lesson_minutes` | Podľa tematických celkov dokumentu: hodina = jedna téma. Dlhá téma sa rozdelí na viac hodín, krátke susedné témy sa spoja. |
+| `syllabus` | zoznam hodín: názov, voliteľne popis a rozsah strán | Hodiny podľa učiteľa. Otázky sa priradia k hodine podľa strán alebo podobnosti. |
 
-## 5. Asynchronous processing
+**Algoritmus**
 
-### 5.1 Recommended: in-process worker + SQLite
+1. **Poradie.** LO sa zoradia topologicky podľa `prerequisite_ids` (graf z kroku 6 je už DAG). Pri zhode rozhoduje poradie zdrojov a strán (`source_title`, `source_page`). Ak by predsa zostal cyklus, preruší sa na hrane smerom k neskoršej strane a do reportu sa pridá varovanie.
+2. **Čas.** Čas jedného LO = súčet `time_to_handle + time_to_explain` jeho otázok. Kapacita hodiny = `lesson_minutes × 60`.
+3. **Témy.** Komunity v grafe pojmov (`build_concept_graph`, `louvain_communities` z networkx). Každé LO sa priradí ku komunite podľa svojho pojmu `anchor`. Pri dokumentoch s jasnými sekciami (snímky PPTX, nadpisy HTML) sa namiesto toho dajú použiť zdrojové sekcie.
+4. **Rozdelenie.**
+   - `lessons`: poradie LO sa rozdelí na N súvislých úsekov dynamickým programovaním tak, aby sa dĺžky čo najmenej líšili od kapacity. Hranica na rozhraní tém je preferovaná. Ak chýba `lesson_count`, N = ceil(celkový čas / kapacita).
+   - `topics`: hodina = téma, dlhá téma sa rozdelí rovnakým spôsobom.
+   - `syllabus`: priradenie podľa `source_page` a rozsahu strán hodiny, inak podľa podobnosti (MiniLM) medzi LO a názvom/popisom hodiny.
+   - `single`: všetko do jednej hodiny.
+5. **Poradie otázok v hodine.** Otázky idú v poradí LO. V rámci jedného LO najprv `choice`, potom `open` a nakoniec `no_answer`.
+6. **Názov a popis hodiny.** Jedno volanie LLM na hodinu vytvorí `title` a `description` z názvov LO v hodine. V režime `topics` je základom názov témy, v režime `syllabus` sa použije názov a popis od učiteľa.
+7. **Validácia.** Kontrola prerekvizít (žiadne LO nie je pred svojou prerekvizitou), prázdnych hodín a odchylky času od kapacity. Pri `single` a `syllabus` sa prekročenie času iba hlási vo `warnings` (v reporte).
 
-- On startup, the FastAPI app starts **one worker thread** (or `MAX_CONCURRENT_JOBS` threads) that reads job ids from a queue.
-- The default is **1 concurrent job**. The pipeline is bound by LLM rate limits, not CPU, so two jobs on the same Groq key would only slow each other down.
-- **Job store:** SQLite at `/data/jobs.db`, table `jobs(id, status, params_json, progress_json, error_json, created_at, started_at, finished_at)`. SQLite is in the standard library, survives restarts, and is enough for one container.
-- **Files per job:** `/data/jobs/{job_id}/`
-  - `input/`: uploaded files
-  - `checkpoints/`: `units.json`, `los.json`, `los_evaluated.json`, … written after each stage
-  - `result.json`: the final output (written to a temp file, then renamed, so a reader never sees half a file)
-  - `job.log`: this job's log lines
-- **Progress:** `run_pipeline(params, progress)` passes a `progress(stage, done, total, message)` callback into the batch loops. The loops already know their batch index, since they print it today. The global stdout capture goes away. Logging uses `logging` with a per-job handler.
-- **Cancel:** `DELETE` sets a `cancel_requested` flag. The `progress` callback checks it after each batch and raises `JobCancelled`. Work stops at the next batch boundary.
-- **Restart:** on startup, jobs still marked `running` become `failed` with `INTERRUPTED`. *Later:* resume them from the last stage checkpoint, the same way `ems.process_book_with_checkpoints` already does it.
-- **Cleanup:** a periodic task deletes jobs and their folders older than `JOB_TTL_DAYS`.
-- **Webhook (optional):** when a job ends, POST `{job_id, status}` to `callback_url` with 3 retries. Polling still works without it.
+### 9. Testovanie
 
-### 5.2 Why not Celery/Redis now
+- **Unit testy** pre modul rozdelenia (všetky režimy, cykly, prázdne vstupy, prekročenie času) a pre mapovanie do `units`.
+- **Kontraktové testy:** každý výstup sa validuje voči JSON schéme formátu `units` (bez polí navyše). Schéma je spoločná s Mlynčekom A.
+- **Integračné testy API** s falošným LLM (`call_llm` nahradený stubom, ktorý vracia pripravený JSON), bez volania skutočného LLM.
+- **Regresný test kvality** na referenčnom dokumente: priemerná vernosť a podiel LO, ktoré prejdú filtrom, v porovnaní so súčasnou verziou (východisková hodnota z M1).
+- **Test odolnosti:** klient sa po odoslaní odpojí, worker sa počas spracovania reštartuje. Výsledok musí byť po dokončení úlohy dostupný.
+- **Smoke test Dockeru:** build, `docker compose up`, `/health`, jedna malá úloha end-to-end.
 
-A separate broker and worker container only pays off with several workers or replicas. The bottleneck is the external LLM rate limit, so more workers don't make jobs faster. If it is needed later, the job layer can be swapped for **Redis + RQ** without touching the API or the pipeline runner, because both only talk to a `JobStore`/`enqueue()` interface.
+### 10. Postup zmien
 
-### 5.3 Expected duration
+1. Presunúť pipeline z `main.py` do balíka (napr. `lo_pipeline/`) bez zmeny logiky doménových modulov. Zlúčiť duplicitné dodatočné spracovanie LO. Opraviť nájdené chyby.
+2. Nahradiť zápis do `/app/output` a globálne logy návratovými hodnotami a `progress_callback`. Pridať `config.py`.
+3. Urobiť `llm_service.py` konfigurovateľným (base URL, modely, bez `exit`). Pridať rozhranie `Embedder`.
+4. Upraviť generovanie otázok na `choice` (viac správnych) / `open` / `no_answer` s nápovedami a časmi. Pridať mapovanie do `units` a JSON schému.
+5. Pridať modul rozdelenia do hodín.
+6. Pridať `/v1` API, Redis + RQ a worker. Nakoniec Docker, testy a README.
 
-The LLM call count grows with document size. For one ~30-page lecture (≈ 30 sections → ~80–120 units):
+Technické podrobnosti k implementácii (API, príklady requestov a odpovedí, chybové kódy, konfigurácia, Docker, štruktúra projektu) sú na samostatnej stránke [Prílohy](api-design-appendix.md). Ide o náčrt, ktorý sa pri implementácii môže zmeniť.
 
-- extraction ≈ 10 calls,
-- generation + MC ≈ 40–50,
-- evaluation ≈ (units / batch size) × models × attempts ≈ 60–100,
-- graph check ≈ (candidate edges / 10),
-- enrichment ≈ 10.
+### 11. Odhad náročnosti
 
-That is **a few hundred calls → roughly 5–20 minutes**, depending on the provider and `INTER_CALL_DELAY`. Rate-limit backoff in `call_llm` waits 60 s or more, so runs can take longer. Polling every 5–10 s is enough, or the backend can use the webhook.
+| # | Úloha | Mandays |
+| --- | --- | --- |
+| 1 | Refaktor pipeline: `run_pipeline` + `progress_callback`, spoločná funkcia na dodatočné spracovanie, jednotky v pamäti, opravy chýb, východisková kvalita | 2-2,5 |
+| 2 | Konfigurácia (pydantic-settings), konfigurovateľný `llm_service`, rozhranie `Embedder` | 1-1,5 |
+| 3 | Úlohy: Redis + RQ, worker, stav a priebeh v Redise, zrušenie, opätovné zaradenie po reštarte, `/data` + mazanie po TTL | 2,5-3 |
+| 4 | `/v1` API: endpointy, Pydantic modely, formát chýb, API kľúč, `external_ref`, `/health`, `/v1/info`, `/v1/schema/lesson` | 1,5-2 |
+| 5 | Nové typy otázok: `choice` s viacerými správnymi, `no_answer`, 1-2 nápovedy, `per_learning_object`, úpravy hodnotenia, jazyk výstupu (`options.language`) | 2,5-3,5 |
+| 6 | Formát units: mapovanie, JSON schéma, validácia, `/report` (vrátane grafu v JSON) | 1-1,5 |
+| 7 | Rozdelenie do hodín: 4 režimy, rozdelenie dynamickým programovaním, názvy hodín, validácia | 3-3,5 |
+| 8 | Docker: viacstupňový image, modely v obraze, compose (api, worker, redis), healthcheck | 1 |
+| 9 | Voliteľné OCR (variant obrazu + záložná extrakcia) | 1-1,5 |
+| 10 | Testy (falošný LLM, kontrakt, rozdelenie, odolnosť, smoke), README, ukážkové volania | 2-2,5 |
+| | **Spolu** | **≈ 18-22 človekodní** (približne 3,5-4,5 týždňa pre jedného človeka) |
 
----
+**Riziká**
 
-## 6. Configuration (environment variables)
+- **Limity a cena LLM:** bezplatná úroveň spomaľuje dlhé úlohy. Zmiernenie: `LOGEN_INTER_CALL_DELAY`, jeden worker, platená úroveň alebo lokálny model.
+- **Čas spracovania:** veľké knihy môžu trvať aj hodinu a viac. Zmiernenie: pokračovanie z checkpointov (neskôr).
+- **Kvalita rozdelenia:** heuristika, treba ju overiť na reálnych kurzoch. `topics` závisí od kvality grafu pojmov.
+- **Nedeterministické výstupy:** ten istý vstup dáva iné otázky, preto testy používajú falošný LLM.
+- **Dostupnosť modelov:** poskytovatelia modely vyraďujú (pozri `LEGACY_ROUTES` v `llm_service.py`), preto sa modely nastavujú v konfigurácii, nie napevno v kóde.
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `LLM_BASE_URL` | — | Base URL of the primary OpenAI-compatible provider (Groq, OpenRouter, vLLM, Ollama…) |
-| `LLM_API_KEY` | — | Key for the primary provider |
-| `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `GITHUB_TOKEN`, `OPENAI_API_KEY` | — | **Backward compatible.** Used as today when `LLM_BASE_URL` is not set (priority Groq > OpenRouter > GitHub > OpenAI) |
-| `GROQ_BASE_URL`, `OPENROUTER_BASE_URL`, `GITHUB_BASE_URL` | current hard-coded URLs | Actually read now (today they're in `env_template` but ignored) |
-| `GEN_MODEL` | provider default | Default generation model (exists today) |
-| `EVAL_MODELS` | `qwen/qwen3.8-27b,openai/gpt-oss-120b` | Default evaluator models (comma-separated); today hard-coded in `main.py`/`ems.py` |
-| `ALLOWED_MODELS` | `GEN_MODEL` + `EVAL_MODELS` | Models a request may choose; others → 422 |
-| `REASONING_EFFORT` | — | GPT-OSS reasoning effort (exists today) |
-| `INTER_CALL_DELAY` | `0.1` | Pause between LLM calls (exists today) |
-| `SERVICE_API_KEY` | — (required) | Key the backend sends in `X-API-Key` |
-| `DATA_DIR` | `/data` | Job store, inputs, results |
-| `MAX_CONCURRENT_JOBS` | `1` | Worker threads |
-| `MAX_QUEUED_JOBS` | `20` | Above this → 429 |
-| `MAX_UPLOAD_MB` | `50` | Per-file limit |
-| `JOB_TTL_DAYS` | `14` | Cleanup age |
-| `CORS_ORIGINS` | empty | Only needed if a browser calls the service directly |
-| `LOG_LEVEL` | `INFO` | Logging |
-| `SPACY_MODEL` | `en_core_web_sm` | Exists today |
-| `OCR_ENABLED` | `false` | Use the OCR fallback (only in the `ocr` image) |
+## Open questions
 
-Rules:
+| **Question** | **Answer** | **Date Answered** |
+| --- | --- | --- |
+| Aký má byť pomer typov otázok a koľko otázok na jedno LO alebo na hodinu? (spoločné s Mlynčekom A) | | |
+| Zakomponovať OCR? Bez neho bude Docker obraz výrazne menší. (spoločné s Mlynčekom A) | | |
+| Ktorý poskytovateľ LLM a embeddingov bude predvolený? Pre tool B: súčasne Groq/OpenRouter, embeddingy lokálny MiniLM. (spoločné s Mlynčekom A) | | |
+| Kde bude služba nasadená a je potrebné overovanie API kľúčom? (spoločné s Mlynčekom A) | | |
+| Ako dlho uchovávať nahraté dokumenty a výsledky (návrh: 7 dní)? (spoločné s Mlynčekom A) | | |
+| Budú zdroje v slovenčine? Prompty a model spaCy v tool B sú dnes v angličtine. | | |
 
-- Secrets come only from env or Docker secrets, never from the image. `.dockerignore` already excludes `.env`.
-- `llm_service.py` reads the config when the app starts instead of at import time. It raises a clear error and does not call `exit(1)`, so `/ready` can report the problem.
+## Reference Links
 
----
-
-## 7. Docker
-
-### 7.1 Image
-
-| Topic | Today | Proposal |
-|---|---|---|
-| Base | `python:3.11-slim` | same |
-| Build tools | `gcc g++` stay in the final image | **multi-stage**: compile wheels in a builder stage, copy only site-packages |
-| torch | CPU wheel (`--index-url …/cpu`) | same; no CUDA |
-| Models | spaCy + NLTK at build time; MiniLM **downloaded at runtime** | bake **all three** at build time (`SentenceTransformer("all-MiniLM-L6-v2")` in a `RUN` step), so it works offline |
-| Missing deps | `beautifulsoup4`, `python-pptx` | add to `requirements.txt` and the lock file |
-| Unneeded deps | `matplotlib`, `seaborn`, `pandas` (only offline analysis/plots) | move to `requirements-dev.txt`; change the module-level `import matplotlib` in `graph_builder.py` into a local import in `visualize_graph` |
-| User | root | non-root `app` user |
-| Health | none | `HEALTHCHECK CMD curl -f http://localhost:8000/health` |
-| Port | 8000 | 8000 |
-| Volumes | `./fastapi/input`, `./fastapi/output` | one `/data` volume |
-| Process | `uvicorn main:app` | `uvicorn app.main:app --workers 1`. Must be **1 process**, because the job queue lives in memory; more processes would need RQ |
-
-### 7.2 GPU
-
-**Not needed.** The only local model is MiniLM-L6 (22M parameters) for embedding-based dedup, which takes seconds on CPU. All big models run at the external provider. If the team later hosts its own model (vLLM/Ollama), that runs as a **separate** container or server, and this service just points `LLM_BASE_URL` at it.
-
-### 7.3 OCR
-
-There is no OCR today. `PyPDF2.extract_text()` returns nothing for scanned PDFs, and such pages are skipped. Proposal:
-
-- an optional build target `ocr`, adding `tesseract-ocr` (+ language packs `eng`, `slk`), `poppler-utils`, `pytesseract`, `pdf2image`: about +100–150 MB;
-- with `OCR_ENABLED=true`, pages where PyPDF2 finds less than ~30 characters get rendered and OCR'd;
-- the normal image stays smaller. The team picks the target in compose.
-
-### 7.4 Size
-
-Expected **≈ 1.5–2.5 GB** uncompressed. Most of it is torch CPU (~700 MB installed), transformers and sentence-transformers, spaCy with its model, and scipy/sklearn. Multi-stage builds and dropping matplotlib/seaborn/pandas save a few hundred MB. *Measure after the first build with `docker images` and put the number here.*
-
-### 7.5 Compose example (next to the backend)
-
-```yaml
-services:
-  lo-service:
-    build:
-      context: ./fastapi
-      target: runtime          # or: ocr
-    env_file: ./fastapi/.env
-    environment:
-      DATA_DIR: /data
-      MAX_CONCURRENT_JOBS: "1"
-    volumes:
-      - lo-data:/data
-    expose:
-      - "8000"                 # internal only, backend calls http://lo-service:8000
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    restart: unless-stopped
-
-volumes:
-  lo-data:
-```
-
----
-
-## 8. Effort estimate
-
-| # | Task | Person-days |
-|---|---|---|
-| 1 | Pipeline runner `run_pipeline(params, progress)`; one shared LO post-processing helper; `filter_and_regenerate` takes units in memory instead of from disk; fix `source_title`/`source_page` on units | 2 |
-| 2 | Job layer: SQLite store, queue + worker thread, cancel, restart handling, TTL cleanup, per-job logging | 2–3 |
-| 3 | `/v1` endpoints, Pydantic request/response models, error envelope, API key check, `/health` + `/ready` | 1.5 |
-| 4 | Result schema v1.0, node-link JSON graphs, `?format=echub`, safer DAG cycle removal | 0.5–1 |
-| 5 | Course split: 4 criteria + lesson titles + ECHub `by_lesson` mode | 2–3 |
-| 6 | `llm_service` config from env (base URLs, models, allowed list, no `exit`) | 0.5–1 |
-| 7 | Dockerfile multi-stage, bake models, missing deps, non-root, healthcheck, compose | 1 |
-| 8 | OCR target + fallback *(optional)* | 1–1.5 |
-| 9 | Tests with a mocked `call_llm` (API, job lifecycle, course split), README + OpenAPI review, integration with the backend | 2 |
-| | **Total** | **≈ 12–16 person-days** (about 2.5–3 weeks for one person; can be split into 1–3, 4–6, 7–9) |
-
-**Risks**
-
-- **LLM rate limits and cost:** the free Groq tier makes long runs slower. Mitigation: `INTER_CALL_DELAY`, 1 concurrent job, a paid tier or our own server.
-- **Run time:** large books can take an hour or more. Mitigation: checkpoints and resume (task 2 "later").
-- **Course split quality:** a heuristic, so it needs checking on real courses. `by_prerequisites` depends on how good the graph is.
-- **Non-deterministic output:** the same input can give different LOs, so tests have to mock the LLM.
-- **Model availability:** providers retire models (see `LEGACY_ROUTES` in `llm_service.py`), so models must be configurable, not hard-coded.
-
----
-
-## 9. Open questions (for the backend team)
-
-1. **Hours:** does one hour only mean one lesson, or also a time budget (e.g. 45 min), so LOs that don't fit get dropped?
-2. **Auth:** is a shared `X-API-Key` enough, or do we need JWT from the backend?
-3. **Polling or webhook:** which one will the backend use? Does the callback need a signature (HMAC)?
-4. **Retention:** how long should results be kept here? Does the backend copy them into its own DB right away?
-5. **HTML UI:** keep it in the same container (dev tool), or drop it?
-6. **Languages:** will sources be in Slovak? The prompts and spaCy model are English today (`SPACY_MODEL`, OCR language packs).
-7. **Limits:** max files per job and max pages per file?
-8. **Editing:** will teachers edit LOs in the backend and send them back for re-export or graph rebuild? (`stages` + `input` covers this.)
+- Repozitár projektu: <https://github.com/Matik080/LO-Generator/tree/integration>
+- Technické podrobnosti: [Prílohy](api-design-appendix.md)
+- Stránka Mlynčeka A (vzor kontraktu): Mlynček A - Martin Štefanko
+- FastAPI: <https://fastapi.tiangolo.com>
+- Pydantic (JSON Schema): <https://docs.pydantic.dev/latest/concepts/json_schema/>
+- pydantic-settings: <https://docs.pydantic.dev/latest/concepts/pydantic_settings/>
+- RQ – Redis Queue: <https://python-rq.org>
+- Docker Compose: <https://docs.docker.com/compose/>
+- OpenAI API (chat, embeddingy): <https://platform.openai.com/docs/api-reference>
+- Groq – kompatibilita s OpenAI: <https://console.groq.com/docs/openai>
+- OpenRouter: <https://openrouter.ai/docs>
+- Lokálny model s OpenAI API: Ollama <https://github.com/ollama/ollama>, vLLM <https://docs.vllm.ai>
+- sentence-transformers (all-MiniLM-L6-v2): <https://www.sbert.net>
+- NetworkX (DAG, komunity): <https://networkx.org>
+- JSON Schema: <https://json-schema.org>
