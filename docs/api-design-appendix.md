@@ -426,7 +426,7 @@ volumes:
   models:
 ```
 
-Fronta sa volá `logen` (A používa `qgen`), takže oba mlynčeky môžu zdieľať jeden Redis, ak by sa testovali concurrently.
+Queue sa volá `logen` (A používa `qgen`), takže oba mlynčeky môžu zdieľať jeden Redis, ak by sa testovali concurrently.
 
 ### Konfigurácia (premenné prostredia)
 

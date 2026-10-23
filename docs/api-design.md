@@ -170,7 +170,7 @@ Služba sa skladá z troch kontajnerov, rovnako ako Mlynček A: API, worker a Re
 | --- | --- | --- |
 | api | FastAPI + Uvicorn, Pydantic v2 | Validácia vstupu, nahratie dokumentov, vytvorenie úlohy, stav, výsledky, OpenAPI dokumentácia, API kľúč |
 | worker | RQ (Redis Queue), rovnaký obraz ako api | Spustí všetky kroky pipeline, hlási priebeh, uloží výsledný JSON a report do `/data`. Obsahuje lokálne modely MiniLM a spaCy. |
-| redis | `redis:7-alpine` (appendonly) | Fronta úloh, stav úlohy, priebeh (krok, progress). |
+| redis | `redis:7-alpine` (appendonly) | Queue úloh, stav úlohy, priebeh (krok, progress). |
 | /data (volume) | Docker volume | Nahraté dokumenty, výsledky a reporty, mazanie po TTL (7 dní alebo ako to budeme chcieť nastaviť). |
 | llm (voliteľné) | Ollama alebo vLLM, GPU | Lokálny model s OpenAI-kompatibilným API. Zapne sa profilom `local-llm`. |
 
@@ -179,7 +179,7 @@ flowchart LR
     P["Stránka / backend"] -- "HTTPS + X-API-Key" --> API
 
     subgraph SVC["docker compose"]
-        API["api<br/>FastAPI /v1"] -- "zaradenie úlohy, čítanie stavu" --> R[("redis<br/>fronta + stav")]
+        API["api<br/>FastAPI /v1"] -- "zaradenie úlohy, čítanie stavu" --> R[("redis<br/>queue + stav")]
         R -- "úloha" --> W["worker (RQ)<br/>run_pipeline<br/>MiniLM + spaCy"]
         W -- "priebeh, stav" --> R
         API --- D[("/data volume<br/>jobs/{id}/")]
