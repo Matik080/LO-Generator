@@ -1,4 +1,5 @@
 import io
+import re
 import sys
 import queue
 import asyncio
@@ -380,7 +381,12 @@ class SaveLOsInput(BaseModel):
     learning_objects: List[Dict[str, Any]]
     filename: str = "learning_objects_saved.json"
 
+# Plain file name only, so the request can't write outside /app/output (e.g. "../main.py")
+_SAFE_FILENAME = re.compile(r"[A-Za-z0-9_.-]{1,100}\.json")
+
 @app.post("/save-los")
 def save_los_endpoint(body: SaveLOsInput):
+    if not _SAFE_FILENAME.fullmatch(body.filename):
+        raise HTTPException(status_code=400, detail="Invalid filename. Use letters, digits, '_', '-', '.' and the .json extension.")
     _save(body.filename, body.learning_objects)
     return {"saved": len(body.learning_objects), "filename": body.filename}

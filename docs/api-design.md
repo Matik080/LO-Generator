@@ -59,6 +59,7 @@ Cieľom je navrhnúť, ako zo súčasného nástroja (Mlynček B, LO Generator, 
 - Vstupom sú dokumenty PDF, HTML a PPTX (jeden alebo viac). Tool B už dnes podporuje všetky tri. OCR zostáva voliteľný krok, o jeho predvolenom použití sa rozhodne neskôr.
 - Generovanie ide cez OpenAI-kompatibilné API. Embeddingy predvolene počíta lokálny model MiniLM (malý, beží na CPU, bez nákladov na API). Voliteľne môžu ísť cez API poskytovateľa.
 - Stránka si sama pamätá, ktoré úlohy patria ktorému používateľovi (cez `job_id` alebo vlastný `external_ref`). Služba používateľov nepozná a neposiela im upozornenia.
+- Službu volá iba backend platformy cez internú sieť, nikdy priamo prehliadač používateľa. Overovanie používateľov a ich práv rieši backend platformy.
 
 ## Milestones
 
@@ -93,6 +94,7 @@ Označenia a znenie požiadaviek zodpovedajú stránke Mlynčeka A, takže sa ob
 | R13 Chyby a limity | Ako stránka chcem jasné chybové odpovede (zlý súbor, veľký súbor, chyba LLM). | MEDIUM | - | Čiastočne (iba nepodporovaný typ súboru) | Jednotný formát chyby. |
 | R14 OpenAPI dokumentácia | Ako vývojár stránky chcem vidieť popis API a vyskúšať ho v prehliadači. | MEDIUM | - | Áno (FastAPI `/docs`) | `/docs` a `/openapi.json`. |
 | R15 Voliteľné OCR | Ako správca chcem OCR zapnúť alebo vypnúť podľa typu dokumentov. | LOW | - | Nie | Parameter `extraction.ocr`, samostatný variant obrazu. |
+| R16 Bezpečnosť | Ako správca chcem, aby službu mohol volať iba náš backend a aby jeden klient nemohol čítať ani mazať úlohy iného. | HIGH | [SCRUM-34](https://stuba-team-bxgehtkq.atlassian.net/browse/SCRUM-34) | Nie (žiadne overenie, kap. 1) | Povinný API kľúč, úlohy viazané na kľúč, UUID `job_id`, limity, sanitizácia HTML v nápovedách (kap. 12). |
 
 ## Out of Scope
 
@@ -120,8 +122,9 @@ Súčasne proces riadi HTML stránka `fastapi/pipeline_ui.html`, ktorá postupne
 | `filter_and_regenerate` (`ems.py`) číta `atomic_units.json` z disku. | Skrytá závislosť na disku (`/evaluate` to obchádza dočasným priečinkom). | Jednotky sa odovzdávajú v pamäti. |
 | Grafy sa vracajú ako gpickle v base64. | Klienti mimo Pythonu ich neprečítajú, rozbaľovanie pickle nie je bezpečné. | Graf ako JSON (node-link) a iba v `/report`. |
 | `llm_service.py` vyberá poskytovateľa pri importe, má pevné adresy (hodnoty `*_BASE_URL` v `env_template` sa ignorujú) a bez kľúča zavolá `exit(1)`. | Zmena poskytovateľa = zmena kódu, služba spadne namiesto toho, aby nahlásila chybu. | Konfigurácia z prostredia pri štarte (pydantic-settings), problém nahlási `/health` a `/v1/info`. |
-| Výstup: `choice` má iba jednu správnu odpoveď (`mc_correct_index`), 1 nápovedu, chýba `no_answer`, 1 unit = 1 zdrojový dokument. | Nezodpovedá dohodnutému formátu `units` ani rozdeleniu do hodín. | Nové typy otázok, 1–2 nápovedy, krok `split` (kap. 8). |
+| Výstup: `choice` má iba jednu správnu odpoveď (`mc_correct_index`), 1 nápovedu, chýba `no_answer`, 1 unit = 1 zdrojový dokument. | Nezodpovedá dohodnutému formátu `units` ani rozdeleniu do hodín. | Nové typy otázok, 1-2 nápovedy, krok `split` (kap. 8). |
 | Dodatočné spracovanie LO (id, kľúčové slová, zdroj v nápovede) je skopírované 3× (`main.py` dvakrát, `ems.py`). | Opravy treba robiť na troch miestach. | Jedna spoločná pomocná funkcia.
+| Žiadny endpoint nemá overenie prístupu. `/save-los` zapisoval súbor s menom z requestu (napr. `../main.py`), `/logs` posiela všetky logy komukoľvek, upload nemá limit veľkosti. | Ktokoľvek, kto sa dostane na port 8000, môže spúšťať úlohy na náš účet LLM, čítať logy a (do opravy) prepísať kód aplikácie. | Zápis cez `/save-los` je už opravený (povolené iba meno `*.json` bez ciest). Zvyšok rieši nové API (kap. 12). Do prerobenia sa súčasný kontajner nemá vystavovať mimo localhost. |
 
 ### 2. Typický scenár volania
 
@@ -140,25 +143,34 @@ sequenceDiagram
     participant API as api
     participant R as redis
     participant W as worker
+    participant D as /data
     participant LLM as Poskytovateľ LLM
 
-    P->>API: POST /v1/jobs (dokumenty + split + external_ref)
-    API->>API: validácia, uloženie do /data/jobs/{id}/
-    API->>R: zaradenie úlohy do fronty
+    P->>API: POST /v1/jobs (dokumenty + options)
+    API->>D: uloženie dokumentov a job.json
+    API->>R: zaradenie úlohy do fronty (stav queued)
     API-->>P: 202 {job_id}
-    R->>W: úloha
-    loop každý krok / batch
-        W->>LLM: chat completion
-        LLM-->>W: JSON
-        W->>R: priebeh (krok, %)
-    end
-    W->>W: result.json + report.json
-    W->>R: stav = completed
-    loop každých 5–10 s (kým je používateľ na stránke)
-        P->>API: GET /v1/jobs/{id}
-        API-->>P: {status, progress}
+    W->>R: vyzdvihnutie úlohy z fronty
+    R-->>W: úloha (stav running)
+    par Spracovanie vo workeri
+        loop každý krok / batch
+            W->>LLM: chat completion
+            LLM-->>W: JSON
+            W->>R: priebeh (stage, progress)
+        end
+        W->>D: result.json + report.json
+        W->>R: stav completed
+    and Stránka sa pýta na stav (každých 5-10 s)
+        loop kým stav nie je completed / failed
+            P->>API: GET /v1/jobs/{id}
+            API->>R: načítanie stavu
+            R-->>API: {status, stage, progress}
+            API-->>P: {status, stage, progress}
+        end
     end
     P->>API: GET /v1/jobs/{id}/result
+    API->>D: načítanie result.json
+    D-->>API: units
     API-->>P: 200 {units: [...]}
 ```
 
@@ -214,11 +226,11 @@ flowchart TD
     LG --> C["2 · Sekcie<br/>strana / snímka / nadpis"]
     C --> D["3 · Atomické jednotky 🤖<br/>+ deduplikácia (MiniLM) + normalizácia pojmov (spaCy)"]
     D --> E["4 · Generovanie LO 🤖"]
-    E --> F{"5 · Hodnotenie LO 🤖🤖<br/>vernosť · atomickosť · samostatnosť"}
+    E --> F{"5 · Hodnotenie LO 🤖🤖<br/>faithfulness · atomicity · self-containment"}
     F -- "nevyhovuje, zostávajú pokusy" --> G["Opätovné generovanie 🤖"]
     G --> F
     F -- "OK / pokusy minuté" --> H["6 · Graf prerekvizít<br/>graf pojmov → kandidáti → kontrola LLM 🤖 → DAG"]
-    H --> I["7 · Otázky 🤖 (NOVÉ TYPY)<br/>choice · open · no_answer, 1–2 nápovedy"]
+    H --> I["7 · Otázky 🤖 (NOVÉ TYPY)<br/>choice · open · no_answer, 1-2 nápovedy"]
     I --> J["8 · Názvy a časy 🤖<br/>name, time_to_handle, time_to_explain"]
     J --> K["9 · Rozdelenie do hodín (NOVÉ)<br/>single · lessons · topics · syllabus"]
     K --> L["10 · Výstup (units) + validácia voči JSON schéme"]
@@ -232,7 +244,7 @@ flowchart TD
 | # | Krok | Kód dnes | Zmena |
 | --- | --- | --- | --- |
 | 1 | Extrakcia textu | `utilities.extract_text_from_source` | voliteľné OCR pre strany bez textu |
-| 1b | Jazyk | – | nové: `options.language` (`auto` = rozpoznanie `sk`/`en` z textu), pričom prompty dostanú jazyk výstupu. Normalizáciu pojmov v slovenčine treba overiť (spaCy je dnes iba anglický) |
+| 1b | Jazyk | - | nové: `options.language` (`auto` = rozpoznanie `sk`/`en` z textu), pričom prompty dostanú jazyk výstupu. Normalizáciu pojmov v slovenčine treba overiť (spaCy je dnes iba anglický) |
 | 2 | Sekcie | `utilities.split_into_sections` | bez zmeny |
 | 3 | Atomické jednotky | `atomic_unit_extractor.extract_atomic_units_batch`, `clean_atomic_units`, `concept_normalizer.normalize_units` | nastaviť `source_title`/`source_page`, embeddingy cez `Embedder` |
 | 4 | LO | `learning_object_generator.generate_learning_object_batch` | spoločná funkcia na dodatočné spracovanie |
@@ -240,7 +252,7 @@ flowchart TD
 | 6 | Graf | `graph_builder.build_concept_graph`, `build_layered_learning_paths`, `verify_prerequisites_batched`, `store_prerequisites` | bezpečnejšie odstraňovanie cyklov, JSON namiesto pickle |
 | 7 | Otázky | `generate_mc_variants_batch` (choice s 1 správnou odpoveďou) | nové prompty pre `choice` s viacerými správnymi / `no_answer` (kap. 7) |
 | 8 | Názvy a časy | `echub_format_converter.enrich_learning_objects` | orezanie časov na rozsah podľa typu |
-| 9 | Rozdelenie do hodín | – | nový modul (kap. 8) |
+| 9 | Rozdelenie do hodín | - | nový modul (kap. 8) |
 | 10 | Výstup | `echub_format_converter.lo_to_question`, `convert_by_source` | mapovanie do hodín, validácia voči JSON schéme |
 
 Každá funkcia pipeline dostane voliteľný parameter `progress_callback(stage, done, total)`. Cykly cez batche už vedia, pri ktorom batchi sú (dnes to iba vypisujú). Worker zapisuje priebeh do Redisu, takže stránka vidí napríklad "questions, 62%".
@@ -252,7 +264,7 @@ Tool B volá modely na jednom mieste: `call_llm` v `llm_service.py`, cez SDK `op
 | Adaptér | Pokrýva | Generovanie / embeddingy |
 | --- | --- | --- |
 | OpenAICompatibleAdapter (existuje už dnes, dostane nastaviteľnú `base_url`) | Groq, OpenRouter, OpenAI, Mistral, GitHub Models, Gemini (OpenAI-kompatibilný endpoint), lokálny server (Ollama, vLLM, LM Studio) | áno / áno (`/v1/chat/completions`, `/v1/embeddings`) |
-| LocalEmbedder (existuje už dnes: `embedding_service.py`) | `all-MiniLM-L6-v2` na CPU vo workeri | – / áno (predvolený) |
+| LocalEmbedder (existuje už dnes: `embedding_service.py`) | `all-MiniLM-L6-v2` na CPU vo workeri | - / áno (predvolený) |
 | AnthropicAdapter (iba v prípade potreby) | Claude modely | áno / nie (embeddingy od iného poskytovateľa) |
 
 **Zásady**
@@ -293,7 +305,7 @@ Celý príklad je v [Prílohách](api-design-appendix.md#výsledok-get-v1jobsidr
 | `generated_name` (+ prefix `[Module X]`) | `name` (bez prefixu) |
 | `mc_options` + `mc_correct_index` (práve 1 správna) | `type: choice`, `choices[{text, is_correct}]`, správnych môže byť viac |
 | `answer` (LO bez `mc_options`) | `type: open`, `choices: [{text: answer, is_correct: true}]` |
-| – (neexistuje) | `type: no_answer` (úloha bez vyhodnotenia) |
+| - (neexistuje) | `type: no_answer` (úloha bez vyhodnotenia) |
 | `hint` (1 reťazec + `[Source: …]`) | `hints: [{name, url: "<p>…</p>"}]`, 1-2 úrovne. Zdroj sa presunie do reportu |
 | `time_to_handle`, `time_to_explain` | rovnaké, fitnuté na rozsah |
 | `id`, `type` (definition, rule…), `source_statement`, `source_title`, `source_page`, `keywords`, `anchor`, `prerequisite_ids`, `expected_output`, hodnotenia | nie sú vo formáte, dostupné v `/v1/jobs/{id}/report` |
@@ -311,13 +323,13 @@ Generovanie otázok (`learning_object_generator.py`) sa upraví tak, aby LLM rov
 
 - **Nápovedy** majú úrovne (ľahká a ťažšia) a nesmú prezradiť odpoveď. Hodnotiaci modul ich už dnes hodnotí (`hint_quality`). LO so zavádzajúcou nápovedou sa vygenerujú znova.
 - **Časy** odhadne LLM (`enrich_learning_objects`) podľa náročnosti otázky. Hodnota sa oreže na povolený rozsah podľa typu (tabuľka nižšie); ak chýba, použije sa predvolená.
-- **Hodnotenie** (vernosť, zrozumiteľnosť, atomickosť, samostatnosť, kvalita nápovedy) zostáva a filtruje otázky ako dnes. Prahy (`faithfulness_threshold`, `hint_quality_threshold`, `max_attempts`) sa presunú do konfigurácie.
+- **Hodnotenie** (faithfulness, clarity, atomicity, self-containment, hint quality) zostáva a filtruje otázky ako dnes. Prahy (`faithfulness_threshold`, `hint_quality_threshold`, `max_attempts`) sa presunú do konfigurácie.
 
 | Typ | time_to_handle (s) | time_to_explain (s) | Predvolené |
 | --- | --- | --- | --- |
-| `choice` | 30 – 180 | 0 – 90 | 120 / 30 |
-| `open` | 120 – 900 | 0 – 180 | 300 / 0 |
-| `no_answer` | 0 – 1800 | 0 – 600 | 300 / 0 |
+| `choice` | 30 - 180 | 0 - 90 | 120 / 30 |
+| `open` | 120 - 900 | 0 - 180 | 300 / 0 |
+| `no_answer` | 0 - 1800 | 0 - 600 | 300 / 0 |
 
 Rozsahy sú rovnaké ako pri Mlynčeku A, takže oba nástroje dávajú porovnateľné hodiny.
 
@@ -327,7 +339,7 @@ Stránka v parametri `split` určí, či sa má všetko dať do jednej hodiny, a
 
 | Režim | Vstup | Výsledok |
 | --- | --- | --- |
-| `single` (predvolený) | – | Všetko do jednej hodiny - jeden unit. |
+| `single` (predvolený) | - | Všetko do jednej hodiny - jeden unit. |
 | `lessons` | `lesson_count` a/alebo `lesson_minutes` | Zadaný počet hodín s vyváženou dĺžkou, v poradí podľa prerekvizít. |
 | `topics` | voliteľne `lesson_minutes` | Podľa tematických celkov dokumentu: hodina = jedna téma. Dlhá téma sa rozdelí na viac hodín, krátke susedné témy sa spoja. |
 | `syllabus` | zoznam hodín: názov, voliteľne popis a rozsah strán | Hodiny podľa učiteľa. Otázky sa priradia k hodine podľa strán alebo podobnosti. |
@@ -351,7 +363,7 @@ Stránka v parametri `split` určí, či sa má všetko dať do jednej hodiny, a
 - **Unit testy** pre modul rozdelenia (všetky režimy, cykly, prázdne vstupy, prekročenie času) a pre mapovanie do `units`.
 - **Kontraktové testy:** každý výstup sa validuje voči JSON schéme formátu `units` (bez polí navyše). Schéma je spoločná s Mlynčekom A.
 - **Integračné testy API** s falošným LLM (`call_llm` nahradený stubom, ktorý vracia pripravený JSON), bez volania skutočného LLM.
-- **Regresný test kvality** na referenčnom dokumente: priemerná vernosť a podiel LO, ktoré prejdú filtrom, v porovnaní so súčasnou verziou (východisková hodnota z M1).
+- **Regresný test kvality** na referenčnom dokumente: priemerné skóre faithfulness a podiel LO, ktoré prejdú filtrom, v porovnaní so súčasnou verziou (východisková hodnota z M1).
 - **Test odolnosti:** klient sa po odoslaní odpojí, worker sa počas spracovania reštartuje. Výsledok musí byť po dokončení úlohy dostupný.
 - **Smoke test Dockeru:** build, `docker compose up`, `/health`, jedna malá úloha end-to-end.
 
@@ -380,7 +392,8 @@ Technické podrobnosti k implementácii (API, príklady requestov a odpovedí, c
 | 8 | Docker: viacstupňový image, modely v obraze, compose (api, worker, redis), healthcheck | 1 |
 | 9 | Voliteľné OCR (variant obrazu + záložná extrakcia) | 1-1,5 |
 | 10 | Testy (falošný LLM, kontrakt, rozdelenie, odolnosť, smoke), README, ukážkové volania | 2-2,5 |
-| | **Spolu** | **≈ 18-22 človekodní** (približne 3,5-4,5 týždňa pre jedného človeka) |
+| 11 | Bezpečnosť: povinný kľúč, úlohy viazané na kľúč, limity a rate limit, sanitizácia HTML, bezpečnostné testy | 1-1,5 |
+| | **Spolu** | **≈ 19-23,5 človekodní** (približne 4-4,5 týždňa pre jedného človeka) |
 
 **Riziká**
 
@@ -389,6 +402,23 @@ Technické podrobnosti k implementácii (API, príklady requestov a odpovedí, c
 - **Kvalita rozdelenia:** heuristika, treba ju overiť na reálnych kurzoch. `topics` závisí od kvality grafu pojmov.
 - **Nedeterministické výstupy:** ten istý vstup dáva iné otázky, preto testy používajú falošný LLM.
 - **Dostupnosť modelov:** poskytovatelia modely vyraďujú (pozri `LEGACY_ROUTES` v `llm_service.py`), preto sa modely nastavujú v konfigurácii, nie napevno v kóde.
+
+### 12. Bezpečnosť
+
+Služba nemá používateľov ani osobné údaje, ale drží nahraté dokumenty, vygenerované otázky a kľúče k platenému LLM. Útočník, ktorý sa k nej dostane, by mohol čítať alebo mazať cudzie úlohy, minúť náš rozpočet na LLM alebo cez upravený dokument podstrčiť škodlivý obsah do testov. Preto platí:
+
+| Riziko | Opatrenie |
+| --- | --- |
+| Služba bez overenia (prázdny `LOGEN_API_KEYS`). Potom by ktokoľvek mohol volať aj `DELETE /v1/jobs/{id}`. | API kľúč je **povinný**. Bez nastavených kľúčov služba nenaštartuje, výnimkou je iba lokálny vývoj (`LOGEN_DEV_MODE=true`). |
+| Jeden klient číta, vypisuje alebo maže úlohy iného (napr. cez `GET /v1/jobs?external_ref=user-152`). | Každá úloha je viazaná na kľúč, ktorým bola vytvorená. Pre iný kľúč sa správa ako neexistujúca (404 `job_not_found`), takže sa nedá ani zistiť, či existuje. |
+| Uhádnuteľné `job_id`. | `job_id` je UUID4 (122 náhodných bitov). |
+| Zahltenie služby a minutie rozpočtu na LLM. | Limity veľkosti a počtu strán (`LOGEN_MAX_UPLOAD_MB`, `LOGEN_MAX_PAGES`), upload sa číta po častiach s kontrolou veľkosti, limit rozbalenej veľkosti PPTX (ZIP bomba), max. počet čakajúcich úloh na kľúč, inak `429 rate_limited`. |
+| Škodlivý dokument (prompt injection) prinúti LLM vložiť do `hints[].url` napr. `<script>`. Ak ho platforma zobrazí bez úpravy, ide o stored XSS v teste. | Služba pred uložením prečistí HTML v `hints[].url` podľa zoznamu povolených značiek (`<p>`, `<b>`, `<i>`, `<code>`, `<pre>`, `<ul>`, `<ol>`, `<li>`, `<br>`). Ostatné polia sú čistý text. Platforma by mala HTML pri zobrazení aj tak escapovať alebo čistiť. |
+| Prompt injection mení obsah otázok (napr. nesprávne označená správna odpoveď). | LLM nemá žiadne nástroje ani prístup k systému, takže riziko je iba v obsahu. Hodnotenie (faithfulness, kontrola `is_correct`) takéto otázky zväčša odfiltruje; otázky aj tak pred použitím kontroluje učiteľ. |
+| Služba alebo Redis dostupné z internetu. | Port API sa publikuje iba do internej siete (alebo `127.0.0.1`), Redis nemá publikovaný port a má heslo (`requirepass`). `/docs` a `/openapi.json` sa v produkcii dajú vypnúť (`LOGEN_DOCS_ENABLED=false`). |
+| Únik tajomstiev. | Kľúče iba v `.env` / Docker secrets, nikdy v obraze ani v logoch. Logy neobsahujú celé prompty ani obsah dokumentov. Kontajner beží pod používateľom bez root práv. |
+
+**Poznámka k nálezom skenera.** Nájdené endpointy (`DELETE /api/helps/{id}`, `/api/options/{id}`, `/api/review/activity/{id}`, `/api/review/event/{id}`) patria backendu platformy, nie Mlynčeku A ani B. Odporúčanie pre backend: každý endpoint, ktorý mení dáta (POST/PUT/PATCH/DELETE), musí overiť prihláseného používateľa **aj** to, či má k danému objektu právo (napr. iba autor testu alebo učiteľ kurzu). Samotné prihlásenie nestačí.
 
 ## Open questions
 
@@ -400,6 +430,7 @@ Technické podrobnosti k implementácii (API, príklady requestov a odpovedí, c
 | Kde bude služba nasadená a je potrebné overovanie API kľúčom? (spoločné s Mlynčekom A) | | |
 | Ako dlho uchovávať nahraté dokumenty a výsledky (návrh: 7 dní)? (spoločné s Mlynčekom A) | | |
 | Budú zdroje v slovenčine? Prompty a model spaCy v tool B sú dnes v angličtine. | | |
+| Kto čistí HTML v `hints[].url`: služba (návrh, kap. 12), platforma pri zobrazení, alebo oboje? (spoločné s Mlynčekom A) | | |
 
 ## Reference Links
 
@@ -409,10 +440,10 @@ Technické podrobnosti k implementácii (API, príklady requestov a odpovedí, c
 - FastAPI: <https://fastapi.tiangolo.com>
 - Pydantic (JSON Schema): <https://docs.pydantic.dev/latest/concepts/json_schema/>
 - pydantic-settings: <https://docs.pydantic.dev/latest/concepts/pydantic_settings/>
-- RQ – Redis Queue: <https://python-rq.org>
+- RQ - Redis Queue: <https://python-rq.org>
 - Docker Compose: <https://docs.docker.com/compose/>
 - OpenAI API (chat, embeddingy): <https://platform.openai.com/docs/api-reference>
-- Groq – kompatibilita s OpenAI: <https://console.groq.com/docs/openai>
+- Groq - kompatibilita s OpenAI: <https://console.groq.com/docs/openai>
 - OpenRouter: <https://openrouter.ai/docs>
 - Lokálny model s OpenAI API: Ollama <https://github.com/ollama/ollama>, vLLM <https://docs.vllm.ai>
 - sentence-transformers (all-MiniLM-L6-v2): <https://www.sbert.net>

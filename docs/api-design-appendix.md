@@ -6,9 +6,9 @@ Prílohy obsahujú konkrétne technické podklady pre implementáciu [Mlynčeka 
 
 ---
 
-## Príloha A – Detaily API
+## Príloha A - Detaily API
 
-Všetky endpointy majú prefix `/v1`. Ak je nastavený `LOGEN_API_KEYS`, stránka posiela header `X-API-Key`.
+Všetky endpointy majú prefix `/v1` a vyžadujú header `X-API-Key` s jedným z kľúčov v `LOGEN_API_KEYS` (hlavná stránka, kap. 12). Úloha je viazaná na kľúč, ktorým bola vytvorená. Iný kľúč ju nevidí ani v zozname, ani cez `GET`/`DELETE` (vráti 404 `job_not_found`). `job_id` je UUID4. `/health` je bez kľúča a vracia iba stav, nie konfiguráciu.
 
 | Metóda | Endpoint | Popis |
 | --- | --- | --- |
@@ -22,7 +22,7 @@ Všetky endpointy majú prefix `/v1`. Ak je nastavený `LOGEN_API_KEYS`, stránk
 | DELETE | `/v1/jobs/{id}` | Zruší bežiacu úlohu alebo zmaže výsledky. |
 | GET | `/v1/schema/lesson` | JSON schéma formátu units. |
 
-FastAPI navyše poskytuje `/docs` a `/openapi.json` (R14).
+FastAPI navyše poskytuje `/docs` a `/openapi.json` (R14). V produkcii sa dajú vypnúť (`LOGEN_DOCS_ENABLED=false`).
 
 **Príklad: vytvorenie úlohy**
 
@@ -35,15 +35,15 @@ curl -X POST http://localhost:8000/v1/jobs \
 
 `HTTP/1.1 202 Accepted`
 ```json
-{ "job_id": "7f3c2a1e", "status": "queued", "links": { "self": "/v1/jobs/7f3c2a1e" } }
+{ "job_id": "3f6b1c2e-8d4a-4f7b-9c1e-5a2d7e9b0c41", "status": "queued", "links": { "self": "/v1/jobs/3f6b1c2e-8d4a-4f7b-9c1e-5a2d7e9b0c41" } }
 ```
 
 **Príklad: stav úlohy**
 
-`GET /v1/jobs/7f3c2a1e`
+`GET /v1/jobs/3f6b1c2e-8d4a-4f7b-9c1e-5a2d7e9b0c41`
 ```json
 {
-  "job_id": "7f3c2a1e",
+  "job_id": "3f6b1c2e-8d4a-4f7b-9c1e-5a2d7e9b0c41",
   "external_ref": "user-152",
   "status": "running",
   "stage": "questions",
@@ -57,7 +57,7 @@ curl -X POST http://localhost:8000/v1/jobs \
 Neúspešná úloha má rovnaký tvar, ale `"status": "failed"` a `error` v jednotnom formáte chyby:
 ```json
 {
-  "job_id": "7f3c2a1e",
+  "job_id": "3f6b1c2e-8d4a-4f7b-9c1e-5a2d7e9b0c41",
   "external_ref": "user-152",
   "status": "failed",
   "stage": "extract",
@@ -100,17 +100,17 @@ Parametre sú rovnaké ako pri Mlynčeku A. Všetky sú voliteľné, chýbajúce
 
 | Parameter | Význam | Poznámka k B |
 | --- | --- | --- |
-| `external_ref` | vlastný identifikátor stránky (voliteľný) | – |
+| `external_ref` | vlastný identifikátor stránky (voliteľný) | - |
 | `language` | `auto` \| `sk` \| `en` | prompty B sú currently v angličtine, generovanie v slovenčine je future work (hlavná stránka, kap. 4, 5) |
 | `extraction.ocr` | OCR obrázkov (voliteľné) | B dnes OCR nemá, samostatný variant obrazu |
-| `questions.types` | ktoré typy generovať | – |
+| `questions.types` | ktoré typy generovať | - |
 | `questions.per_learning_object` | počet otázok na jedno LO | B dnes vytvára jedno LO = jednu otázku, ďalšie pribudnú v novom kroku 7 |
 | `questions.choice_options` | počet možností pri `choice` | B dnes vždy generuje 4 (3 distraktory + správna) |
 | `questions.hints` | počet nápovied (napr. ľahká a ťažká) | B má dnes 1 nápovedu |
-| `split.mode` | `single` \| `lessons` \| `topics` \| `syllabus` | – |
-| `split.lesson_count` | počet hodín (`lessons`) | – |
+| `split.mode` | `single` \| `lessons` \| `topics` \| `syllabus` | - |
+| `split.lesson_count` | počet hodín (`lessons`) | - |
 | `split.lesson_minutes` | dĺžka hodiny v minútach | predvolene `LOGEN_DEFAULT_LESSON_MINUTES` |
-| `split.syllabus` | zoznam hodín (`syllabus`) | – |
+| `split.syllabus` | zoznam hodín (`syllabus`) | - |
 
 Príklady rozdelenia (rovnaké ako pri Mlynčeku A):
 ```text
@@ -176,7 +176,7 @@ Modely iba z povoleného zoznamu v konfigurácii; iné → `invalid_options`.
         },
         {
           "name": "Esej: manuálna vs. automatická správa pamäte",
-          "description": "Napíšte krátku úvahu (5–10 viet), v ktorej porovnáte manuálnu správu pamäte v C s garbage collection.",
+          "description": "Napíšte krátku úvahu (5-10 viet), v ktorej porovnáte manuálnu správu pamäte v C s garbage collection.",
           "type": "no_answer",
           "time_to_handle": 600,
           "time_to_explain": 0,
@@ -189,7 +189,7 @@ Modely iba z povoleného zoznamu v konfigurácii; iné → `invalid_options`.
 }
 ```
 
-Výsledok sa pred uložením validuje voči schéme z `GET /v1/schema/lesson` (`additionalProperties: false` na každej úrovni). Schéma by mala byť jeden spoločný súbor pre Mlynček A aj B.
+HTML v `hints[].url` sa pred uložením prečistí podľa zoznamu povolených značiek (`<p>`, `<b>`, `<i>`, `<code>`, `<pre>`, `<ul>`, `<ol>`, `<li>`, `<br>`), ostatné polia sú čistý text (hlavná stránka, kap. 12). Výsledok sa pred uložením validuje voči schéme z `GET /v1/schema/lesson` (`additionalProperties: false` na každej úrovni). Schéma by mala byť jeden spoločný súbor pre Mlynček A aj B.
 
 ### Report (`GET /v1/jobs/{id}/report`)
 
@@ -197,7 +197,7 @@ Formát reportu nie je spoločný, každý mlynček vracia svoje interné údaje
 
 ```json
 {
-  "job_id": "7f3c2a1e",
+  "job_id": "3f6b1c2e-8d4a-4f7b-9c1e-5a2d7e9b0c41",
   "options": { "split": { "mode": "topics", "lesson_minutes": 45 } },
   "sources": [
     { "document": "D1", "file": "modul1.pdf", "sections": 34, "units": 61, "ocr_pages": 0 }
@@ -255,6 +255,7 @@ Všetky chyby majú rovnaký tvar: `{"error": {"code": "...", "message": "...", 
 | 413 | `file_too_large` | Súbor je väčší ako limit alebo má priveľa strán. |
 | 415 | `unsupported_file` | Súbor nie je PDF, HTML ani PPTX **(B: A prijíma iba PDF)**. |
 | 422 | `validation_error` | Telo requestu nezodpovedá schéme (generuje FastAPI). |
+| 429 | `rate_limited` | Kľúč má priveľa čakajúcich úloh alebo posiela priveľa requestov; header `Retry-After` **(návrh pre A aj B)**. |
 | 502 | `llm_error` | Poskytovateľ LLM zlyhal aj po opakovaniach alebo vrátil neplatný JSON. |
 
 **Kódy chýb neúspešnej úlohy** (pole `error.code` v stave úlohy `failed`) **(návrh pre A aj B)**:
@@ -302,7 +303,7 @@ Dnešná funkcia `call_llm(messages, model, temperature, ...)` v `llm_service.py
 | Adaptér | Pokrýva | Generovanie / embeddingy |
 | --- | --- | --- |
 | `OpenAICompatibleAdapter` | Groq, OpenRouter, OpenAI, Mistral, GitHub Models, Gemini (OpenAI endpoint), lokálny server (Ollama, vLLM, LM Studio) | áno / áno (`/v1/chat/completions`, `/v1/embeddings`) |
-| `LocalEmbedder` **(B)** | `all-MiniLM-L6-v2` vo workeri (dnešný `embedding_service.py`) | – / áno |
+| `LocalEmbedder` **(B)** | `all-MiniLM-L6-v2` vo workeri (dnešný `embedding_service.py`) | - / áno |
 | `AnthropicAdapter` | Claude modely (iba v prípade potreby) | áno / nie |
 
 ### Príklady konfigurácie
@@ -323,7 +324,7 @@ LOGEN_EMBED_BASE_URL=http://llm:11434/v1
 
 ---
 
-## Príloha C – Štruktúra projektu po zmenách
+## Príloha C - Štruktúra projektu po zmenách
 
 Štruktúra zodpovedá Mlynčeku A: jadro (`lo_pipeline/`, v A `qgen/`) je oddelené od služby (`service/`).
 
@@ -355,7 +356,7 @@ Odstráni sa: súčasný `main.py` s endpointmi pre jednotlivé kroky a globáln
 
 ---
 
-## Príloha D – Docker a konfigurácia
+## Príloha D - Docker a konfigurácia
 
 ### Dockerfile (náčrt)
 
@@ -384,7 +385,7 @@ CMD ["uvicorn", "service.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 - **torch** tool B potrebuje kvôli lokálnym embeddingom (sentence-transformers). Pri `LOGEN_EMBED_PROVIDER=openai_compatible` môžu torch a sentence-transformers z obrazu odpadnúť a obraz bude výrazne menší (otvorená otázka, spolu s OCR).
-- **OCR** (voliteľné): samostatný build target s `tesseract-ocr` (`eng`, `slk`), `poppler-utils`, `pytesseract`, `pdf2image`, približne +100–150 MB.
+- **OCR** (voliteľné): samostatný build target s `tesseract-ocr` (`eng`, `slk`), `poppler-utils`, `pytesseract`, `pdf2image`, približne +100-150 MB.
 - **GPU** netreba (MiniLM beží na CPU). Treba ju iba pre voliteľný lokálny kontajner `llm`.
 - **Veľkosť:** odhad 1,5-2,5 GB s torch, bez neho niekoľko stoviek MB. *Po builde doplniť nameranú hodnotu (`docker images`).*
 - **Python 3.11** používa B dnes (lock súbor je pre túto verziu). A používa 3.12. Prechod na 3.12 je možný, ale nie je nutný.
@@ -395,21 +396,21 @@ CMD ["uvicorn", "service.main:app", "--host", "0.0.0.0", "--port", "8000"]
 services:
   api:
     build: .
-    ports: ["8000:8000"]
+    ports: ["127.0.0.1:8000:8000"]           # iba lokálne; v nasadení iba interná sieť s backendom
     env_file: .env
     volumes: [data:/data]
     depends_on: [redis]
     restart: unless-stopped
   worker:
     build: .
-    command: rq worker --url redis://redis:6379 logen
+    command: rq worker --url redis://:${LOGEN_REDIS_PASSWORD}@redis:6379 logen
     env_file: .env
     volumes: [data:/data]
     depends_on: [redis]
     restart: unless-stopped
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes   # queue a stav prežijú reštart
+    command: redis-server --appendonly yes --requirepass ${LOGEN_REDIS_PASSWORD}   # queue a stav prežijú reštart; bez publikovaného portu
     volumes: [redis:/data]
     restart: unless-stopped
   llm:                                       # voliteľný lokálny model (generovanie aj embeddingy)
@@ -435,17 +436,22 @@ Prefix `LOGEN_` (A používa `QGEN_`) umožňuje prevádzkovať obe služby ved�
 | Premenná | Predvolená hodnota | Význam |
 | --- | --- | --- |
 | `LOGEN_LLM_PROVIDER` | `openai_compatible` | `openai_compatible` \| `anthropic` (Gemini ide cez svoj OpenAI endpoint) |
-| `LOGEN_LLM_BASE_URL` / `LOGEN_LLM_API_KEY` | Groq / – | Adresa a kľúč poskytovateľa (cloud alebo lokálny server) |
+| `LOGEN_LLM_BASE_URL` / `LOGEN_LLM_API_KEY` | Groq / - | Adresa a kľúč poskytovateľa (cloud alebo lokálny server) |
 | `LOGEN_LLM_MODEL` (+ `_UNITS`, `_LO`, `_QUESTIONS`, `_EVAL`, `_PREREQ`) | `openai/gpt-oss-120b`; `_EVAL` = `qwen/qwen3.8-27b,openai/gpt-oss-120b` | Predvolený model a voliteľne model pre každú rolu (dnes `GEN_MODEL` a konštanty v `main.py`, `ems.py`) |
-| `LOGEN_EMBED_PROVIDER` / `_BASE_URL` / `_MODEL` | `local` / – / `all-MiniLM-L6-v2` | Poskytovateľ, adresa a model embeddingov |
+| `LOGEN_EMBED_PROVIDER` / `_BASE_URL` / `_MODEL` | `local` / - / `all-MiniLM-L6-v2` | Poskytovateľ, adresa a model embeddingov |
 | `LOGEN_DEDUP_THRESHOLD` / `LOGEN_TOPIC_MATCH_THRESHOLD` | `0.82` / nakalibrovať | Prahy podobnosti; kalibrujú sa pre embedding model |
 | `LOGEN_FAITHFULNESS_THRESHOLD` / `LOGEN_HINT_QUALITY_THRESHOLD` / `LOGEN_MAX_ATTEMPTS` | `3.0` / `2.0` / `2` | Filter kvality **(B)** |
 | `LOGEN_DEFAULT_LESSON_MINUTES` | `45` | Dĺžka hodiny, ak ju stránka nepošle |
 | `LOGEN_OCR_ENABLED` | `false` | Predvolené zapnutie OCR |
-| `LOGEN_API_KEYS` | prázdne | Povolené kľúče pre `X-API-Key`; prázdne = bez overenia (lokálne) |
+| `LOGEN_API_KEYS` | – (povinné) | Povolené kľúče pre `X-API-Key` (oddelené čiarkou). Bez nich služba nenaštartuje |
+| `LOGEN_DEV_MODE` | `false` | Iba lokálny vývoj: povolí štart bez `LOGEN_API_KEYS` |
+| `LOGEN_DOCS_ENABLED` | `true` | `/docs` a `/openapi.json`; v produkcii `false` |
+| `LOGEN_MAX_QUEUED_JOBS_PER_KEY` | `5` | Max. čakajúcich úloh na jeden kľúč, potom `429 rate_limited` |
+| `LOGEN_MAX_UNZIPPED_MB` | `200` | Max. rozbalená veľkosť PPTX (ochrana pred ZIP bombou) |
+| `LOGEN_REDIS_PASSWORD` | – (povinné) | Heslo pre Redis (`requirepass`) |
 | `LOGEN_MAX_UPLOAD_MB` / `LOGEN_MAX_PAGES` | `50` / `300` | Limity vstupu |
 | `LOGEN_RESULT_TTL_DAYS` | `7` | Ako dlho sa uchovávajú výsledky v `/data` |
-| `LOGEN_INTER_CALL_DELAY` / `LOGEN_REASONING_EFFORT` | `0.1` / – | Pauza medzi volaniami LLM, úroveň uvažovania pre GPT-OSS **(B, dnes bez prefixu)** |
+| `LOGEN_INTER_CALL_DELAY` / `LOGEN_REASONING_EFFORT` | `0.1` / - | Pauza medzi volaniami LLM, úroveň uvažovania pre GPT-OSS **(B, dnes bez prefixu)** |
 | `LOGEN_REDIS_URL` / `LOGEN_DATA_DIR` / `LOGEN_JOB_TIMEOUT_MINUTES` | `redis://redis:6379` / `/data` / `120` | Infraštruktúra **(B, návrh)** |
 
 Kvôli spätnej kompatibilite fungujú aj dnešné premenné (`GROQ_API_KEY`, `OPENROUTER_API_KEY`, `GEN_MODEL`, `INTER_CALL_DELAY`, `SPACY_MODEL`, …) ako náhradné hodnoty, ak variant s prefixom `LOGEN_` nie je nastavený.
