@@ -12,19 +12,18 @@ python-dotenv
 
 # Document parsing
 PyPDF2
+beautifulsoup4
+python-pptx
 
 # NLP
 spacy
 nltk
 sentence-transformers
 
-# Graph construction + plotting (graph_builder.py imports matplotlib at module level)
+# Graph construction
 networkx
-matplotlib
 
-# Data / ML utilities
+# Data utilities
 numpy
-pandas
-scikit-learn
-scipy
-seaborn
+
+# Thesis analysis/plotting deps (matplotlib, pandas, ...) live in requirements-dev.txt

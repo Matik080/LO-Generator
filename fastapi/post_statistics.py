@@ -1,18 +1,10 @@
-from scipy.stats import wilcoxon
-
 from lexical_overlap_computation import compute_overlaps
 import os
 import json
 from collections import Counter
 import statistics
-import pandas as pd
-from sklearn.metrics import cohen_kappa_score
-from scipy.stats import spearmanr
 
 import networkx as nx
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
 import pickle
 
 # Utilities
@@ -27,6 +19,9 @@ def save_table(data, path):
 
 # Learning object quality assessment functions
 def evaluate_learning_objects(learning_objects, output_dir, comparison_learning_objects=None, comparison_learning_objects_2=None):
+    # Analysis-only deps (requirements-dev.txt), imported here so the API doesn't need them
+    import numpy as np
+    import matplotlib.pyplot as plt
     overlaps = [
         lo["lexical_overlap"]
         for lo in learning_objects
@@ -92,6 +87,8 @@ def evaluate_learning_objects(learning_objects, output_dir, comparison_learning_
 
 # Concept graph evaluation
 def evaluate_concept_graph(G, output_dir):
+    # Analysis-only deps (requirements-dev.txt), imported here so the API doesn't need them
+    import matplotlib.pyplot as plt
     stats = {
 
         "nodes": G.number_of_nodes(),
@@ -136,6 +133,8 @@ def evaluate_concept_graph(G, output_dir):
 
 # Learning Path Evaluation
 def evaluate_learning_paths(KG, output_dir):
+    # Analysis-only deps (requirements-dev.txt), imported here so the API doesn't need them
+    import matplotlib.pyplot as plt
     stats = {
         "nodes": KG.number_of_nodes(),
         "edges": KG.number_of_edges(),
@@ -284,6 +283,9 @@ def build_dummy_knowledge_graph(learning_objects):
     return KG
 
 def compute_cohens_kappa(evaluation_file: str, metrics: list = None):
+    # Analysis-only deps (requirements-dev.txt), imported here so the API doesn't need them
+    import pandas as pd
+    from sklearn.metrics import cohen_kappa_score
     with open(evaluation_file) as f:
         data = json.load(f)
     df = pd.DataFrame(data)
@@ -309,6 +311,9 @@ def compute_cohens_kappa(evaluation_file: str, metrics: list = None):
 
 
 def weighted_kappa(evaluation_file: str, metrics: list = None):
+    # Analysis-only deps (requirements-dev.txt), imported here so the API doesn't need them
+    import pandas as pd
+    from sklearn.metrics import cohen_kappa_score
     with open(evaluation_file) as f:
         data = json.load(f)
     df = pd.DataFrame(data)
@@ -334,6 +339,9 @@ def weighted_kappa(evaluation_file: str, metrics: list = None):
 
 
 def wilcoxon_model_comparison(evaluation_file: str, metrics: list = None):
+    # Analysis-only deps (requirements-dev.txt), imported here so the API doesn't need them
+    import pandas as pd
+    from scipy.stats import wilcoxon
     with open(evaluation_file) as f:
         data = json.load(f)
     df = pd.DataFrame(data)
@@ -362,6 +370,9 @@ def wilcoxon_model_comparison(evaluation_file: str, metrics: list = None):
 
 
 def spearman_agreement(evaluation_file: str, metrics: list = None):
+    # Analysis-only deps (requirements-dev.txt), imported here so the API doesn't need them
+    import pandas as pd
+    from scipy.stats import spearmanr
     with open(evaluation_file) as f:
         data = json.load(f)
     df = pd.DataFrame(data)
@@ -387,6 +398,8 @@ def spearman_agreement(evaluation_file: str, metrics: list = None):
 
 
 def print_binary_agreement(evaluation_file: str):
+    # Analysis-only deps (requirements-dev.txt), imported here so the API doesn't need them
+    import pandas as pd
     """Agreement on binary metrics across models."""
     with open(evaluation_file) as f:
         data = json.load(f)
@@ -414,6 +427,10 @@ def print_binary_agreement(evaluation_file: str):
 
 
 def generate_combined_boxplots(evaluation_file: str, output_path="./output/evaluation_boxplots.png", metrics: list = None):
+    # Analysis-only deps (requirements-dev.txt), imported here so the API doesn't need them
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
     with open(evaluation_file) as f:
         data = json.load(f)
     df = pd.DataFrame(data)

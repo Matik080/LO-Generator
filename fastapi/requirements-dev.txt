@@ -1,0 +1,8 @@
+# Extra dependencies for the offline thesis analysis scripts (post_statistics.py, graph plots).
+# Not needed by the API server or the Docker image.
+-r requirements.txt
+matplotlib
+pandas
+scikit-learn
+scipy
+seaborn

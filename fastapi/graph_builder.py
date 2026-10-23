@@ -1,7 +1,7 @@
 #imports
 import os
 import pickle
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import networkx as nx
 import re
 import json
@@ -40,7 +40,7 @@ def build_concept_graph(units):
                     G.add_edge(concepts[i], concepts[j], weight=1)
     return G
 
-def visualize_graph(G, output_path="concept_graph.png"):
+""" def visualize_graph(G, output_path="concept_graph.png"):
     plt.figure(figsize=(60, 45))
 
     pos = nx.kamada_kawai_layout(G)
@@ -68,7 +68,7 @@ def visualize_graph(G, output_path="concept_graph.png"):
     plt.axis("off")
     plt.tight_layout()
     plt.savefig(output_path, dpi=200, bbox_inches="tight")
-    print(f"[Graph] Saved to {output_path}")
+    print(f"[Graph] Saved to {output_path}") """
 
 def assign_anchor(lo, centrality):
     scored = [
@@ -403,7 +403,7 @@ if __name__ == "__main__":
     G = build_concept_graph(units)
     print("Number of nodes:", G.number_of_nodes())
     print("Number of edges:", G.number_of_edges())
-    visualize_graph(G)
+    #visualize_graph(G)
 
     learning_objects = load_json(os.path.join(output_dir, "learning_objects.json"))
     centrality = nx.degree_centrality(G)
@@ -463,7 +463,7 @@ if __name__ == "__main__":
         if data["weight"] >= 3:
             H.add_edge(u, v, weight=data["weight"])
 
-    visualize_graph(H, "concept_graph_filtered.png")
+    #visualize_graph(H, "concept_graph_filtered.png")
 
     print_graph_summary(KG, learning_objects)
 
