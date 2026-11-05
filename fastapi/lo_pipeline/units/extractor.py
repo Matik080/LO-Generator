@@ -78,19 +78,23 @@ def extract_atomic_units(section_text: str) -> List[Dict[str, Any]]:
     units = parse_json(response)
     return units
 
-def extract_atomic_units_batch(sections, batch_size=3, progress=None):
+def extract_atomic_units_batch(sections, batch_size=3, progress=None, stats=None):
     """
     Extract atomic units from multiple sections in a single API call.
-    Returns flat list of all atomic units found.
+    Returns flat list of all atomic units found, each with `source_title` and `source_page` of its section
+    (see units/sources.py for how the section is determined and checked).
     `progress(done, total)` is called after each LLM batch (optional).
+    `stats` (optional dict) receives counts of corrected/missing section numbers.
     """
+    from lo_pipeline.units.sources import assign_sections
+
     all_units = []
     total_batches = -(-len(sections) // batch_size)
 
     for batch_start in range(0, len(sections), batch_size):
         batch = sections[batch_start:batch_start + batch_size]
         batch_content = [s["content"] if isinstance(s, dict) else s for s in batch]
-        combined_text = "\n\n--- SECTION BREAK ---\n\n".join(batch_content)
+        combined_text = "\n\n".join(f"[SECTION {i}]\n{content}" for i, content in enumerate(batch_content, 1))
 
         prompt = f"""
 You are extracting atomic knowledge units from computer science textbook sections.
@@ -103,6 +107,8 @@ STRICT RULES:
 - Do NOT extract duplicate or near-duplicate concepts
 - For code snippets, include the actual code in the statement field
 - If two sentences say the same thing differently, extract only the clearest one
+- The sections are numbered [SECTION 1], [SECTION 2], ... For each unit, set "section" to the number of
+  the section its statement comes from. If it combines several sections, use the one it relies on most.
 
 ALLOWED TYPES (use exactly these strings):
 definition, rule, property, algorithm_step, constraint, theorem, fact, example
@@ -115,7 +121,8 @@ Return a JSON array only. No markdown. No explanation.
   {{
     "type": "definition | rule | property | algorithm_step | constraint | theorem | fact | example",
     "statement": "Clear standalone statement. Include code if relevant.",
-    "concepts": ["concept1", "concept2"]
+    "concepts": ["concept1", "concept2"],
+    "section": 1
   }}
 ]
 
@@ -149,7 +156,8 @@ Textbook sections:
         units = parse_json(response)
 
         if isinstance(units, list):
-            all_units.extend(units)
+            units = [u for u in units if isinstance(u, dict)]
+            all_units.extend(assign_sections(units, batch, stats))
             logger.info(f"[Extraction] Got {len(units)} units from this batch.")
         else:
             logger.warning(f"[Extraction] Unexpected response format, skipping batch.")

@@ -101,13 +101,20 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     # 2. Atomic units: extracted per document (a batch never mixes two documents), deduplicated across all
     with timed("units"):
         total = sum(_ceil_div(len(s), opts.extraction_batch_size) for s in sections_per_source)
-        raw_units, offset = [], 0
+        raw_units, offset, source_stats = [], 0, {}
         for sections in sections_per_source:
             raw_units += extract_atomic_units_batch(
                 sections, batch_size=opts.extraction_batch_size,
                 progress=progress.step("units", offset, total - offset - _ceil_div(len(sections), opts.extraction_batch_size)),
+                stats=source_stats,
             )
             offset += _ceil_div(len(sections), opts.extraction_batch_size)
+        fixed = source_stats.get("section_corrected", 0) + source_stats.get("section_missing", 0)
+        if fixed:
+            warnings.append({"code": "unit_section_reassigned",
+                             "message": f"{fixed} of {len(raw_units)} unit(s) got their page from text matching "
+                                        f"instead of the LLM's section number.",
+                             "details": source_stats})
         logger.info(f"[Extract] Deduplicating {len(raw_units)} raw units...")
         units = normalize_units(clean_atomic_units(raw_units))
         logger.info(f"[Extract] {len(units)} units after dedup.")

@@ -295,9 +295,7 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
             try:
                 units = extract_atomic_units_batch(batch, batch_size=extraction_batch_size)
                 if isinstance(units, list):
-                    for unit in units:
-                        unit["source_title"] = batch[0].get("source", title) if isinstance(batch[0], dict) else title
-                        unit["source_page"] = batch[0].get("page") if isinstance(batch[0], dict) else None
+                    # source_title / source_page are set per unit by the extractor
                     checkpoint["raw_units"].extend(units)
                     logger.info(f"[Extraction] +{len(units)} units, total raw: {len(checkpoint['raw_units'])}")
             except Exception as e:
