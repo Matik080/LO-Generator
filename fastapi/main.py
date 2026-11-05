@@ -3,14 +3,11 @@ import re
 import sys
 import queue
 import asyncio
-import pickle
-import base64
 import statistics as stats
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any
 
-import networkx as nx
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
@@ -45,14 +42,9 @@ sys.stdout = _LogCapture(sys.stdout)
 
 from lo_pipeline.units.normalizer import normalize_units
 from lo_pipeline.units.extractor import extract_atomic_units_batch, clean_atomic_units
-from lo_pipeline.graph.builder import (
-    build_concept_graph, assign_anchor,
-    build_layered_learning_paths, verify_prerequisites_batched, store_prerequisites,
-)
-from lo_pipeline.lo.evaluator import evaluate_learning_objects_batch
-from lo_pipeline.lo.generator import (
-    generate_learning_object_batch, generate_mc_variants_batch, generate_id, extract_keywords,
-)
+from lo_pipeline.graph.prerequisites import build_prerequisite_graph, graph_to_json
+from lo_pipeline.lo.generator import generate_mc_variants_batch
+from lo_pipeline.lo.postprocess import generate_learning_objects
 from lo_pipeline.lo.quality_filter import filter_and_regenerate
 from lo_pipeline.lo.lexical import lexical_overlap
 from analysis.post_statistics import analyze_evaluations
@@ -143,25 +135,8 @@ async def generate_los_endpoint(body: UnitsInput):
     batch_size = 5
     set_stage("generate")
     def _run():
-        los = []
-        total_batches = -(-len(units) // batch_size)
-        print(f'[Generate] {len(units)} units -> {total_batches} batch(es).')
-        for batch_start in range(0, len(units), batch_size):
-            batch = units[batch_start:batch_start + batch_size]
-            los_raw = generate_learning_object_batch(batch, batch_size=batch_size)
-            for unit, lo in zip(batch, los_raw):
-                lo["id"] = generate_id(lo["source_statement"])
-                lo["keywords"] = list(extract_keywords(lo["question"] + " " + lo["answer"]))
-                lo["source_title"] = unit.get("source_title", "")
-                lo["source_page"] = unit.get("source_page", "")
-                src = unit.get("source_title", "")
-                page = unit.get("source_page", "")
-                if src and page:
-                    lo["hint"] = lo["hint"].rstrip(".") + f". [Source: {src}, p. {page}]"
-                elif src:
-                    lo["hint"] = lo["hint"].rstrip(".") + f". [Source: {src}]"
-                los.append(lo)
-            print(f'[Generate] Batch {batch_start // batch_size + 1}/{total_batches} done -- {len(los)} LOs so far.')
+        print(f'[Generate] {len(units)} units -> {-(-len(units) // batch_size)} batch(es).')
+        los = generate_learning_objects(units, batch_size=batch_size)
         print(f'[Generate] Generating MC variants for {len(los)} LOs...')
         los = generate_mc_variants_batch(los, batch_size=5)
         print(f'[Generate] Done. {len(los)} LOs with MC variants.')
@@ -184,7 +159,6 @@ class EvalInput(BaseModel):
 
 @app.post("/evaluate")
 async def evaluate_endpoint(body: EvalInput):
-    import tempfile, os, json as _json
     los_in = list(body.learning_objects)
     units = body.units
     models = body.models
@@ -192,13 +166,10 @@ async def evaluate_endpoint(body: EvalInput):
     attempts = body.max_attempts
     set_stage("evaluate")
     def _run():
-        with tempfile.TemporaryDirectory() as tmp:
-            with open(os.path.join(tmp, "atomic_units.json"), "w") as f:
-                _json.dump(units, f)
-            return filter_and_regenerate(
-                los_in, output_dir=tmp, eval_models=models,
-                faithfulness_threshold=threshold, max_attempts=attempts,
-            )
+        return filter_and_regenerate(
+            los_in, units, eval_models=models,
+            faithfulness_threshold=threshold, max_attempts=attempts,
+        )
     los = await _run_blocking(_run)
     return {
         "learning_objects": los,
@@ -218,42 +189,21 @@ async def build_graph_endpoint(body: GraphInput):
     los = body.learning_objects
     set_stage("graph")
     def _run():
-        print(f"[Graph] Building concept graph from {len(units)} units...")
-        G = build_concept_graph(units)
-        centrality = nx.degree_centrality(G)
-        print(f"[Graph] Concept graph: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges.")
-        for lo in los:
-            lo["anchor"] = assign_anchor(lo, centrality)
-        print(f"[Graph] Building layered learning paths for {len(los)} LOs...")
-        candidate_edges = build_layered_learning_paths(los, centrality)
-        print(f"[Graph] {len(candidate_edges)} candidate edges.")
-        verified_edges = verify_prerequisites_batched(candidate_edges, los, batch_size=10)
-        edges = list(set(verified_edges))
-        KG = nx.DiGraph()
-        KG.add_edges_from(edges)
-        for lo in los:
-            if lo["id"] not in KG:
-                KG.add_node(lo["id"])
-        if not nx.is_directed_acyclic_graph(KG):
-            print("[Graph] Cycle detected, removing feedback edges...")
-            for cycle in list(nx.simple_cycles(KG)):
-                KG.remove_edge(cycle[-1], cycle[0])
-        result_los = store_prerequisites(KG, los)
-        print(f"[Graph] Complete. {KG.number_of_nodes()} nodes, {KG.number_of_edges()} edges. DAG: {nx.is_directed_acyclic_graph(KG)}")
-        def serialize(g):
-            return base64.b64encode(pickle.dumps(g)).decode("utf-8")
+        g = build_prerequisite_graph(units, los, verify_batch_size=10)
+        G, KG = g["concept_graph"], g["knowledge_graph"]
         return {
-            "learning_objects": result_los,
-            "concept_graph_b64": serialize(G),
-            "knowledge_graph_b64": serialize(KG),
+            "learning_objects": g["learning_objects"],
+            "concept_graph": graph_to_json(G),
+            "knowledge_graph": graph_to_json(KG),
             "stats": {
                 "concept_graph_nodes": G.number_of_nodes(),
                 "concept_graph_edges": G.number_of_edges(),
                 "knowledge_graph_nodes": KG.number_of_nodes(),
                 "knowledge_graph_edges": KG.number_of_edges(),
-                "candidate_edges": len(candidate_edges),
-                "verified_edges": len(edges),
-                "is_dag": nx.is_directed_acyclic_graph(KG),
+                "candidate_edges": g["candidate_edges"],
+                "verified_edges": g["verified_edges"],
+                "removed_cycle_edges": len(g["removed_cycle_edges"]),
+                "is_dag": True,
             },
         }
     return await _run_blocking(_run)
@@ -292,57 +242,24 @@ async def add_sources_endpoint(body: AddSourcesInput):
     batch_size = 5
     set_stage("add-sources")
     def _run():
-        new_los = []
-        total_batches = -(-len(new_units) // batch_size)
-        print(f"[AddSources] {len(new_units)} new units -> {total_batches} batch(es)...")
-        for batch_start in range(0, len(new_units), batch_size):
-            batch = new_units[batch_start:batch_start + batch_size]
-            los_raw = generate_learning_object_batch(batch, batch_size=batch_size)
-            for unit, lo in zip(batch, los_raw):
-                lo["id"] = generate_id(lo["source_statement"])
-                lo["keywords"] = list(extract_keywords(lo["question"] + " " + lo["answer"]))
-                lo["source_title"] = unit.get("source_title", "")
-                lo["source_page"] = unit.get("source_page", "")
-                src = unit.get("source_title", "")
-                page = unit.get("source_page", "")
-                if src and page:
-                    lo["hint"] = lo["hint"].rstrip(".") + f". [Source: {src}, p. {page}]"
-                elif src:
-                    lo["hint"] = lo["hint"].rstrip(".") + f". [Source: {src}]"
-                new_los.append(lo)
-            print(f"[AddSources] Batch {batch_start // batch_size + 1}/{total_batches} -- {len(new_los)} new LOs.")
+        print(f"[AddSources] {len(new_units)} new units -> {-(-len(new_units) // batch_size)} batch(es)...")
+        new_los = generate_learning_objects(new_units, batch_size=batch_size)
         new_los = generate_mc_variants_batch(new_los, batch_size=5)
         combined_units = existing_units + new_units
         combined_los = existing_los + new_los
         print(f"[AddSources] Rebuilding graph over {len(combined_los)} total LOs...")
-        G = build_concept_graph(combined_units)
-        centrality = nx.degree_centrality(G)
-        for lo in combined_los:
-            lo["anchor"] = assign_anchor(lo, centrality)
-        candidate_edges = build_layered_learning_paths(combined_los, centrality)
-        verified_edges = verify_prerequisites_batched(candidate_edges, combined_los, batch_size=10)
-        edges = list(set(verified_edges))
-        KG = nx.DiGraph()
-        KG.add_edges_from(edges)
-        for lo in combined_los:
-            if lo["id"] not in KG:
-                KG.add_node(lo["id"])
-        if not nx.is_directed_acyclic_graph(KG):
-            for cycle in list(nx.simple_cycles(KG)):
-                KG.remove_edge(cycle[-1], cycle[0])
-        combined_los = store_prerequisites(KG, combined_los)
-        def serialize(g):
-            return base64.b64encode(pickle.dumps(g)).decode("utf-8")
-        print(f"[AddSources] Done. {len(combined_los)} total LOs.")
+        g = build_prerequisite_graph(combined_units, combined_los, verify_batch_size=10)
+        KG = g["knowledge_graph"]
+        print(f"[AddSources] Done. {len(g['learning_objects'])} total LOs.")
         return {
-            "learning_objects": combined_los,
-            "knowledge_graph_b64": serialize(KG),
+            "learning_objects": g["learning_objects"],
+            "knowledge_graph": graph_to_json(KG),
             "stats": {
-                "total_los": len(combined_los),
+                "total_los": len(g["learning_objects"]),
                 "new_los": len(new_los),
                 "knowledge_graph_nodes": KG.number_of_nodes(),
                 "knowledge_graph_edges": KG.number_of_edges(),
-                "is_dag": nx.is_directed_acyclic_graph(KG),
+                "is_dag": True,
             },
         }
     return await _run_blocking(_run)

@@ -1,14 +1,13 @@
 #imports
 import os
-from collections import Counter, defaultdict
+from collections import defaultdict
 
 from lo_pipeline.units.normalizer import normalize_units
 from lo_pipeline.units.extractor import extract_atomic_units_batch, clean_atomic_units
-from lo_pipeline.lo.generator import (
-    generate_learning_object_batch, generate_mc_variants_batch, generate_id, extract_keywords,
-)
+from lo_pipeline.lo.generator import generate_learning_object_batch, generate_mc_variants_batch
+from lo_pipeline.lo.postprocess import postprocess_lo
 from lo_pipeline.extraction.documents import extract_text_from_source, split_into_sections
-from lo_pipeline.files import load_json, export_json
+from lo_pipeline.files import export_json
 import json
 
 
@@ -98,9 +97,10 @@ def _question_is_self_contained(question: str):
             return False, f"references external context: '{m.group()}'"
     return True, None
 
-def filter_and_regenerate(learning_objects, output_dir, eval_models=None, faithfulness_threshold=3.0, hint_quality_threshold=2.0, max_attempts=2):
+def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, faithfulness_threshold=3.0, hint_quality_threshold=2.0, max_attempts=2):
     """
     Evaluates all LOs with one or more models, flags those that fail the quality threshold by consensus, and regenerates them from source units.
+    `atomic_units` are the units the LOs were generated from (matched by statement for regeneration).
 
     Failure logic (conservative):
       - Faithfulness average across models < faithfulness_threshold
@@ -164,7 +164,6 @@ def filter_and_regenerate(learning_objects, output_dir, eval_models=None, faithf
         print(f"[Filter] Attempt {attempt + 1}: {len(failing)} LOs flagged, regenerating...")
 
         # Find source units for failing LOs
-        atomic_units = load_json(os.path.join(output_dir, "atomic_units.json"))
         unit_map = {u["statement"]: u for u in atomic_units}
 
         failing_units = []
@@ -192,17 +191,7 @@ def filter_and_regenerate(learning_objects, output_dir, eval_models=None, faithf
 
         for unit, lo in zip(failing_units, new_los_raw):
             lo.pop("_fail_reasons", None)
-            lo["id"] = generate_id(lo["source_statement"])
-            lo["keywords"] = list(extract_keywords(lo["question"] + " " + lo["answer"]))
-            lo["source_title"] = unit.get("source_title", "")
-            lo["source_page"] = unit.get("source_page", "")
-            src = unit.get("source_title", "")
-            page = unit.get("source_page", "")
-            if src and page:
-                lo["hint"] = lo["hint"].rstrip(".") + f". [Source: {src}, p. {page}]"
-            elif src:
-                lo["hint"] = lo["hint"].rstrip(".") + f". [Source: {src}]"
-            surviving.append(lo)
+            surviving.append(postprocess_lo(lo, unit))
 
         learning_objects = surviving
         print(f"[Filter] Regenerated {len(failing_units)} LOs. Total now: {len(learning_objects)}")
@@ -302,17 +291,7 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
             los_raw = generate_learning_object_batch(batch, batch_size=generation_batch_size)
 
             for unit, lo in zip(batch, los_raw):
-                lo["id"] = generate_id(lo["source_statement"])
-                lo["keywords"] = list(extract_keywords(lo["question"] + " " + lo["answer"]))
-                lo["source_title"] = unit.get("source_title", "")
-                lo["source_page"] = unit.get("source_page", "")
-                src = unit.get("source_title", "")
-                page = unit.get("source_page", "")
-                if src and page:
-                    lo["hint"] = lo["hint"].rstrip(".") + f". [Source: {src}, p. {page}]"
-                elif src:
-                    lo["hint"] = lo["hint"].rstrip(".") + f". [Source: {src}]"
-                learning_objects.append(lo)
+                learning_objects.append(postprocess_lo(lo, unit))
 
             checkpoint["last_lo_index"] = start_lo + batch_start + len(batch)
             checkpoint["learning_objects"] = learning_objects
@@ -331,7 +310,7 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
     print(f"[Book] Filtering and regenerating low-quality LOs...")
     learning_objects = filter_and_regenerate(
         learning_objects,
-        output_dir,
+        atomic_units,
         #eval_models=["llama-3.3-70b-versatile"],
         #eval_models=["llama-3.3-70b-versatile", "moonshotai/kimi-k2-instruct"],
         #eval_models=["llama-3.3-70b-versatile", "openai/gpt-oss-120b"],

@@ -1258,8 +1258,8 @@ function exportJSON(type) {
   else if (type === 'units') { data = state.units; filename = 'atomic_units.json'; }
   else if (type === 'graph') {
     if (!state.graphData) { alert('Run the graph build first.'); return; }
-    // Extract edges from the graph stats (we store the b64 pickle server-side)
     data = {
+      knowledge_graph: state.graphData.knowledge_graph,  // node-link JSON: {nodes, edges}
       knowledge_graph_stats: state.graphData.stats,
       los_with_anchors: state.los.map(lo => ({ id: lo.id, anchor: lo.anchor, type: lo.type })),
     };
