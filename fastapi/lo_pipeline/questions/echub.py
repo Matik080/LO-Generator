@@ -1,8 +1,8 @@
 import json
 import re
 from collections import defaultdict
-from utilities import load_json, export_json
-from llm_service import call_llm
+from lo_pipeline.files import load_json, export_json
+from lo_pipeline.llm.service import call_llm
 
 # Helpers
 def _source_prefix(source_title: str) -> str:

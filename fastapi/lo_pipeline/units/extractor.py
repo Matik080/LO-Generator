@@ -1,9 +1,9 @@
 # imports
 from typing import List, Dict, Any
 
-from llm_service import call_llm
-from utilities import parse_json
-from embedding_service import get_embeddings_batch, cosine_similarity
+from lo_pipeline.llm.service import call_llm
+from lo_pipeline.llm.json_load import parse_json
+from lo_pipeline.llm.embeddings import get_embeddings_batch, cosine_similarity
 
 def extract_atomic_units(section_text: str) -> List[Dict[str, Any]]:
     prompt = f"""

@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT))
 FIXTURES = Path(__file__).parent / "fixtures"
 CASSETTE = FIXTURES / "llm_cassette.json"
 
-import llm_service  # noqa: E402  (needs the sys.path entry above)
+from lo_pipeline.llm import service as llm_service  # noqa: E402  (needs the sys.path entry above)
 
 
 def _key(messages, model, temperature):

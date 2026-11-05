@@ -1,4 +1,4 @@
-from lexical_overlap_computation import compute_overlaps
+from analysis.lexical_overlap_computation import compute_overlaps
 import os
 import json
 from collections import Counter

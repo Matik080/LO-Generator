@@ -1,27 +1,8 @@
-import json
-import re
 import os
 from typing import List, Dict, Any
-try:
-    from openai import OpenAI
-    import PyPDF2
-except ImportError:
-    import PyPDF2
-    print("ERROR: Missing necessary dependencies, please run:")
-    print("pip install openai PyPDF2")
-    exit(1)
 
-def parse_llm_json(response: str) -> dict:
-    # Strip Markdown code fences if present
-    response = response.strip()
-    response = re.sub(r"^```(?:json)?\s*", "", response)
-    response = re.sub(r"\s*```$", "", response)
-    response = response.strip()
+import PyPDF2
 
-    if not response:
-        raise ValueError("LLM returned an empty response")
-
-    return json.loads(response)
 
 def extract_text_from_pdf(pdf_path: str, document_title: str = None) -> str:
     try:
@@ -170,42 +151,3 @@ def split_into_sections(text: str) -> List[Dict[str, Any]]:
             "content": content
         })
     return sections
-
-
-def parse_json(text: str) -> Any:
-    """Attempts to parse JSON string into Python object"""
-    try:
-        # Strip markdown fences if model ignored instructions
-        text = re.sub(r"^```(?:json)?\s*", "", text.strip())
-        text = re.sub(r"\s*```$", "", text).strip()
-
-        return json.loads(text)
-    except json.JSONDecodeError:
-        # Second attempt: try to fix invalid escape sequences
-        try:
-            # Replace invalid backslash escapes that aren't valid JSON escapes
-            # Valid JSON escapes are: \" \\ \/ \b \f \n \r \t \uXXXX
-            cleaned = re.sub(r'\\(?!["\\/bfnrtu])', r'\\\\', text)
-            return json.loads(cleaned)
-        except json.JSONDecodeError:
-            print("\n=== RAW MODEL OUTPUT START ===")
-            print(text)
-            print("=== RAW MODEL OUTPUT END ===\n")
-            raise
-
-def load_json(path: str) -> List[Dict[str, Any]]:
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                print(f"[Import] Successfully loaded {path}")
-                return json.load(f)
-        except Exception as e:
-            raise Exception(f"[Import] Failed to load from {path}: {e}")
-
-
-def export_json(units: List[Dict[str, Any]], output_path: str) -> None:
-    try:
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(units, f, indent=2, ensure_ascii=False)
-        print(f"[Export] Successfully saved {len(units)} units to {output_path}")
-    except Exception as e:
-        print(f"[Export] Failed to save to {output_path}: {e}")

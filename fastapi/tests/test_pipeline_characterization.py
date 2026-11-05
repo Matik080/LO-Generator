@@ -18,13 +18,13 @@ EVAL_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b"]
 
 def run_current_chain(doc_path, tmp_dir):
     """Mirrors the step bodies in main.py, minus HTTP, file saving and pickling."""
-    from utilities import extract_text_from_source, split_into_sections
-    from atomic_unit_extractor import extract_atomic_units_batch, clean_atomic_units
-    from concept_normalizer import normalize_units
-    from learning_object_generator import generate_learning_object_batch, generate_mc_variants_batch, generate_id, extract_keywords
-    from ems import filter_and_regenerate
-    from graph_builder import build_concept_graph, assign_anchor, build_layered_learning_paths, verify_prerequisites_batched, store_prerequisites
-    from echub_format_converter import enrich_learning_objects, convert_by_source
+    from lo_pipeline.extraction.documents import extract_text_from_source, split_into_sections
+    from lo_pipeline.units.extractor import extract_atomic_units_batch, clean_atomic_units
+    from lo_pipeline.units.normalizer import normalize_units
+    from lo_pipeline.lo.generator import generate_learning_object_batch, generate_mc_variants_batch, generate_id, extract_keywords
+    from lo_pipeline.lo.quality_filter import filter_and_regenerate
+    from lo_pipeline.graph.builder import build_concept_graph, assign_anchor, build_layered_learning_paths, verify_prerequisites_batched, store_prerequisites
+    from lo_pipeline.questions.echub import enrich_learning_objects, convert_by_source
 
     # /extract-units
     text = extract_text_from_source(str(doc_path), document_title=doc_path.name)

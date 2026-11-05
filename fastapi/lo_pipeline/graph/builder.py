@@ -5,8 +5,8 @@ import pickle
 import networkx as nx
 import re
 import json
-from llm_service import call_llm
-from utilities import load_json, export_json
+from lo_pipeline.llm.service import call_llm
+from lo_pipeline.files import load_json, export_json
 
 TYPE_LEVEL = {
     "definition": 1,
@@ -123,8 +123,8 @@ When in doubt, return false.
 
 
 def build_prerequisite_edges(learning_objects, centrality):
-    from embedding_service import get_embeddings_batch, cosine_similarity
-    from llm_service import call_llm
+    from lo_pipeline.llm.embeddings import get_embeddings_batch, cosine_similarity
+    from lo_pipeline.llm.service import call_llm
     import re, json
 
     texts = [lo["question"] + " " + lo["answer"] for lo in learning_objects]
@@ -194,7 +194,7 @@ def build_layered_learning_paths(learning_objects, centrality):
     Within the same layer, edges are drawn by embedding similarity
     when concepts overlap significantly.
     """
-    from embedding_service import get_embeddings_batch, cosine_similarity
+    from lo_pipeline.llm.embeddings import get_embeddings_batch, cosine_similarity
 
     TYPE_LAYER = {
         "definition": 1,

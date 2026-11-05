@@ -207,6 +207,21 @@ curl -X POST http://localhost:8000/build-graph \
 
 ---
 
+## Running tests
+
+Tests replay recorded LLM answers, so they need no API key and make no LLM calls. Run them in the Docker image:
+
+```bash
+cd fastapi
+docker compose build
+docker run --rm -v "$(pwd):/app" -e PYTHONHASHSEED=0 -w /app lo-generator-fastapi \
+  sh -c "pip install -q pytest && python -m pytest -q tests"
+```
+
+`PYTHONHASHSEED=0` keeps the prompt order stable. After a deliberate change to prompts or pipeline logic, re-record the answers with the real LLM (`-e LLM_MODE=record`, needs keys in `fastapi/.env`). This also refreshes the snapshot in `tests/fixtures/snapshots/`; review its diff before committing.
+
+---
+
 ## Project Structure
 
 ```
@@ -219,18 +234,22 @@ curl -X POST http://localhost:8000/build-graph \
     ├── requirements.txt                <- all Python dependencies
     ├── pipeline_ui.html                <- single-page web UI served at http://localhost:8000
     ├── main.py                         <- FastAPI app: all endpoints, SSE log streaming, auto-save to output/
-    ├── llm_service.py                  <- LLM call wrapper with retries and rate limit handling
-    ├── atomic_unit_extractor.py        <- extracts atomic knowledge units from text sections and semantic deduplication
-    ├── concept_normalizer.py           <- normalises concept strings for consistent graph node naming
-    ├── echub_format_converter.py       <- enriches LOs and converts them to ECEH JSON format for platform upload
-    ├── embedding_service.py            <- sentence-transformers wrapper (all-MiniLM-L6-v2) for cosine similarity
-    ├── ems.py                          <- offline pipeline runner with checkpoint support
-    ├── graph_builder.py                <- builds concept co-occurrence graph, generates and LLM-verifies prerequisite edges, enforces DAG
-    ├── learning_object_evaluator.py    <- batched LLM evaluation of LOs
-    ├── learning_object_generator.py    <- batched LO generation and multiple-choice variant generation
-    ├── lexical_overlap_computation.py  <- computes lexical overlap between source statements and generated answers
-    ├── post_statistics.py              <- aggregates and analyses evaluation scores across LO batches
-    ├── utilities.py                    <- text extraction from PDF/HTML/PPTX, section splitting, JSON parsing helpers
+    ├── lo_pipeline/                    <- pipeline core (no web/UI code)
+    │   ├── extraction/documents.py     <- text extraction from PDF/HTML/PPTX, section splitting
+    │   ├── llm/service.py              <- LLM call wrapper with retries and rate limit handling
+    │   ├── llm/embeddings.py           <- sentence-transformers wrapper (all-MiniLM-L6-v2) for cosine similarity
+    │   ├── llm/json_load.py            <- tolerant JSON parsing of LLM output
+    │   ├── units/extractor.py          <- extracts atomic knowledge units from text sections and semantic deduplication
+    │   ├── units/normalizer.py         <- normalises concept strings for consistent graph node naming
+    │   ├── lo/generator.py             <- batched LO generation and multiple-choice variant generation
+    │   ├── lo/evaluator.py             <- batched LLM evaluation of LOs
+    │   ├── lo/quality_filter.py        <- quality filter + regeneration, offline pipeline runner with checkpoint support
+    │   ├── lo/lexical.py               <- tokenizer and lexical overlap
+    │   ├── graph/builder.py            <- builds concept co-occurrence graph, generates and LLM-verifies prerequisite edges, enforces DAG
+    │   ├── questions/echub.py          <- enriches LOs and converts them to ECEH JSON format for platform upload
+    │   └── files.py                    <- JSON load/save helpers for standalone scripts
+    ├── analysis/                       <- thesis analysis scripts (post_statistics, lexical overlap, unit merger)
+    ├── tests/                          <- pytest suite; LLM answers are replayed from tests/fixtures/llm_cassette.json
     ├── input/                          <- uploaded source files (persisted on host via Docker volume mount)
     └── output/                         <- generated outputs: atomic_units.json, learning_objects.json, echub_export.json
 ``` 

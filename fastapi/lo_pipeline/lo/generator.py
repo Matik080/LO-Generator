@@ -5,9 +5,9 @@ from typing import Dict, Any
 import hashlib
 from nltk.corpus import stopwords
 
-from utilities import parse_json
-from lexical_overlap_computation import tokenize
-from llm_service import call_llm
+from lo_pipeline.llm.json_load import parse_json
+from lo_pipeline.lo.lexical import tokenize
+from lo_pipeline.llm.service import call_llm
 
 
 def generate_id(source_statement):

@@ -5,7 +5,8 @@ from typing import Dict, List
 
 from openai import OpenAI, RateLimitError
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=True)
+# fastapi/.env (this file is fastapi/lo_pipeline/llm/service.py)
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env", override=True)
 
 GITHUB_TOKEN       = os.getenv("GITHUB_TOKEN")
 OPENAI_API_KEY     = os.getenv("OPENAI_API_KEY")

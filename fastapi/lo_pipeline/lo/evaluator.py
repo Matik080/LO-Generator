@@ -1,7 +1,7 @@
 import json
 import re
-from utilities import load_json, export_json
-from llm_service import call_llm
+from lo_pipeline.files import load_json, export_json
+from lo_pipeline.llm.service import call_llm
 
 # Per-model batch sizes, GPT OSS truncates on long prompts, Kimi rate limits
 MODEL_BATCH_SIZES = {

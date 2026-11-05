@@ -2,10 +2,13 @@
 import os
 from collections import Counter, defaultdict
 
-from concept_normalizer import normalize_units
-from atomic_unit_extractor import extract_atomic_units_batch, clean_atomic_units
-from learning_object_generator import *
-from utilities import *
+from lo_pipeline.units.normalizer import normalize_units
+from lo_pipeline.units.extractor import extract_atomic_units_batch, clean_atomic_units
+from lo_pipeline.lo.generator import (
+    generate_learning_object_batch, generate_mc_variants_batch, generate_id, extract_keywords,
+)
+from lo_pipeline.extraction.documents import extract_text_from_source, split_into_sections
+from lo_pipeline.files import load_json, export_json
 import json
 
 
@@ -104,7 +107,7 @@ def filter_and_regenerate(learning_objects, output_dir, eval_models=None, faithf
       - ALL models agree the LO is not atomic
       - ALL models agree the LO is not self-contained
     """
-    from learning_object_evaluator import evaluate_learning_objects_batch
+    from lo_pipeline.lo.evaluator import evaluate_learning_objects_batch
 
     if eval_models is None:
         eval_models = ["llama-3.3-70b-versatile"]

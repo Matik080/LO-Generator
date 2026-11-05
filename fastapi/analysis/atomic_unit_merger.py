@@ -14,8 +14,8 @@ from typing import List, Dict, Any, Tuple
 
 import numpy as np
 
-from embedding_service import get_embeddings_batch, cosine_similarity
-from llm_service import call_llm
+from lo_pipeline.llm.embeddings import get_embeddings_batch, cosine_similarity
+from lo_pipeline.llm.service import call_llm
 
 # Cosine similarity threshold for merging
 MERGE_THRESHOLD = 0.90

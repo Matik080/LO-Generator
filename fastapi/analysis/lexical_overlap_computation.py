@@ -1,6 +1,6 @@
-import re
-from utilities import export_json
-from embedding_service import get_embeddings_batch, cosine_similarity
+from lo_pipeline.files import export_json
+from lo_pipeline.lo.lexical import tokenize, lexical_overlap  # noqa: F401  (re-exported for older scripts)
+from lo_pipeline.llm.embeddings import get_embeddings_batch, cosine_similarity
 
 def compute_semantic_similarities(learning_objects):
     """
@@ -23,20 +23,6 @@ def compute_semantic_similarities(learning_objects):
         similarities.append(sim)
 
     return similarities
-
-def tokenize(text):
-    text = text.lower()
-    tokens = re.findall(r"\b\w+\b", text)
-    return tokens
-
-def lexical_overlap(source, answer):
-    source_tokens = set(tokenize(source))
-    answer_tokens = set(tokenize(answer))
-    if not answer_tokens:
-        return 0.0
-
-    overlap = source_tokens.intersection(answer_tokens)
-    return len(overlap) / len(answer_tokens)
 
 def compute_overlaps(learning_objects):
     overlaps = []

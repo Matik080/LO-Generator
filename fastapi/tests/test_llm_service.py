@@ -1,6 +1,6 @@
 import pytest
 
-import llm_service
+from lo_pipeline.llm import service as llm_service
 
 
 def test_import_does_not_need_api_key():
