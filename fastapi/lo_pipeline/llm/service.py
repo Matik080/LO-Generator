@@ -3,14 +3,7 @@ import time
 from pathlib import Path
 from typing import Dict, List
 
-try:
-    from openai import OpenAI, RateLimitError
-    import PyPDF2
-except ImportError:
-    print("ERROR: Missing necessary dependencies, please run:")
-    print("pip install openai PyPDF2")
-    exit(1)
-
+from openai import OpenAI, RateLimitError
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=True)
 
@@ -33,30 +26,40 @@ REASONING_EFFORT = os.getenv("REASONING_EFFORT")
 # Groq shut down llama-3.3-70b-versatile for non-enterprise tiers on 2026-08-16.
 # The legacy name is still accepted everywhere and routed to OpenRouter's Llama 3.3 70B (see LEGACY_ROUTES below).
 # Default generator: Llama 3.3 70B (thesis model) when OpenRouter is available, otherwise GPT-OSS 120B on Groq.
+# The client is created on the first call, so importing this module never needs an API key (tests, tooling).
+# Each entry: (provider name, api key, base_url or None, default model)
 if GROQ_API_KEY:
-    print("[Config] Primary provider: Groq")
-    client = OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
-    DEFAULT_MODEL = "llama-3.3-70b-versatile" if OPENROUTER_API_KEY else "openai/gpt-oss-120b"
+    _PRIMARY = ("Groq", GROQ_API_KEY, "https://api.groq.com/openai/v1",
+                "llama-3.3-70b-versatile" if OPENROUTER_API_KEY else "openai/gpt-oss-120b")
 elif OPENROUTER_API_KEY:
-    print("[Config] Primary provider: OpenRouter")
-    client = OpenAI(api_key=OPENROUTER_API_KEY, base_url="https://openrouter.ai/api/v1")
-    DEFAULT_MODEL = "meta-llama/llama-3.3-70b-instruct"
+    _PRIMARY = ("OpenRouter", OPENROUTER_API_KEY, "https://openrouter.ai/api/v1", "meta-llama/llama-3.3-70b-instruct")
 elif GITHUB_TOKEN:
-    print("[Config] Primary provider: GitHub Models")
-    client = OpenAI(api_key=GITHUB_TOKEN, base_url="https://models.inference.ai.azure.com")
-    DEFAULT_MODEL = "gpt-4.1-nano"
+    _PRIMARY = ("GitHub Models", GITHUB_TOKEN, "https://models.inference.ai.azure.com", "gpt-4.1-nano")
 elif OPENAI_API_KEY:
-    print("[Config] Primary provider: OpenAI")
-    client = OpenAI(api_key=OPENAI_API_KEY)
-    DEFAULT_MODEL = "gpt-4.1-nano"
+    _PRIMARY = ("OpenAI", OPENAI_API_KEY, None, "gpt-4.1-nano")
 else:
-    print("ERROR: No API key found. Set GROQ_API_KEY, OPENROUTER_API_KEY, GITHUB_TOKEN, or OPENAI_API_KEY.")
-    exit(1)
+    _PRIMARY = None
 
-if GEN_MODEL:
-    DEFAULT_MODEL = GEN_MODEL
+DEFAULT_MODEL = GEN_MODEL or (_PRIMARY[3] if _PRIMARY else None)
 
-print(f"[Config] Default generation model: {DEFAULT_MODEL}")
+
+class LLMConfigError(RuntimeError):
+    """No usable provider/API key is configured. Raised on the first call instead of exiting at import."""
+
+
+_client = None
+
+def _get_primary_client():
+    global _client
+    if _client is not None:
+        return _client
+    if _PRIMARY is None:
+        raise LLMConfigError("No API key found. Set GROQ_API_KEY, OPENROUTER_API_KEY, GITHUB_TOKEN, or OPENAI_API_KEY.")
+    name, key, base_url, _ = _PRIMARY
+    print(f"[Config] Primary provider: {name}")
+    print(f"[Config] Default generation model: {DEFAULT_MODEL}")
+    _client = OpenAI(api_key=key, base_url=base_url) if base_url else OpenAI(api_key=key)
+    return _client
 
 # Secondary client for OpenRouter-only models (e.g. Kimi K2)
 # If primary is already OpenRouter, we reuse that client.
@@ -104,10 +107,21 @@ def _client_for_model(model: str):
                 f"Add OPENROUTER_API_KEY to .env, or use a Groq model such as 'openai/gpt-oss-120b'."
             )
         return c, target
-    return client, target
+    return _get_primary_client(), target
 
 
 def call_llm(
+        messages: List[Dict[str, str]], model: str | None = None, temperature: float = 0.2, max_retries: int = 6, rate_limit_backoff: float = 60.0,
+) -> str | None:
+    """
+    Entry point used by all pipeline modules. Delegates to `_backend`, which tests swap for a fake
+    (modules import `call_llm` by name, so patching this module attribute alone would not reach them).
+    """
+    return _backend(messages, model=model, temperature=temperature,
+                    max_retries=max_retries, rate_limit_backoff=rate_limit_backoff)
+
+
+def _openai_call(
         messages: List[Dict[str, str]], model: str | None = None, temperature: float = 0.2, max_retries: int = 6, rate_limit_backoff: float = 60.0,
 ) -> str | None:
     """
@@ -124,7 +138,7 @@ def call_llm(
     selected_client, resolved_model = _client_for_model(model or DEFAULT_MODEL)
 
     extra = {}
-    if REASONING_EFFORT and resolved_model.startswith("openai/gpt-oss") and selected_client is client and GROQ_API_KEY:
+    if REASONING_EFFORT and resolved_model.startswith("openai/gpt-oss") and selected_client is _client and GROQ_API_KEY:
         extra["reasoning_effort"] = REASONING_EFFORT
 
     for attempt in range(max_retries):
@@ -161,3 +175,6 @@ def call_llm(
                 raise Exception(f"LLM call failed after {max_retries} attempts: {e}")
 
     return None
+
+# Swappable in tests (see tests/conftest.py)
+_backend = _openai_call

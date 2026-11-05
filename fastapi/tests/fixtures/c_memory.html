@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Dynamic memory in C</title></head>
+<body>
+<h1>Pointers</h1>
+<p>A pointer is a variable that stores the memory address of another variable. The unary operator &amp; returns the address of its operand, and the unary operator * dereferences a pointer, giving access to the value stored at that address.</p>
+<p>A pointer that does not point to any valid object should be set to NULL. Dereferencing a NULL pointer is undefined behaviour.</p>
+
+<h2>Dynamic allocation with malloc</h2>
+<p>The function malloc, declared in stdlib.h, allocates a block of memory of the requested size in bytes on the heap and returns a pointer to the start of that block. If the allocation fails, malloc returns NULL, so the return value must always be checked before use.</p>
+<p>Memory returned by malloc is not initialised. The function calloc allocates memory for an array and sets all of its bytes to zero.</p>
+
+<h2>Releasing memory with free</h2>
+<p>Every block allocated with malloc or calloc must be released with free when it is no longer needed. Memory that is allocated but never freed is called a memory leak.</p>
+<p>After free is called, the pointer still holds the old address and is called a dangling pointer. Using a dangling pointer, or calling free twice on the same block, is undefined behaviour.</p>
+</body>
+</html>
