@@ -97,21 +97,47 @@ def _question_is_self_contained(question: str):
             return False, f"references external context: '{m.group()}'"
     return True, None
 
-def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, faithfulness_threshold=3.0, hint_quality_threshold=2.0, max_attempts=2):
+def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, faithfulness_threshold=3.0, hint_quality_threshold=2.0, max_attempts=2, progress=None):
     """
     Evaluates all LOs with one or more models, flags those that fail the quality threshold by consensus, and regenerates them from source units.
     `atomic_units` are the units the LOs were generated from (matched by statement for regeneration).
+    `progress(done, total)` counts LLM calls (optional). The total grows when LOs are regenerated.
 
     Failure logic (conservative):
       - Faithfulness average across models < faithfulness_threshold
       - ALL models agree the LO is not atomic
       - ALL models agree the LO is not self-contained
     """
-    from lo_pipeline.lo.evaluator import evaluate_learning_objects_batch
+    from lo_pipeline.lo.evaluator import evaluate_learning_objects_batch, eval_batch_size
 
     if eval_models is None:
         eval_models = ["llama-3.3-70b-versatile"]
 
+    # Progress counts LLM calls. `total` starts as an upper bound (every LO fails every attempt) and only
+    # shrinks once the real number of failures is known, so done/total never goes backwards.
+    calls = {"done": 0, "total": 0}
+
+    def _eval_calls(n_los):
+        return sum(-(-n_los // eval_batch_size(m)) for m in eval_models)
+
+    def _regen_calls(n_los):
+        return -(-n_los // 5)
+
+    def _remaining_bound(n_failing, attempts_left):
+        """Upper bound on calls after an evaluation that found n_failing LOs."""
+        return _regen_calls(n_failing) + attempts_left * (_eval_calls(n_failing) + _regen_calls(n_failing))
+
+    def _tick():
+        calls["done"] += 1
+        if progress:
+            progress(calls["done"], max(calls["total"], calls["done"]))
+
+    def _set_total(total):
+        calls["total"] = total
+        if progress and calls["done"]:
+            progress(calls["done"], max(total, calls["done"]))
+
+    calls["total"] = _eval_calls(len(learning_objects)) + _remaining_bound(len(learning_objects), max_attempts - 1)
     print(f"[Filter] Evaluating {len(learning_objects)} LOs with {eval_models}...")
 
     # On the first attempt evaluate everything, on subsequent attempts evaluate only the newly regenerated LOs, no point re-scoring ones that already passed.
@@ -123,7 +149,7 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
         all_evals = []
         for model in eval_models:
             model_evals = evaluate_learning_objects_batch(
-                los_to_eval, model
+                los_to_eval, model, progress=_tick
             )
             all_evals.extend(model_evals)
 
@@ -182,8 +208,11 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
             print(f"[Filter] No source units found for any failing LO, stopping.")
             break
 
-        # Regenerate
+        # Regenerate. Only these LOs are re-evaluated next, so later attempts can't fail more than this.
+        _set_total(calls["done"] + _remaining_bound(len(failing_units), max_attempts - 1 - attempt))
         new_los_raw = generate_learning_object_batch(failing_units, batch_size=5)
+        for _ in range(_regen_calls(len(failing_units))):
+            _tick()
 
         # Replace failing LOs
         failing_ids = {lo["id"] for lo in failing}
@@ -202,6 +231,8 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
         los_to_eval = [lo for lo in learning_objects
                        if lo.get("source_statement") in regen_source_statements]
         print(f"[Filter] Next attempt will evaluate only {len(los_to_eval)} regenerated LOs.")
+
+    _set_total(calls["done"])  # the upper bound wasn't needed in full
 
     # Strip any leftover internal fields
     for lo in learning_objects:

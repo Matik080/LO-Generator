@@ -300,9 +300,10 @@ def print_graph_summary(KG, learning_objects):
             lo = lo_map.get(n, {})
             print(f"  out={KG.out_degree(n)} [{lo.get('type', '')}] {lo.get('question', '?')[:80]}")
 
-def verify_prerequisites_batched(candidate_edges, learning_objects, batch_size=10):
+def verify_prerequisites_batched(candidate_edges, learning_objects, batch_size=10, progress=None):
     """
     Takes candidate edges from the layered approach and verifies each one with an LLM. Returns only confirmed prerequisite edges.
+    `progress(done, total)` is called after each LLM batch (optional).
     """
     lo_map = {lo["id"]: lo for lo in learning_objects}
     verified_edges = []
@@ -366,6 +367,8 @@ Return JSON array only. No markdown. No explanation.
 
         print(f"[Graph] Verifying batch {batch_start // batch_size + 1} ({len(batch)} pairs)...")
         response = call_llm(messages, temperature=0.0)
+        if progress:
+            progress(batch_start // batch_size + 1, -(-len(pairs) // batch_size))
 
         response = re.sub(r"^```(?:json)?\s*", "", response.strip())
         response = re.sub(r"\s*```$", "", response).strip()

@@ -119,10 +119,11 @@ JSON array only. No markdown. No explanation.
             for _ in los]
 
 
-def enrich_learning_objects(learning_objects: list, batch_size: int = 10) -> list:
+def enrich_learning_objects(learning_objects: list, batch_size: int = 10, progress=None) -> list:
     """
     Adds 'generated_name', 'time_to_handle', 'time_to_explain' to each LO in-place.
     Batches LLM calls for efficiency.
+    `progress(done, total)` is called after each LLM batch (optional).
     """
     total = len(learning_objects)
     print(f"[Enrich] Generating names and time estimates for {total} LOs...")
@@ -131,6 +132,8 @@ def enrich_learning_objects(learning_objects: list, batch_size: int = 10) -> lis
         batch = learning_objects[batch_start:batch_start + batch_size]
         print(f"[Enrich] Batch {batch_start // batch_size + 1} ({len(batch)} LOs)...")
         enriched = _enrich_batch(batch)
+        if progress:
+            progress(batch_start // batch_size + 1, -(-total // batch_size))
 
         for lo, meta in zip(batch, enriched):
             lo["generated_name"] = meta.get("name", "Learning Object")

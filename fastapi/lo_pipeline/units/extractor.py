@@ -75,12 +75,14 @@ def extract_atomic_units(section_text: str) -> List[Dict[str, Any]]:
     units = parse_json(response)
     return units
 
-def extract_atomic_units_batch(sections, batch_size=3):
+def extract_atomic_units_batch(sections, batch_size=3, progress=None):
     """
     Extract atomic units from multiple sections in a single API call.
     Returns flat list of all atomic units found.
+    `progress(done, total)` is called after each LLM batch (optional).
     """
     all_units = []
+    total_batches = -(-len(sections) // batch_size)
 
     for batch_start in range(0, len(sections), batch_size):
         batch = sections[batch_start:batch_start + batch_size]
@@ -139,6 +141,8 @@ Textbook sections:
 
         print(f"[Extraction] Processing sections {batch_start + 1}-{min(batch_start + batch_size, len(sections))}...")
         response = call_llm(messages, temperature=0.2)
+        if progress:
+            progress(batch_start // batch_size + 1, total_batches)
         units = parse_json(response)
 
         if isinstance(units, list):

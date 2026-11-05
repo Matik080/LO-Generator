@@ -45,10 +45,11 @@ def break_cycles(KG: nx.DiGraph, learning_objects: list) -> list:
         removed.append((a, b))
 
 
-def build_prerequisite_graph(units: list, learning_objects: list, verify_batch_size: int = 10) -> dict:
+def build_prerequisite_graph(units: list, learning_objects: list, verify_batch_size: int = 10, progress=None) -> dict:
     """
     Builds the concept graph and the verified prerequisite DAG. Sets `anchor` and `prerequisite_ids` on the LOs.
     Returns a dict with the LOs, both graphs, and counts for stats/reporting.
+    `progress(done, total)` is called after each LLM verification batch (optional).
     """
     print(f"[Graph] Building concept graph from {len(units)} units...")
     G = build_concept_graph(units)
@@ -60,7 +61,8 @@ def build_prerequisite_graph(units: list, learning_objects: list, verify_batch_s
     print(f"[Graph] Building layered learning paths for {len(learning_objects)} LOs...")
     candidate_edges = build_layered_learning_paths(learning_objects, centrality)
     print(f"[Graph] {len(candidate_edges)} candidate edges.")
-    verified = set(verify_prerequisites_batched(candidate_edges, learning_objects, batch_size=verify_batch_size))
+    verified = set(verify_prerequisites_batched(candidate_edges, learning_objects,
+                                                batch_size=verify_batch_size, progress=progress))
 
     KG = nx.DiGraph()
     KG.add_edges_from(verified)

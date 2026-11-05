@@ -376,17 +376,20 @@ Return JSON only:
     return lo
 
 
-def generate_mc_variants_batch(learning_objects, batch_size=5):
+MC_ELIGIBLE_TYPES = {"definition", "rule", "property", "fact", "constraint", "theorem"}
+
+
+def generate_mc_variants_batch(learning_objects, batch_size=5, progress=None):
     """
     Generates MC variants for a list of LOs.
     Skips algorithm_step and example types since code answers
     don't work well as multiple choice.
+    `progress(done, total)` is called after each LLM batch (optional).
     """
-    MC_ELIGIBLE_TYPES = {"definition", "rule", "property", "fact", "constraint", "theorem"}
-
     results = []
     eligible = [(i, lo) for i, lo in enumerate(learning_objects)
                 if lo.get("type") in MC_ELIGIBLE_TYPES]
+    total_batches = -(-len(eligible) // batch_size)
 
     print(f"[MC] Generating variants for {len(eligible)} eligible LOs "
           f"({len(learning_objects) - len(eligible)} skipped as code types)...")
@@ -436,6 +439,8 @@ Return JSON array only. No markdown. No explanation.
 
         print(f"[MC] Processing batch {batch_start // batch_size + 1} ({len(batch)} LOs)...")
         response = call_llm(messages, temperature=0.4)
+        if progress:
+            progress(batch_start // batch_size + 1, total_batches)
         response = re.sub(r"^```(?:json)?\s*", "", response.strip())
         response = re.sub(r"\s*```$", "", response).strip()
 

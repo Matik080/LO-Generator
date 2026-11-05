@@ -207,6 +207,20 @@ curl -X POST http://localhost:8000/build-graph \
 
 ---
 
+## Running the whole pipeline without the UI
+
+`lo_pipeline/runner.py` runs every step on one or more documents and writes one result JSON (LOs, graphs, ECHub export, timings):
+
+```bash
+cd fastapi
+docker run --rm -v "$(pwd):/app" -w /app lo-generator-fastapi \
+  python -m lo_pipeline.runner input/modul1.pdf input/modul2.pptx --out output/result.json
+```
+
+From Python: `from lo_pipeline.runner import run_pipeline; result = run_pipeline(["modul1.pdf"], progress_callback=print)`.
+
+---
+
 ## Running tests
 
 Tests replay recorded LLM answers, so they need no API key and make no LLM calls. Run them in the Docker image:

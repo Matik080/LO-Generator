@@ -1,73 +1,75 @@
 """
-Characterization test: runs the current pipeline chain (the same steps pipeline_ui.html triggers through
-/extract-units -> /generate-los -> /evaluate -> /build-graph -> /export-echub) on a small fixture document
-with recorded LLM answers, and compares the result to a stored snapshot.
+Characterization test: runs the whole pipeline (run_pipeline) on a small fixture document with recorded
+LLM answers and compares the result to a stored snapshot.
 
-The refactor (M1) must keep this snapshot unchanged, apart from deliberate, reviewed changes.
-Update the snapshot with UPDATE_SNAPSHOTS=1 (or automatically when recording with LLM_MODE=record).
+The snapshot was first recorded from the original step-by-step chain the UI triggers
+(/extract-units -> /generate-los -> /evaluate -> /build-graph -> /export-echub), so a match proves the
+refactor kept the behaviour. Update it only for deliberate, reviewed changes:
+UPDATE_SNAPSHOTS=1 (or automatically when recording with LLM_MODE=record).
 """
 import json
 
 import networkx as nx
 
 from conftest import FIXTURES
+from lo_pipeline.runner import run_pipeline, STAGES
 
 SNAPSHOT = FIXTURES / "snapshots" / "c_memory_chain.json"
-EVAL_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b"]
+DOC = FIXTURES / "c_memory.html"
 
 
-def run_current_chain(doc_path):
-    """Mirrors the step bodies in main.py, minus HTTP and file saving."""
-    from lo_pipeline.extraction.documents import extract_text_from_source, split_into_sections
-    from lo_pipeline.units.extractor import extract_atomic_units_batch, clean_atomic_units
-    from lo_pipeline.units.normalizer import normalize_units
-    from lo_pipeline.lo.generator import generate_mc_variants_batch
-    from lo_pipeline.lo.postprocess import generate_learning_objects
-    from lo_pipeline.lo.quality_filter import filter_and_regenerate
-    from lo_pipeline.graph.prerequisites import build_prerequisite_graph
-    from lo_pipeline.questions.echub import enrich_learning_objects, convert_by_source
-
-    # /extract-units
-    text = extract_text_from_source(str(doc_path), document_title=doc_path.name)
-    sections = split_into_sections(text)
-    units = normalize_units(clean_atomic_units(extract_atomic_units_batch(sections, batch_size=3)))
-
-    # /generate-los
-    los = generate_mc_variants_batch(generate_learning_objects(units, batch_size=5), batch_size=5)
-
-    # /evaluate
-    los = filter_and_regenerate(los, units, eval_models=EVAL_MODELS, faithfulness_threshold=3.0, max_attempts=2)
-
-    # /build-graph
-    g = build_prerequisite_graph(units, los, verify_batch_size=10)
-    los, G, KG = g["learning_objects"], g["concept_graph"], g["knowledge_graph"]
-    assert nx.is_directed_acyclic_graph(KG)
-
-    # /export-echub (mode=by_source)
-    echub = convert_by_source(enrich_learning_objects(los, batch_size=10))
-
-    return {
-        "atomic_units": units,
-        "learning_objects": los,
-        "knowledge_graph_edges": sorted([list(e) for e in KG.edges()]),
-        "concept_graph": {"nodes": G.number_of_nodes(), "edges": G.number_of_edges()},
-        "echub": echub,
+def _snapshot_view(result):
+    """The parts of run_pipeline's result that the snapshot stores."""
+    kg = result["knowledge_graph"]
+    view = {
+        "atomic_units": result["atomic_units"],
+        "learning_objects": result["learning_objects"],
+        "knowledge_graph_edges": sorted([e["source"], e["target"]] for e in kg["edges"]),
+        "concept_graph": {"nodes": len(result["concept_graph"]["nodes"]),
+                          "edges": len(result["concept_graph"]["edges"])},
+        "echub": result["echub"],
     }
-
-
-def test_chain_matches_snapshot(fake_llm, update_snapshots):
-    result = run_current_chain(FIXTURES / "c_memory.html")
     # Round-trip through JSON so tuples/sets compare the same way as the stored snapshot
-    result = json.loads(json.dumps(result, ensure_ascii=False, default=list))
+    return json.loads(json.dumps(view, ensure_ascii=False, default=list))
 
-    assert result["atomic_units"], "fixture produced no atomic units"
-    assert result["learning_objects"], "fixture produced no learning objects"
+
+def test_pipeline_matches_snapshot(fake_llm, update_snapshots):
+    result = run_pipeline([DOC])
+    view = _snapshot_view(result)
+
+    assert view["atomic_units"], "fixture produced no atomic units"
+    assert view["learning_objects"], "fixture produced no learning objects"
+    kg = nx.DiGraph([(e["source"], e["target"]) for e in result["knowledge_graph"]["edges"]])
+    assert nx.is_directed_acyclic_graph(kg)
 
     if update_snapshots or not SNAPSHOT.exists():
         SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
-        SNAPSHOT.write_text(json.dumps(result, indent=1, ensure_ascii=False), encoding="utf-8")
+        SNAPSHOT.write_text(json.dumps(view, indent=1, ensure_ascii=False), encoding="utf-8")
         return
 
     expected = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
     for section in expected:
-        assert result[section] == expected[section], f"'{section}' differs from snapshot"
+        assert view[section] == expected[section], f"'{section}' differs from snapshot"
+
+
+def test_progress_is_reported_per_stage(fake_llm):
+    events = []
+    result = run_pipeline([DOC], progress_callback=lambda s, d, t: events.append((s, d, t)))
+
+    # Every stage reports, in pipeline order, and nothing else
+    seen = list(dict.fromkeys(s for s, _, _ in events))
+    assert seen == STAGES
+
+    for stage in STAGES:
+        stage_events = [(d, t) for s, d, t in events if s == stage]
+        assert stage_events[0] == (0, 0), f"{stage} should start with (0, 0)"
+        assert all(0 <= d <= t for d, t in stage_events[1:]), f"{stage}: done must stay within total"
+        fractions = [d / t for d, t in stage_events[1:]]
+        assert fractions == sorted(fractions), f"{stage}: progress went backwards: {stage_events}"
+        assert stage_events[-1][0] == stage_events[-1][1], f"{stage} should end finished"
+
+    # LLM-heavy stages report per batch, not just start/end
+    for stage in ["units", "learning_objects", "lo_evaluation", "questions"]:
+        assert len([1 for s, _, _ in events if s == stage]) > 2, stage
+
+    assert set(result["timings"]) == set(STAGES)

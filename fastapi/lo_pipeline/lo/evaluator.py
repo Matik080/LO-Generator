@@ -51,9 +51,14 @@ def _recover_partial_json(raw: str) -> list:
     return objects
 
 
-def evaluate_learning_objects_batch(learning_objects, model, batch_size=None):
+def eval_batch_size(model):
+    return MODEL_BATCH_SIZES.get(model, DEFAULT_BATCH_SIZE)
+
+
+def evaluate_learning_objects_batch(learning_objects, model, batch_size=None, progress=None):
+    """`progress()` (no arguments) is called after each LLM batch (optional)."""
     if batch_size is None:
-        batch_size = MODEL_BATCH_SIZES.get(model, DEFAULT_BATCH_SIZE)
+        batch_size = eval_batch_size(model)
 
     all_evaluations = []
 
@@ -212,6 +217,8 @@ Return JSON array only. No markdown. No explanation.
             import time
             time.sleep(delay)
         response = call_llm(messages, model=model, temperature=0.0)
+        if progress:
+            progress()
 
         response = re.sub(r"^```(?:json)?\s*", "", response.strip())
         response = re.sub(r"\s*```$", "", response).strip()
