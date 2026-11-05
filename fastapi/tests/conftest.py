@@ -6,11 +6,14 @@ LLM calls go through a record/replay "cassette" so tests run offline and determi
   - record (LLM_MODE=record): calls the real provider (needs an API key in .env) and saves every answer.
 
 Run with PYTHONHASHSEED=0 so set ordering (and therefore prompt order) is the same in every run.
+
+Limitation: the cassette keys answers by prompt only, so if a run sends the identical prompt twice (e.g. the same
+failing LO regenerated in two rounds), both get the first recorded answer. Real runs (and checkpoints, see
+llm/service.py _RunCache) give each repetition its own answer.
 """
 import hashlib
 import json
 import os
-import random
 import sys
 from pathlib import Path
 
@@ -69,7 +72,6 @@ def fake_llm(monkeypatch):
     mode = os.getenv("LLM_MODE", "replay")
     cassette = Cassette(CASSETTE, mode)
     monkeypatch.setattr(llm_service, "_backend", cassette)
-    random.seed(1234)  # MC option shuffling
     yield cassette
     cassette.save()
 

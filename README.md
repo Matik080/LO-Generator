@@ -219,6 +219,8 @@ docker run --rm -v "$(pwd):/app" -w /app lo-generator-fastapi \
 
 From Python: `from lo_pipeline.runner import run_pipeline; result = run_pipeline(["modul1.pdf"], progress_callback=print)`.
 
+**Resuming after a crash.** The CLI saves progress to `<out>.checkpoint/`: the result of each finished step and every LLM answer as it arrives. If a run is interrupted, run the same command again. It skips finished steps and reuses the saved answers, so no LLM call is paid twice. If the input files or options changed, the old checkpoint is discarded and the run starts over. The folder is removed after a successful run. Use `--checkpoint-dir` to choose the folder or `--no-checkpoint` to turn this off.
+
 ---
 
 ## Running tests
@@ -257,10 +259,12 @@ docker run --rm -v "$(pwd):/app" -e PYTHONHASHSEED=0 -w /app lo-generator-fastap
     │   ├── units/normalizer.py         <- normalises concept strings for consistent graph node naming
     │   ├── lo/generator.py             <- batched LO generation and multiple-choice variant generation
     │   ├── lo/evaluator.py             <- batched LLM evaluation of LOs
-    │   ├── lo/quality_filter.py        <- quality filter + regeneration, offline pipeline runner with checkpoint support
+    │   ├── lo/quality_filter.py        <- quality filter + regeneration of failing LOs
     │   ├── lo/lexical.py               <- tokenizer and lexical overlap
     │   ├── graph/builder.py            <- builds concept co-occurrence graph, generates and LLM-verifies prerequisite edges, enforces DAG
     │   ├── questions/echub.py          <- enriches LOs and converts them to ECEH JSON format for platform upload
+    │   ├── runner.py                   <- run_pipeline(): every step in one call, progress reporting, CLI
+    │   ├── checkpoint.py               <- saved progress so an interrupted run can resume
     │   └── files.py                    <- JSON load/save helpers for standalone scripts
     ├── analysis/                       <- thesis analysis scripts (post_statistics, lexical overlap, unit merger)
     ├── tests/                          <- pytest suite; LLM answers are replayed from tests/fixtures/llm_cassette.json

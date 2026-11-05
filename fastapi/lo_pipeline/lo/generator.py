@@ -17,6 +17,18 @@ def generate_id(source_statement):
     return hashlib.md5(source_statement.encode('utf-8')).hexdigest()[:8]
 
 
+def shuffle_options(lo, distractors):
+    """
+    The 3 distractors plus the correct answer, in an order that depends only on the LO's content.
+    Same LO -> same order in every run, so reruns, resumed runs and tests agree.
+    """
+    import random
+    options = distractors[:3] + [lo["answer"]]
+    seed = hashlib.sha256((lo["question"] + "\0" + lo["answer"]).encode("utf-8")).hexdigest()
+    random.Random(seed).shuffle(options)
+    return options
+
+
 def get_type_prompt(unit: Dict[str, Any]) -> str:
     unit_type = unit.get("type", "fact")
     statement = unit["statement"]
@@ -326,8 +338,6 @@ def generate_mc_variants(lo: Dict[str, Any]) -> Dict[str, Any]:
     Adds mc_options (list of 4 strings) and mc_correct_index (int) to the LO.
     Only makes sense for non-code types, skipping algorithm_step.
     """
-    import random
-
     prompt = f"""
 You are creating multiple choice distractors for a learning object.
 
@@ -367,8 +377,7 @@ Return JSON only:
         if len(distractors) < 3:
             return lo  # Don't add MC if we didn't get enough distractors
 
-        options = distractors[:3] + [lo["answer"]]
-        random.shuffle(options)
+        options = shuffle_options(lo, distractors)
         correct_index = options.index(lo["answer"])
 
         lo["mc_options"] = options
@@ -456,9 +465,7 @@ Return JSON array only. No markdown. No explanation.
                 original_idx, lo = batch[lo_idx]
                 distractors = result.get("distractors", [])
                 if len(distractors) >= 3:
-                    import random
-                    options = distractors[:3] + [lo["answer"]]
-                    random.shuffle(options)
+                    options = shuffle_options(lo, distractors)
                     lo["mc_options"] = options
                     lo["mc_correct_index"] = options.index(lo["answer"])
                 results.append(original_idx)

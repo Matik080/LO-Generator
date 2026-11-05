@@ -220,12 +220,12 @@
    "source_title": "c_memory.html",
    "source_page": 1,
    "mc_options": [
+    "A pointer is a variable that stores the memory address of another variable, whereas a standard variable typically stores a direct value.",
     "A pointer is a variable that stores the size of the data type of another variable, whereas a standard variable stores the actual data directly in the stack.",
-    "A pointer is a variable that stores the index of an array element, whereas a standard variable stores a reference to the function that created it.",
     "A pointer is a variable that stores a copy of the value of another variable, whereas a standard variable stores the name of the variable in the symbol table.",
-    "A pointer is a variable that stores the memory address of another variable, whereas a standard variable typically stores a direct value."
+    "A pointer is a variable that stores the index of an array element, whereas a standard variable stores a reference to the function that created it."
    ],
-   "mc_correct_index": 3,
+   "mc_correct_index": 0,
    "anchor": "pointer",
    "prerequisite_ids": [],
    "generated_name": "Pointer Versus Standard Variable Distinction",
@@ -268,117 +268,19 @@
    "source_title": "c_memory.html",
    "source_page": 1,
    "mc_options": [
-    "The & operator increments the address of its operand by one, while the * operator decrements the value stored at that address. They are complementary because they adjust memory offsets in opposite directions.",
     "The & operator returns the address of its operand, while the * operator dereferences a pointer to access the value stored at that address. They are complementary because one retrieves the location and the other retrieves the content at that location.",
     "The & operator checks if the operand is null, while the * operator allocates new memory for the operand. They are complementary because one validates the pointer and the other initializes it.",
-    "The & operator dereferences a pointer to access the value, while the * operator returns the address of its operand. They are complementary because one retrieves the content and the other retrieves the location."
-   ],
-   "mc_correct_index": 1,
-   "anchor": "pointer",
-   "prerequisite_ids": [
-    "1fd448b1"
-   ],
-   "generated_name": "Complementary Roles of Address and Dereference Operators",
-   "time_to_handle": 60,
-   "time_to_explain": 45
-  },
-  {
-   "question": "What is the required state for a pointer that does not point to any valid object, and why is this specific state necessary?",
-   "answer": "It should be set to NULL. This is necessary to explicitly indicate that the pointer is not referencing any valid object, preventing accidental access to invalid memory locations.",
-   "expected_output": null,
-   "hint": "Consider the standard value used to represent the absence of a valid memory reference. [Source: c_memory.html, p. 1]",
-   "source_statement": "A pointer that does not point to any valid object should be set to NULL.",
-   "type": "constraint",
-   "id": "0014f89b",
-   "keywords": [
-    "pointer",
-    "specific",
-    "preventing",
-    "accidental",
-    "necessary",
-    "set",
-    "object",
-    "null",
-    "state",
-    "required",
-    "access",
-    "memory",
-    "indicate",
-    "explicitly",
-    "point",
-    "referencing",
-    "valid",
-    "locations",
-    "invalid"
-   ],
-   "source_title": "c_memory.html",
-   "source_page": 1,
-   "mc_options": [
-    "It should be set to the address of the main function. This is necessary to provide a default fallback location if the pointer is accidentally dereferenced before assignment.",
-    "It should be left uninitialized. This is necessary to allow the compiler to optimize the memory layout by reusing the space for other variables until it is assigned a value.",
-    "It should be set to NULL. This is necessary to explicitly indicate that the pointer is not referencing any valid object, preventing accidental access to invalid memory locations.",
-    "It should be set to zero. This is necessary to ensure the pointer occupies the lowest possible memory address, optimizing access speed for empty references."
-   ],
-   "mc_correct_index": 2,
-   "anchor": "pointer",
-   "prerequisite_ids": [
-    "1fd448b1"
-   ],
-   "generated_name": "Null Pointer State and Safety Requirement",
-   "time_to_handle": 45,
-   "time_to_explain": 40
-  },
-  {
-   "question": "What is the consequence of attempting to dereference a NULL pointer, and what does this imply about the predictability of the program's execution?",
-   "answer": "It results in undefined behaviour. This implies that the program's execution is unpredictable and may crash, produce incorrect results, or behave in any other manner not specified by the language standard.",
-   "expected_output": null,
-   "hint": "Think about the term used in programming standards to describe actions that have no guaranteed outcome. [Source: c_memory.html, p. 1]",
-   "source_statement": "Dereferencing a NULL pointer is undefined behaviour.",
-   "type": "fact",
-   "id": "af2272c6",
-   "keywords": [
-    "produce",
-    "pointer",
-    "consequence",
-    "attempting",
-    "undefined",
-    "manner",
-    "incorrect",
-    "null",
-    "behaviour",
-    "language",
-    "results",
-    "standard",
-    "behave",
-    "dereference",
-    "program",
-    "unpredictable",
-    "crash",
-    "execution",
-    "predictability",
-    "implies",
-    "imply",
-    "specified",
-    "may"
-   ],
-   "source_title": "c_memory.html",
-   "source_page": 1,
-   "mc_options": [
-    "It results in undefined behaviour. This implies that the program's execution is unpredictable and may crash, produce incorrect results, or behave in any other manner not specified by the language standard.",
-    "It results in the pointer being automatically reset to NULL. This implies that the program continues execution safely, as the invalid reference is cleared to prevent further errors.",
-    "It results in a compile-time error. This implies that the program cannot be built until the pointer is explicitly checked for validity before use.",
-    "It results in a segmentation fault immediately. This implies that the program will always terminate with a specific error code, making the failure predictable and consistent."
+    "The & operator dereferences a pointer to access the value, while the * operator returns the address of its operand. They are complementary because one retrieves the content and the other retrieves the location.",
+    "The & operator increments the address of its operand by one, while the * operator decrements the value stored at that address. They are complementary because they adjust memory offsets in opposite directions."
    ],
    "mc_correct_index": 0,
    "anchor": "pointer",
    "prerequisite_ids": [
-    "0014f89b",
-    "6af8c7ab",
     "1fd448b1"
    ],
-   "generated_name": "Consequences of Dereferencing Null Pointers",
-   "time_to_handle": 40,
-   "time_to_explain": 35
+   "generated_name": "Address And Dereference Operator Roles",
+   "time_to_handle": 60,
+   "time_to_explain": 45
   },
   {
    "question": "In what specific memory region does the function malloc allocate the requested block of memory, and what does it return to the caller?",
@@ -408,15 +310,15 @@
    "source_title": "c_memory.html",
    "source_page": 2,
    "mc_options": [
-    "It allocates memory on the heap and returns a pointer to the start of that block.",
     "It allocates memory in the code segment and returns a function pointer to the start of the allocated routine.",
     "It allocates memory in the static data segment and returns a constant pointer to the program's global variables.",
+    "It allocates memory on the heap and returns a pointer to the start of that block.",
     "It allocates memory on the stack and returns a reference to the local variable scope."
    ],
-   "mc_correct_index": 0,
+   "mc_correct_index": 2,
    "anchor": "malloc",
    "prerequisite_ids": [],
-   "generated_name": "Malloc Heap Allocation and Return Value",
+   "generated_name": "Malloc Heap Allocation And Return Value",
    "time_to_handle": 40,
    "time_to_explain": 30
   },
@@ -455,19 +357,18 @@
    "source_page": 2,
    "mc_options": [
     "The program will receive a segmentation fault immediately upon the malloc call, before any subsequent code is executed.",
-    "The program will allocate a default minimum size of memory regardless of the request, ensuring the pointer is always valid.",
     "The program will automatically retry the allocation until it succeeds, potentially causing an infinite loop if the system is out of memory.",
+    "The program will allocate a default minimum size of memory regardless of the request, ensuring the pointer is always valid.",
     "The program will attempt to use a NULL pointer, which leads to undefined behavior or a crash because the memory allocation failed."
    ],
    "mc_correct_index": 3,
    "anchor": "malloc",
    "prerequisite_ids": [
-    "1e3de2e2",
-    "1fd448b1"
+    "1e3de2e2"
    ],
-   "generated_name": "Unchecked Malloc Failure and Null Usage",
+   "generated_name": "Null Pointer Consequence After Failed Allocation",
    "time_to_handle": 50,
-   "time_to_explain": 45
+   "time_to_explain": 40
   },
   {
    "question": "If a programmer allocates memory using malloc and immediately reads the contents of that memory block without writing to it first, what can be predicted about the data retrieved?",
@@ -506,17 +407,18 @@
    "source_page": 2,
    "mc_options": [
     "The data retrieved will be uninitialized, meaning it contains arbitrary or garbage values from previous memory usage.",
-    "The data retrieved will always be zero, as the operating system clears memory blocks before handing them to the process.",
+    "The data retrieved will be the address of the previous allocation, allowing the programmer to traverse the memory heap.",
     "The data retrieved will be undefined only if the memory was previously freed, otherwise it retains the last written values.",
-    "The data retrieved will be the address of the previous allocation, allowing the programmer to traverse the memory heap."
+    "The data retrieved will always be zero, as the operating system clears memory blocks before handing them to the process."
    ],
    "mc_correct_index": 0,
    "anchor": "malloc",
    "prerequisite_ids": [
+    "1fd448b1",
     "1e3de2e2"
    ],
    "generated_name": "Uninitialized Memory Content After Malloc",
-   "time_to_handle": 40,
+   "time_to_handle": 45,
    "time_to_explain": 35
   },
   {
@@ -557,7 +459,7 @@
    "mc_correct_index": 0,
    "anchor": "calloc",
    "prerequisite_ids": [],
-   "generated_name": "Calloc Zero Initialization Behavior Difference",
+   "generated_name": "Calloc Zero Initialization Behavior",
    "time_to_handle": 40,
    "time_to_explain": 30
   },
@@ -586,17 +488,65 @@
    "source_title": "c_memory.html",
    "source_page": 3,
    "mc_options": [
-    "A buffer overflow.",
     "A memory leak.",
-    "A memory fragmentation.",
-    "A dangling pointer."
+    "A buffer overflow.",
+    "A dangling pointer.",
+    "A memory fragmentation."
    ],
-   "mc_correct_index": 1,
+   "mc_correct_index": 0,
    "anchor": "never",
    "prerequisite_ids": [],
-   "generated_name": "Memory Leak Definition and Concept",
+   "generated_name": "Memory Leak Definition And Concept",
    "time_to_handle": 30,
    "time_to_explain": 25
+  },
+  {
+   "question": "In C memory management, what specific state does a pointer enter after the memory it points to has been released by the `free` function, and why is this state problematic?",
+   "answer": "The pointer becomes a dangling pointer because it still holds the old address of the freed memory, even though that memory is no longer valid for use.",
+   "expected_output": null,
+   "hint": "Consider the relationship between the pointer's stored value and the validity of the memory location it references after deallocation. [Source: c_memory.html, p. 3]",
+   "source_statement": "After free is called, the pointer still holds the old address and is called a dangling pointer.",
+   "type": "definition",
+   "id": "2fe16f5c",
+   "keywords": [
+    "freed",
+    "pointer",
+    "still",
+    "specific",
+    "dangling",
+    "longer",
+    "old",
+    "address",
+    "management",
+    "released",
+    "problematic",
+    "holds",
+    "free",
+    "even",
+    "state",
+    "use",
+    "memory",
+    "enter",
+    "points",
+    "though",
+    "function",
+    "becomes",
+    "valid"
+   ],
+   "source_title": "c_memory.html",
+   "source_page": 3,
+   "mc_options": [
+    "The pointer becomes a wild pointer because the memory is immediately overwritten with garbage values by the operating system.",
+    "The pointer becomes a dangling pointer because it still holds the old address of the freed memory, even though that memory is no longer valid for use.",
+    "The pointer becomes a stale pointer because the compiler invalidates the variable scope and prevents any subsequent dereferencing.",
+    "The pointer becomes a null pointer because the free function automatically sets the address to zero to prevent further access."
+   ],
+   "mc_correct_index": 1,
+   "anchor": "free",
+   "prerequisite_ids": [],
+   "generated_name": "Dangling Pointer State After Free",
+   "time_to_handle": 50,
+   "time_to_explain": 40
   },
   {
    "question": "What is the consequence of using a pointer that still holds the address of previously freed memory, or calling the `free` function twice on the same memory block?",
@@ -628,121 +578,170 @@
    "source_title": "c_memory.html",
    "source_page": 3,
    "mc_options": [
-    "It triggers a segmentation fault immediately, causing the program to crash and terminate before any further code executes.",
     "It results in undefined behaviour.",
     "It returns a non-zero error code from the free function, allowing the programmer to handle the memory leak gracefully.",
+    "It triggers a segmentation fault immediately, causing the program to crash and terminate before any further code executes.",
     "It causes a memory leak because the operating system marks the block as corrupted and refuses to reclaim the space."
    ],
-   "mc_correct_index": 1,
+   "mc_correct_index": 0,
    "anchor": "free",
    "prerequisite_ids": [
     "2fe16f5c"
    ],
-   "generated_name": "Dangling Pointer and Double Free Consequences",
-   "time_to_handle": 40,
+   "generated_name": "Undefined Behavior From Double Free",
+   "time_to_handle": 35,
+   "time_to_explain": 30
+  },
+  {
+   "question": "What is the required state for a pointer that does not point to any valid object, and why is this specific state necessary?",
+   "answer": "It should be set to NULL. This is necessary to explicitly indicate that the pointer is not referencing any valid object, preventing accidental access to invalid memory locations.",
+   "expected_output": null,
+   "hint": "Consider the standard value used to represent the absence of a valid memory reference. [Source: c_memory.html, p. 1]",
+   "source_statement": "A pointer that does not point to any valid object should be set to NULL.",
+   "type": "constraint",
+   "id": "0014f89b",
+   "keywords": [
+    "pointer",
+    "specific",
+    "preventing",
+    "accidental",
+    "necessary",
+    "set",
+    "object",
+    "null",
+    "state",
+    "required",
+    "access",
+    "memory",
+    "indicate",
+    "explicitly",
+    "point",
+    "referencing",
+    "valid",
+    "locations",
+    "invalid"
+   ],
+   "source_title": "c_memory.html",
+   "source_page": 1,
+   "mc_options": [
+    "It should be left uninitialized. This is necessary to allow the compiler to optimize the memory layout by reusing the space for other variables until it is assigned a value.",
+    "It should be set to zero. This is necessary to ensure the pointer occupies the lowest possible memory address, optimizing access speed for empty references.",
+    "It should be set to the address of the main function. This is necessary to provide a default fallback location if the pointer is accidentally dereferenced before assignment.",
+    "It should be set to NULL. This is necessary to explicitly indicate that the pointer is not referencing any valid object, preventing accidental access to invalid memory locations."
+   ],
+   "mc_correct_index": 3,
+   "anchor": "pointer",
+   "prerequisite_ids": [],
+   "generated_name": "Null Pointer Requirement For Invalid References",
+   "time_to_handle": 45,
    "time_to_explain": 35
   },
   {
-   "question": "In C memory management, why is it mandatory to call free on every block allocated with malloc or calloc once it is no longer needed, and what is the consequence of failing to do so?",
-   "answer": "It is mandatory to release the memory to prevent memory leaks. If free is not called, the allocated memory remains occupied and unavailable for reuse, leading to resource exhaustion.",
+   "question": "What is the consequence of attempting to dereference a NULL pointer, and what does this imply about the predictability of the program's execution?",
+   "answer": "It results in undefined behaviour. This implies that the program's execution is unpredictable and may crash, produce incorrect results, or behave in any other manner not specified by the language standard.",
    "expected_output": null,
-   "hint": "Consider the lifecycle of heap memory and what happens if allocated space is never returned to the system. [Source: c_memory.html, p. 3]",
+   "hint": "Think about the term used in programming standards to describe actions that have no guaranteed outcome. [Source: c_memory.html, p. 1]",
+   "source_statement": "Dereferencing a NULL pointer is undefined behaviour.",
+   "type": "fact",
+   "id": "af2272c6",
+   "keywords": [
+    "produce",
+    "pointer",
+    "consequence",
+    "attempting",
+    "undefined",
+    "manner",
+    "incorrect",
+    "null",
+    "behaviour",
+    "language",
+    "results",
+    "standard",
+    "behave",
+    "dereference",
+    "program",
+    "unpredictable",
+    "crash",
+    "execution",
+    "predictability",
+    "implies",
+    "imply",
+    "specified",
+    "may"
+   ],
+   "source_title": "c_memory.html",
+   "source_page": 1,
+   "mc_options": [
+    "It results in undefined behaviour. This implies that the program's execution is unpredictable and may crash, produce incorrect results, or behave in any other manner not specified by the language standard.",
+    "It results in a segmentation fault immediately. This implies that the program will always terminate with a specific error code, making the failure predictable and consistent.",
+    "It results in a compile-time error. This implies that the program cannot be built until the pointer is explicitly checked for validity before use.",
+    "It results in the pointer being automatically reset to NULL. This implies that the program continues execution safely, as the invalid reference is cleared to prevent further errors."
+   ],
+   "mc_correct_index": 0,
+   "anchor": "pointer",
+   "prerequisite_ids": [
+    "0014f89b",
+    "6af8c7ab"
+   ],
+   "generated_name": "NULL Pointer Dereference Consequences",
+   "time_to_handle": 45,
+   "time_to_explain": 35
+  },
+  {
+   "question": "Why is it mandatory to release every block of memory allocated using malloc or calloc with free when it is no longer needed, and what is the primary consequence of failing to do so?",
+   "answer": "This rule exists to prevent memory leaks. If allocated memory is not released, the program cannot reuse that memory, leading to a gradual exhaustion of available system resources.",
+   "expected_output": null,
+   "hint": "Think about the resource management issue that arises when allocated space is not returned to the system. [Source: c_memory.html, p. 3]",
    "source_statement": "Every block allocated with malloc or calloc must be released with free when it is no longer needed.",
    "type": "rule",
    "id": "3fd57a4b",
    "keywords": [
+    "using",
     "allocated",
-    "remains",
     "longer",
-    "called",
     "consequence",
     "exhaustion",
+    "system",
     "prevent",
-    "resource",
-    "call",
-    "management",
+    "exists",
+    "gradual",
+    "available",
+    "cannot",
     "mandatory",
+    "resources",
     "every",
+    "released",
     "failing",
-    "block",
     "free",
+    "block",
     "leading",
     "malloc",
-    "unavailable",
+    "rule",
     "needed",
     "leaks",
     "memory",
     "calloc",
+    "primary",
     "reuse",
     "release",
-    "occupied"
+    "program"
    ],
    "source_title": "c_memory.html",
    "source_page": 3,
    "mc_options": [
-    "It is mandatory to release the memory to prevent segmentation faults. If free is not called, the allocated memory is immediately zeroed out, causing data corruption in adjacent blocks.",
-    "It is mandatory to release the memory to prevent memory leaks. If free is not called, the allocated memory remains occupied and unavailable for reuse, leading to resource exhaustion.",
-    "It is mandatory to release the memory to prevent buffer overflows. If free is not called, the allocated memory is automatically reclaimed by the OS, leading to no significant performance impact.",
-    "It is mandatory to release the memory to prevent stack overflow. If free is not called, the allocated memory is moved to the heap permanently, leading to increased compile time."
+    "This rule exists to prevent memory leaks. If allocated memory is not released, the program cannot reuse that memory, leading to a gradual exhaustion of available system resources.",
+    "This rule exists to prevent stack overflow. If allocated memory is not released, the call stack grows indefinitely, causing the program to crash due to exceeding the fixed stack size limit.",
+    "This rule exists to maintain cache coherency. If allocated memory is not released, the CPU cache lines remain locked, preventing other threads from accessing shared data and causing a deadlock.",
+    "This rule exists to ensure deterministic garbage collection. If allocated memory is not released, the compiler cannot optimize variable scope, leading to increased binary size and slower compilation times."
    ],
-   "mc_correct_index": 1,
+   "mc_correct_index": 0,
    "anchor": "malloc",
    "prerequisite_ids": [
     "1e3de2e2"
    ],
-   "generated_name": "Mandatory Free Call To Prevent Leaks",
+   "generated_name": "Memory Leak Prevention With Free",
    "time_to_handle": 60,
    "time_to_explain": 45
-  },
-  {
-   "question": "After the free function is invoked on a pointer, what specific state does that pointer enter, and why is this state problematic for subsequent operations?",
-   "answer": "The pointer becomes a dangling pointer because it still holds the old address of the freed memory. This state is problematic because accessing that address leads to undefined behavior since the memory is no longer valid for that pointer.",
-   "expected_output": null,
-   "hint": "Think about the value stored in the pointer variable after the memory deallocation occurs and the term used to describe a pointer that points to invalid memory. [Source: c_memory.html, p. 3]",
-   "source_statement": "After free is called, the pointer still holds the old address and is called a dangling pointer.",
-   "type": "definition",
-   "id": "2fe16f5c",
-   "keywords": [
-    "freed",
-    "pointer",
-    "still",
-    "specific",
-    "dangling",
-    "longer",
-    "old",
-    "address",
-    "undefined",
-    "invoked",
-    "problematic",
-    "holds",
-    "free",
-    "leads",
-    "state",
-    "accessing",
-    "since",
-    "operations",
-    "enter",
-    "memory",
-    "behavior",
-    "function",
-    "subsequent",
-    "becomes",
-    "valid"
-   ],
-   "source_title": "c_memory.html",
-   "source_page": 3,
-   "mc_options": [
-    "The pointer becomes a wild pointer because it is reset to a random address by the system. This state is problematic because the address is invalid and cannot be used for any memory operations.",
-    "The pointer becomes a null pointer because it is automatically set to NULL by the free function. This state is problematic because dereferencing it causes a predictable null pointer exception.",
-    "The pointer becomes a const pointer because its value is locked by the runtime. This state is problematic because attempting to modify the pointer variable results in a compilation error.",
-    "The pointer becomes a dangling pointer because it still holds the old address of the freed memory. This state is problematic because accessing that address leads to undefined behavior since the memory is no longer valid for that pointer."
-   ],
-   "mc_correct_index": 3,
-   "anchor": "free",
-   "prerequisite_ids": [],
-   "generated_name": "Dangling Pointer State After Free",
-   "time_to_handle": 45,
-   "time_to_explain": 35
   }
  ],
  "knowledge_graph_edges": [
@@ -764,19 +763,11 @@
   ],
   [
    "1fd448b1",
-   "0014f89b"
-  ],
-  [
-   "1fd448b1",
-   "6af8c7ab"
+   "087e5d7b"
   ],
   [
    "1fd448b1",
    "97be2dec"
-  ],
-  [
-   "1fd448b1",
-   "af2272c6"
   ],
   [
    "2fe16f5c",
@@ -815,11 +806,11 @@
       ],
       "choices": [
        {
-        "text": "A pointer is a variable that stores the size of the data type of another variable, whereas a standard variable stores the actual data directly in the stack.",
-        "is_correct": false
+        "text": "A pointer is a variable that stores the memory address of another variable, whereas a standard variable typically stores a direct value.",
+        "is_correct": true
        },
        {
-        "text": "A pointer is a variable that stores the index of an array element, whereas a standard variable stores a reference to the function that created it.",
+        "text": "A pointer is a variable that stores the size of the data type of another variable, whereas a standard variable stores the actual data directly in the stack.",
         "is_correct": false
        },
        {
@@ -827,13 +818,13 @@
         "is_correct": false
        },
        {
-        "text": "A pointer is a variable that stores the memory address of another variable, whereas a standard variable typically stores a direct value.",
-        "is_correct": true
+        "text": "A pointer is a variable that stores the index of an array element, whereas a standard variable stores a reference to the function that created it.",
+        "is_correct": false
        }
       ]
      },
      {
-      "name": "[c_memory.html] Complementary Roles of Address and Dereference Operators",
+      "name": "[c_memory.html] Address And Dereference Operator Roles",
       "description": "Why do the unary operators & and * serve complementary roles in memory management, and what specific action does each perform on its operand?",
       "type": "choice",
       "time_to_handle": 60,
@@ -850,10 +841,6 @@
       ],
       "choices": [
        {
-        "text": "The & operator increments the address of its operand by one, while the * operator decrements the value stored at that address. They are complementary because they adjust memory offsets in opposite directions.",
-        "is_correct": false
-       },
-       {
         "text": "The & operator returns the address of its operand, while the * operator dereferences a pointer to access the value stored at that address. They are complementary because one retrieves the location and the other retrieves the content at that location.",
         "is_correct": true
        },
@@ -864,81 +851,15 @@
        {
         "text": "The & operator dereferences a pointer to access the value, while the * operator returns the address of its operand. They are complementary because one retrieves the content and the other retrieves the location.",
         "is_correct": false
-       }
-      ]
-     },
-     {
-      "name": "[c_memory.html] Null Pointer State and Safety Requirement",
-      "description": "What is the required state for a pointer that does not point to any valid object, and why is this specific state necessary?",
-      "type": "choice",
-      "time_to_handle": 45,
-      "time_to_explain": 40,
-      "hints": [
-       {
-        "name": "Hint",
-        "url": "<p>Consider the standard value used to represent the absence of a valid memory reference</p>"
        },
        {
-        "name": "Source",
-        "url": "<p>[Source:c_memory.html]</p>"
-       }
-      ],
-      "choices": [
-       {
-        "text": "It should be set to the address of the main function. This is necessary to provide a default fallback location if the pointer is accidentally dereferenced before assignment.",
-        "is_correct": false
-       },
-       {
-        "text": "It should be left uninitialized. This is necessary to allow the compiler to optimize the memory layout by reusing the space for other variables until it is assigned a value.",
-        "is_correct": false
-       },
-       {
-        "text": "It should be set to NULL. This is necessary to explicitly indicate that the pointer is not referencing any valid object, preventing accidental access to invalid memory locations.",
-        "is_correct": true
-       },
-       {
-        "text": "It should be set to zero. This is necessary to ensure the pointer occupies the lowest possible memory address, optimizing access speed for empty references.",
+        "text": "The & operator increments the address of its operand by one, while the * operator decrements the value stored at that address. They are complementary because they adjust memory offsets in opposite directions.",
         "is_correct": false
        }
       ]
      },
      {
-      "name": "[c_memory.html] Consequences of Dereferencing Null Pointers",
-      "description": "What is the consequence of attempting to dereference a NULL pointer, and what does this imply about the predictability of the program's execution?",
-      "type": "choice",
-      "time_to_handle": 40,
-      "time_to_explain": 35,
-      "hints": [
-       {
-        "name": "Hint",
-        "url": "<p>Think about the term used in programming standards to describe actions that have no guaranteed outcome</p>"
-       },
-       {
-        "name": "Source",
-        "url": "<p>[Source:c_memory.html]</p>"
-       }
-      ],
-      "choices": [
-       {
-        "text": "It results in undefined behaviour. This implies that the program's execution is unpredictable and may crash, produce incorrect results, or behave in any other manner not specified by the language standard.",
-        "is_correct": true
-       },
-       {
-        "text": "It results in the pointer being automatically reset to NULL. This implies that the program continues execution safely, as the invalid reference is cleared to prevent further errors.",
-        "is_correct": false
-       },
-       {
-        "text": "It results in a compile-time error. This implies that the program cannot be built until the pointer is explicitly checked for validity before use.",
-        "is_correct": false
-       },
-       {
-        "text": "It results in a segmentation fault immediately. This implies that the program will always terminate with a specific error code, making the failure predictable and consistent.",
-        "is_correct": false
-       }
-      ]
-     },
-     {
-      "name": "[c_memory.html] Malloc Heap Allocation and Return Value",
+      "name": "[c_memory.html] Malloc Heap Allocation And Return Value",
       "description": "In what specific memory region does the function malloc allocate the requested block of memory, and what does it return to the caller?",
       "type": "choice",
       "time_to_handle": 40,
@@ -955,10 +876,6 @@
       ],
       "choices": [
        {
-        "text": "It allocates memory on the heap and returns a pointer to the start of that block.",
-        "is_correct": true
-       },
-       {
         "text": "It allocates memory in the code segment and returns a function pointer to the start of the allocated routine.",
         "is_correct": false
        },
@@ -967,17 +884,21 @@
         "is_correct": false
        },
        {
+        "text": "It allocates memory on the heap and returns a pointer to the start of that block.",
+        "is_correct": true
+       },
+       {
         "text": "It allocates memory on the stack and returns a reference to the local variable scope.",
         "is_correct": false
        }
       ]
      },
      {
-      "name": "[c_memory.html] Unchecked Malloc Failure and Null Usage",
+      "name": "[c_memory.html] Null Pointer Consequence After Failed Allocation",
       "description": "What specific consequence occurs if a program uses the pointer returned by malloc without verifying it, and the allocation process has failed?",
       "type": "choice",
       "time_to_handle": 50,
-      "time_to_explain": 45,
+      "time_to_explain": 40,
       "hints": [
        {
         "name": "Hint",
@@ -994,11 +915,11 @@
         "is_correct": false
        },
        {
-        "text": "The program will allocate a default minimum size of memory regardless of the request, ensuring the pointer is always valid.",
+        "text": "The program will automatically retry the allocation until it succeeds, potentially causing an infinite loop if the system is out of memory.",
         "is_correct": false
        },
        {
-        "text": "The program will automatically retry the allocation until it succeeds, potentially causing an infinite loop if the system is out of memory.",
+        "text": "The program will allocate a default minimum size of memory regardless of the request, ensuring the pointer is always valid.",
         "is_correct": false
        },
        {
@@ -1011,7 +932,7 @@
       "name": "[c_memory.html] Uninitialized Memory Content After Malloc",
       "description": "If a programmer allocates memory using malloc and immediately reads the contents of that memory block without writing to it first, what can be predicted about the data retrieved?",
       "type": "choice",
-      "time_to_handle": 40,
+      "time_to_handle": 45,
       "time_to_explain": 35,
       "hints": [
        {
@@ -1029,7 +950,7 @@
         "is_correct": true
        },
        {
-        "text": "The data retrieved will always be zero, as the operating system clears memory blocks before handing them to the process.",
+        "text": "The data retrieved will be the address of the previous allocation, allowing the programmer to traverse the memory heap.",
         "is_correct": false
        },
        {
@@ -1037,13 +958,13 @@
         "is_correct": false
        },
        {
-        "text": "The data retrieved will be the address of the previous allocation, allowing the programmer to traverse the memory heap.",
+        "text": "The data retrieved will always be zero, as the operating system clears memory blocks before handing them to the process.",
         "is_correct": false
        }
       ]
      },
      {
-      "name": "[c_memory.html] Calloc Zero Initialization Behavior Difference",
+      "name": "[c_memory.html] Calloc Zero Initialization Behavior",
       "description": "How does the behavior of the calloc function differ from standard allocation methods regarding the initial state of the allocated memory bytes?",
       "type": "choice",
       "time_to_handle": 40,
@@ -1078,7 +999,7 @@
       ]
      },
      {
-      "name": "[c_memory.html] Memory Leak Definition and Concept",
+      "name": "[c_memory.html] Memory Leak Definition And Concept",
       "description": "What is the specific term used to describe the situation where memory is allocated by a program but never subsequently released?",
       "type": "choice",
       "time_to_handle": 30,
@@ -1095,29 +1016,64 @@
       ],
       "choices": [
        {
-        "text": "A buffer overflow.",
-        "is_correct": false
-       },
-       {
         "text": "A memory leak.",
         "is_correct": true
        },
        {
-        "text": "A memory fragmentation.",
+        "text": "A buffer overflow.",
         "is_correct": false
        },
        {
         "text": "A dangling pointer.",
         "is_correct": false
+       },
+       {
+        "text": "A memory fragmentation.",
+        "is_correct": false
        }
       ]
      },
      {
-      "name": "[c_memory.html] Dangling Pointer and Double Free Consequences",
+      "name": "[c_memory.html] Dangling Pointer State After Free",
+      "description": "In C memory management, what specific state does a pointer enter after the memory it points to has been released by the `free` function, and why is this state problematic?",
+      "type": "choice",
+      "time_to_handle": 50,
+      "time_to_explain": 40,
+      "hints": [
+       {
+        "name": "Hint",
+        "url": "<p>Consider the relationship between the pointer's stored value and the validity of the memory location it references after deallocation</p>"
+       },
+       {
+        "name": "Source",
+        "url": "<p>[Source:c_memory.html]</p>"
+       }
+      ],
+      "choices": [
+       {
+        "text": "The pointer becomes a wild pointer because the memory is immediately overwritten with garbage values by the operating system.",
+        "is_correct": false
+       },
+       {
+        "text": "The pointer becomes a dangling pointer because it still holds the old address of the freed memory, even though that memory is no longer valid for use.",
+        "is_correct": true
+       },
+       {
+        "text": "The pointer becomes a stale pointer because the compiler invalidates the variable scope and prevents any subsequent dereferencing.",
+        "is_correct": false
+       },
+       {
+        "text": "The pointer becomes a null pointer because the free function automatically sets the address to zero to prevent further access.",
+        "is_correct": false
+       }
+      ]
+     },
+     {
+      "name": "[c_memory.html] Undefined Behavior From Double Free",
       "description": "What is the consequence of using a pointer that still holds the address of previously freed memory, or calling the `free` function twice on the same memory block?",
       "type": "choice",
-      "time_to_handle": 40,
-      "time_to_explain": 35,
+      "time_to_handle": 35,
+      "time_to_explain": 30,
       "hints": [
        {
         "name": "Hint",
@@ -1130,15 +1086,15 @@
       ],
       "choices": [
        {
-        "text": "It triggers a segmentation fault immediately, causing the program to crash and terminate before any further code executes.",
-        "is_correct": false
-       },
-       {
         "text": "It results in undefined behaviour.",
         "is_correct": true
        },
        {
         "text": "It returns a non-zero error code from the free function, allowing the programmer to handle the memory leak gracefully.",
+        "is_correct": false
+       },
+       {
+        "text": "It triggers a segmentation fault immediately, causing the program to crash and terminate before any further code executes.",
         "is_correct": false
        },
        {
@@ -1148,50 +1104,15 @@
       ]
      },
      {
-      "name": "[c_memory.html] Mandatory Free Call To Prevent Leaks",
-      "description": "In C memory management, why is it mandatory to call free on every block allocated with malloc or calloc once it is no longer needed, and what is the consequence of failing to do so?",
-      "type": "choice",
-      "time_to_handle": 60,
-      "time_to_explain": 45,
-      "hints": [
-       {
-        "name": "Hint",
-        "url": "<p>Consider the lifecycle of heap memory and what happens if allocated space is never returned to the system</p>"
-       },
-       {
-        "name": "Source",
-        "url": "<p>[Source:c_memory.html]</p>"
-       }
-      ],
-      "choices": [
-       {
-        "text": "It is mandatory to release the memory to prevent segmentation faults. If free is not called, the allocated memory is immediately zeroed out, causing data corruption in adjacent blocks.",
-        "is_correct": false
-       },
-       {
-        "text": "It is mandatory to release the memory to prevent memory leaks. If free is not called, the allocated memory remains occupied and unavailable for reuse, leading to resource exhaustion.",
-        "is_correct": true
-       },
-       {
-        "text": "It is mandatory to release the memory to prevent buffer overflows. If free is not called, the allocated memory is automatically reclaimed by the OS, leading to no significant performance impact.",
-        "is_correct": false
-       },
-       {
-        "text": "It is mandatory to release the memory to prevent stack overflow. If free is not called, the allocated memory is moved to the heap permanently, leading to increased compile time.",
-        "is_correct": false
-       }
-      ]
-     },
-     {
-      "name": "[c_memory.html] Dangling Pointer State After Free",
-      "description": "After the free function is invoked on a pointer, what specific state does that pointer enter, and why is this state problematic for subsequent operations?",
+      "name": "[c_memory.html] Null Pointer Requirement For Invalid References",
+      "description": "What is the required state for a pointer that does not point to any valid object, and why is this specific state necessary?",
       "type": "choice",
       "time_to_handle": 45,
       "time_to_explain": 35,
       "hints": [
        {
         "name": "Hint",
-        "url": "<p>Think about the value stored in the pointer variable after the memory deallocation occurs and the term used to describe a pointer that points to invalid memory</p>"
+        "url": "<p>Consider the standard value used to represent the absence of a valid memory reference</p>"
        },
        {
         "name": "Source",
@@ -1200,20 +1121,90 @@
       ],
       "choices": [
        {
-        "text": "The pointer becomes a wild pointer because it is reset to a random address by the system. This state is problematic because the address is invalid and cannot be used for any memory operations.",
+        "text": "It should be left uninitialized. This is necessary to allow the compiler to optimize the memory layout by reusing the space for other variables until it is assigned a value.",
         "is_correct": false
        },
        {
-        "text": "The pointer becomes a null pointer because it is automatically set to NULL by the free function. This state is problematic because dereferencing it causes a predictable null pointer exception.",
+        "text": "It should be set to zero. This is necessary to ensure the pointer occupies the lowest possible memory address, optimizing access speed for empty references.",
         "is_correct": false
        },
        {
-        "text": "The pointer becomes a const pointer because its value is locked by the runtime. This state is problematic because attempting to modify the pointer variable results in a compilation error.",
+        "text": "It should be set to the address of the main function. This is necessary to provide a default fallback location if the pointer is accidentally dereferenced before assignment.",
         "is_correct": false
        },
        {
-        "text": "The pointer becomes a dangling pointer because it still holds the old address of the freed memory. This state is problematic because accessing that address leads to undefined behavior since the memory is no longer valid for that pointer.",
+        "text": "It should be set to NULL. This is necessary to explicitly indicate that the pointer is not referencing any valid object, preventing accidental access to invalid memory locations.",
         "is_correct": true
+       }
+      ]
+     },
+     {
+      "name": "[c_memory.html] NULL Pointer Dereference Consequences",
+      "description": "What is the consequence of attempting to dereference a NULL pointer, and what does this imply about the predictability of the program's execution?",
+      "type": "choice",
+      "time_to_handle": 45,
+      "time_to_explain": 35,
+      "hints": [
+       {
+        "name": "Hint",
+        "url": "<p>Think about the term used in programming standards to describe actions that have no guaranteed outcome</p>"
+       },
+       {
+        "name": "Source",
+        "url": "<p>[Source:c_memory.html]</p>"
+       }
+      ],
+      "choices": [
+       {
+        "text": "It results in undefined behaviour. This implies that the program's execution is unpredictable and may crash, produce incorrect results, or behave in any other manner not specified by the language standard.",
+        "is_correct": true
+       },
+       {
+        "text": "It results in a segmentation fault immediately. This implies that the program will always terminate with a specific error code, making the failure predictable and consistent.",
+        "is_correct": false
+       },
+       {
+        "text": "It results in a compile-time error. This implies that the program cannot be built until the pointer is explicitly checked for validity before use.",
+        "is_correct": false
+       },
+       {
+        "text": "It results in the pointer being automatically reset to NULL. This implies that the program continues execution safely, as the invalid reference is cleared to prevent further errors.",
+        "is_correct": false
+       }
+      ]
+     },
+     {
+      "name": "[c_memory.html] Memory Leak Prevention With Free",
+      "description": "Why is it mandatory to release every block of memory allocated using malloc or calloc with free when it is no longer needed, and what is the primary consequence of failing to do so?",
+      "type": "choice",
+      "time_to_handle": 60,
+      "time_to_explain": 45,
+      "hints": [
+       {
+        "name": "Hint",
+        "url": "<p>Think about the resource management issue that arises when allocated space is not returned to the system</p>"
+       },
+       {
+        "name": "Source",
+        "url": "<p>[Source:c_memory.html]</p>"
+       }
+      ],
+      "choices": [
+       {
+        "text": "This rule exists to prevent memory leaks. If allocated memory is not released, the program cannot reuse that memory, leading to a gradual exhaustion of available system resources.",
+        "is_correct": true
+       },
+       {
+        "text": "This rule exists to prevent stack overflow. If allocated memory is not released, the call stack grows indefinitely, causing the program to crash due to exceeding the fixed stack size limit.",
+        "is_correct": false
+       },
+       {
+        "text": "This rule exists to maintain cache coherency. If allocated memory is not released, the CPU cache lines remain locked, preventing other threads from accessing shared data and causing a deadlock.",
+        "is_correct": false
+       },
+       {
+        "text": "This rule exists to ensure deterministic garbage collection. If allocated memory is not released, the compiler cannot optimize variable scope, leading to increased binary size and slower compilation times.",
+        "is_correct": false
        }
       ]
      }

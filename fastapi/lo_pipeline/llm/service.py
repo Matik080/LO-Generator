@@ -1,5 +1,9 @@
+import hashlib
+import json
 import os
 import time
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Dict, List
 
@@ -120,9 +124,68 @@ def call_llm(
     """
     Entry point used by all pipeline modules. Delegates to `_backend`, which tests swap for a fake
     (modules import `call_llm` by name, so patching this module attribute alone would not reach them).
+
+    If a response cache is active (see `use_response_cache`), an identical earlier call is answered from it.
+    That is how a resumed pipeline run skips the LLM calls it already made.
     """
-    return _backend(messages, model=model, temperature=temperature,
-                    max_retries=max_retries, rate_limit_backoff=rate_limit_backoff)
+    cache = _response_cache.get()
+    slot = None
+    if cache is not None:
+        slot, hit = cache.lookup(call_key(messages, model or DEFAULT_MODEL, temperature))
+        if hit is not None:
+            return hit
+    response = _backend(messages, model=model, temperature=temperature,
+                        max_retries=max_retries, rate_limit_backoff=rate_limit_backoff)
+    if cache is not None and response is not None:
+        cache.save(slot, response)
+    return response
+
+
+def call_key(messages, model, temperature) -> str:
+    """Stable hash of one LLM request (same prompt + model + temperature -> same key)."""
+    raw = json.dumps({"model": model, "temperature": temperature, "messages": messages},
+                     sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+class _RunCache:
+    """
+    Saved answers for one pipeline run, keyed by request AND occurrence: the same prompt can legitimately be
+    sent several times in a run (e.g. regenerating the same failing LO in two rounds), and each time must get
+    its own answer. So the n-th identical request maps to the n-th saved answer, and a resumed run replays
+    answers in exactly the order the original run received them.
+    """
+
+    def __init__(self, store):
+        self.store = store  # object with get(slot) -> str | None and put(slot, response)
+        self.seen = {}
+
+    def lookup(self, key):
+        n = self.seen.get(key, 0)
+        self.seen[key] = n + 1
+        slot = f"{key}#{n}"
+        return slot, self.store.get(slot)
+
+    def save(self, slot, response):
+        self.store.put(slot, response)
+
+
+# Response cache of the current pipeline run. A ContextVar, not a global, so concurrent runs in different
+# threads/tasks don't share it.
+_response_cache: ContextVar = ContextVar("llm_response_cache", default=None)
+
+
+@contextmanager
+def use_response_cache(store):
+    """
+    Within this block, call_llm answers requests that `store` already has (same request, same occurrence)
+    and saves every new answer to it. `store` needs get(slot) and put(slot, response).
+    """
+    token = _response_cache.set(_RunCache(store))
+    try:
+        yield
+    finally:
+        _response_cache.reset(token)
 
 
 def _openai_call(
