@@ -126,6 +126,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
             faithfulness_threshold=opts.faithfulness_threshold,
             hint_quality_threshold=opts.hint_quality_threshold,
             max_attempts=opts.max_attempts,
+            mc_batch_size=opts.mc_batch_size,
             progress=progress.step("lo_evaluation"),
         )
 

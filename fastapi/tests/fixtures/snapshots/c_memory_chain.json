@@ -415,8 +415,7 @@
    "mc_correct_index": 0,
    "anchor": "using",
    "prerequisite_ids": [
-    "1e3de2e2",
-    "1fd448b1"
+    "1e3de2e2"
    ],
    "generated_name": "Allocation Failure Check Requirement",
    "time_to_handle": 45,
@@ -655,6 +654,13 @@
    ],
    "source_title": "",
    "source_page": "",
+   "mc_options": [
+    "A pointer that holds the address of a static variable is called a static pointer. This implies that the pointer remains valid for the duration of the program, as static memory is never deallocated during execution.",
+    "A pointer that points to the beginning of the heap is called a null pointer. This implies that the pointer is valid for accessing the first allocated block of memory, as that memory is reserved for system use.",
+    "A pointer that references a memory block allocated with malloc is called a valid pointer. This implies that the pointer is safe for access after free, as the memory contents are preserved until the program terminates.",
+    "A pointer that still holds the old address after free is called a dangling pointer. This implies that the pointer is no longer valid for accessing the memory it points to, as that memory has been released."
+   ],
+   "mc_correct_index": 3,
    "anchor": "pointer",
    "prerequisite_ids": [],
    "generated_name": "Dangling Pointer Definition and Validity",
@@ -662,54 +668,50 @@
    "time_to_explain": 30
   },
   {
-   "question": "Why is it considered a best practice to set a pointer to NULL when it does not point to any valid object, and what potential issue does this prevent?",
-   "answer": "Setting a pointer to NULL when it does not point to a valid object prevents the program from accidentally dereferencing an invalid address, which could lead to undefined behavior or crashes. It clearly indicates that the pointer is not currently associated with any memory location.",
+   "question": "Why is it recommended to set a pointer to NULL if it does not point to any valid object?",
+   "answer": "Setting a pointer to NULL when it does not point to a valid object is a best practice to ensure the pointer is in a known, safe state rather than holding an invalid or random address.",
    "expected_output": null,
-   "hint": "Think about what happens if the program tries to use a pointer that holds a random or stale address instead of a safe, recognizable value.",
+   "hint": "Consider the safety and predictability of having a pointer that does not reference active data.",
    "source_statement": "A pointer that does not point to any valid object should be set to NULL.",
    "type": "rule",
    "id": "0014f89b",
    "keywords": [
+    "rather",
     "pointer",
-    "associated",
+    "recommended",
     "best",
-    "prevent",
-    "location",
     "address",
-    "lead",
-    "potential",
-    "indicates",
-    "undefined",
-    "dereferencing",
-    "crashes",
+    "state",
     "object",
-    "set",
     "null",
-    "could",
-    "prevents",
-    "considered",
-    "memory",
-    "accidentally",
-    "clearly",
-    "program",
+    "set",
+    "ensure",
+    "known",
     "practice",
-    "behavior",
+    "random",
+    "safe",
     "setting",
     "point",
-    "issue",
+    "holding",
     "valid",
-    "currently",
     "invalid"
    ],
    "source_title": "",
    "source_page": "",
+   "mc_options": [
+    "Setting a pointer to NULL when it does not point to a valid object is a best practice to ensure the pointer is in a known, safe state rather than holding an invalid or random address.",
+    "Setting a pointer to NULL initializes the pointer to point to the first element of an array.",
+    "Setting a pointer to NULL prevents the compiler from optimizing the code and ensures faster execution speed.",
+    "Setting a pointer to NULL automatically frees the memory previously allocated to the pointer."
+   ],
+   "mc_correct_index": 0,
    "anchor": "pointer",
    "prerequisite_ids": [
     "1fd448b1"
    ],
-   "generated_name": "Null Pointer Assignment Best Practice",
-   "time_to_handle": 60,
-   "time_to_explain": 45
+   "generated_name": "Null Pointer Safety Best Practice",
+   "time_to_handle": 40,
+   "time_to_explain": 35
   },
   {
    "question": "In the context of memory management, what specific condition defines a memory leak, and why is this state problematic for long-running applications?",
@@ -750,11 +752,18 @@
    ],
    "source_title": "",
    "source_page": "",
+   "mc_options": [
+    "A memory leak is defined as memory that is allocated on the stack but not returned. This is problematic because it causes the stack pointer to overflow immediately, leading to a crash before the main function completes.",
+    "A memory leak is defined as the excessive fragmentation of the heap due to frequent allocation and deallocation. This is problematic because it reduces the maximum size of any single allocation, preventing the program from running efficiently.",
+    "A memory leak is defined as memory that has been allocated but never freed. This is problematic because it causes the application's memory usage to grow over time, potentially leading to resource exhaustion and system instability.",
+    "A memory leak is defined as memory that has been freed but is still referenced by a pointer. This is problematic because it causes immediate segmentation faults when the application attempts to read from the deallocated address."
+   ],
+   "mc_correct_index": 2,
    "anchor": "freed",
    "prerequisite_ids": [],
    "generated_name": "Memory Leak Condition and Impact",
-   "time_to_handle": 45,
-   "time_to_explain": 35
+   "time_to_handle": 50,
+   "time_to_explain": 40
   }
  ],
  "knowledge_graph_edges": [
@@ -781,10 +790,6 @@
   [
    "1fd448b1",
    "087e5d7b"
-  ],
-  [
-   "1fd448b1",
-   "6af8c7ab"
   ],
   [
    "2fe16f5c",
@@ -1118,7 +1123,7 @@
      {
       "name": "Dangling Pointer Definition and Validity",
       "description": "What is the term for a pointer that still holds the address of memory that has just been deallocated using the free function, and what does this state imply about the pointer's current validity?",
-      "type": "open",
+      "type": "choice",
       "time_to_handle": 45,
       "time_to_explain": 30,
       "hints": [
@@ -1129,36 +1134,60 @@
       ],
       "choices": [
        {
+        "text": "A pointer that holds the address of a static variable is called a static pointer. This implies that the pointer remains valid for the duration of the program, as static memory is never deallocated during execution.",
+        "is_correct": false
+       },
+       {
+        "text": "A pointer that points to the beginning of the heap is called a null pointer. This implies that the pointer is valid for accessing the first allocated block of memory, as that memory is reserved for system use.",
+        "is_correct": false
+       },
+       {
+        "text": "A pointer that references a memory block allocated with malloc is called a valid pointer. This implies that the pointer is safe for access after free, as the memory contents are preserved until the program terminates.",
+        "is_correct": false
+       },
+       {
         "text": "A pointer that still holds the old address after free is called a dangling pointer. This implies that the pointer is no longer valid for accessing the memory it points to, as that memory has been released.",
         "is_correct": true
        }
       ]
      },
      {
-      "name": "Null Pointer Assignment Best Practice",
-      "description": "Why is it considered a best practice to set a pointer to NULL when it does not point to any valid object, and what potential issue does this prevent?",
-      "type": "open",
-      "time_to_handle": 60,
-      "time_to_explain": 45,
+      "name": "Null Pointer Safety Best Practice",
+      "description": "Why is it recommended to set a pointer to NULL if it does not point to any valid object?",
+      "type": "choice",
+      "time_to_handle": 40,
+      "time_to_explain": 35,
       "hints": [
        {
         "name": "Hint",
-        "url": "<p>Think about what happens if the program tries to use a pointer that holds a random or stale address instead of a safe, recognizable value.</p>"
+        "url": "<p>Consider the safety and predictability of having a pointer that does not reference active data.</p>"
        }
       ],
       "choices": [
        {
-        "text": "Setting a pointer to NULL when it does not point to a valid object prevents the program from accidentally dereferencing an invalid address, which could lead to undefined behavior or crashes. It clearly indicates that the pointer is not currently associated with any memory location.",
+        "text": "Setting a pointer to NULL when it does not point to a valid object is a best practice to ensure the pointer is in a known, safe state rather than holding an invalid or random address.",
         "is_correct": true
+       },
+       {
+        "text": "Setting a pointer to NULL initializes the pointer to point to the first element of an array.",
+        "is_correct": false
+       },
+       {
+        "text": "Setting a pointer to NULL prevents the compiler from optimizing the code and ensures faster execution speed.",
+        "is_correct": false
+       },
+       {
+        "text": "Setting a pointer to NULL automatically frees the memory previously allocated to the pointer.",
+        "is_correct": false
        }
       ]
      },
      {
       "name": "Memory Leak Condition and Impact",
       "description": "In the context of memory management, what specific condition defines a memory leak, and why is this state problematic for long-running applications?",
-      "type": "open",
-      "time_to_handle": 45,
-      "time_to_explain": 35,
+      "type": "choice",
+      "time_to_handle": 50,
+      "time_to_explain": 40,
       "hints": [
        {
         "name": "Hint",
@@ -1167,8 +1196,20 @@
       ],
       "choices": [
        {
+        "text": "A memory leak is defined as memory that is allocated on the stack but not returned. This is problematic because it causes the stack pointer to overflow immediately, leading to a crash before the main function completes.",
+        "is_correct": false
+       },
+       {
+        "text": "A memory leak is defined as the excessive fragmentation of the heap due to frequent allocation and deallocation. This is problematic because it reduces the maximum size of any single allocation, preventing the program from running efficiently.",
+        "is_correct": false
+       },
+       {
         "text": "A memory leak is defined as memory that has been allocated but never freed. This is problematic because it causes the application's memory usage to grow over time, potentially leading to resource exhaustion and system instability.",
         "is_correct": true
+       },
+       {
+        "text": "A memory leak is defined as memory that has been freed but is still referenced by a pointer. This is problematic because it causes immediate segmentation faults when the application attempts to read from the deallocated address.",
+        "is_correct": false
        }
       ]
      }

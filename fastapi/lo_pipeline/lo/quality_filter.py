@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from lo_pipeline.units.normalizer import normalize_units
 from lo_pipeline.units.extractor import extract_atomic_units_batch, clean_atomic_units
-from lo_pipeline.lo.generator import generate_learning_object_batch, generate_mc_variants_batch
+from lo_pipeline.lo.generator import generate_learning_object_batch, generate_mc_variants_batch, MC_ELIGIBLE_TYPES
 from lo_pipeline.lo.postprocess import postprocess_lo
 from lo_pipeline.extraction.documents import extract_text_from_source, split_into_sections
 from lo_pipeline.files import export_json
@@ -97,35 +97,43 @@ def _question_is_self_contained(question: str):
             return False, f"references external context: '{m.group()}'"
     return True, None
 
-def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, faithfulness_threshold=3.0, hint_quality_threshold=2.0, max_attempts=2, progress=None):
+def _rank(model_evals, reasons):
+    """Lower is better: fewer failure reasons first, then higher average faithfulness."""
+    faith = [e["faithfulness"] for e in model_evals if isinstance(e.get("faithfulness"), (int, float))]
+    return len(reasons), -(sum(faith) / len(faith) if faith else 0.0)
+
+
+def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, faithfulness_threshold=3.0,
+                          hint_quality_threshold=2.0, max_attempts=2, mc_batch_size=5, progress=None):
     """
     Evaluates all LOs with one or more models, flags those that fail the quality threshold by consensus, and regenerates them from source units.
     `atomic_units` are the units the LOs were generated from (matched by statement for regeneration).
-    `progress(done, total)` counts LLM calls (optional). The total grows when LOs are regenerated.
+    `max_attempts` is the number of regeneration rounds. Every regenerated LO is evaluated again; an LO that
+    still fails after the last round is kept in its best-scoring version. Regenerated LOs get MC variants once,
+    at the end (so their distractors are not scored; distractor quality is not a pass/fail criterion).
+    `progress(done, total)` counts LLM calls (optional); `total` only shrinks, so done/total never goes backwards.
 
     Failure logic (conservative):
       - Faithfulness average across models < faithfulness_threshold
       - ALL models agree the LO is not atomic
       - ALL models agree the LO is not self-contained
     """
-    from lo_pipeline.lo.evaluator import evaluate_learning_objects_batch, eval_batch_size
+    from lo_pipeline.lo import evaluator
 
     if eval_models is None:
         eval_models = ["llama-3.3-70b-versatile"]
 
-    # Progress counts LLM calls. `total` starts as an upper bound (every LO fails every attempt) and only
-    # shrinks once the real number of failures is known, so done/total never goes backwards.
+    # --- progress: LLM calls, starting from an upper bound (every LO fails every round) ---
     calls = {"done": 0, "total": 0}
 
-    def _eval_calls(n_los):
-        return sum(-(-n_los // eval_batch_size(m)) for m in eval_models)
+    def _eval_calls(n):
+        return sum(-(-n // evaluator.eval_batch_size(m)) for m in eval_models)
 
-    def _regen_calls(n_los):
-        return -(-n_los // 5)
+    def _round_calls(n):  # regenerate + re-evaluate
+        return -(-n // 5) + _eval_calls(n)
 
-    def _remaining_bound(n_failing, attempts_left):
-        """Upper bound on calls after an evaluation that found n_failing LOs."""
-        return _regen_calls(n_failing) + attempts_left * (_eval_calls(n_failing) + _regen_calls(n_failing))
+    def _mc_calls(n):  # final MC for regenerated LOs (upper bound: all of them MC-eligible)
+        return -(-n // mc_batch_size)
 
     def _tick():
         calls["done"] += 1
@@ -133,40 +141,33 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
             progress(calls["done"], max(calls["total"], calls["done"]))
 
     def _set_total(total):
-        calls["total"] = total
+        calls["total"] = max(total, calls["done"])
         if progress and calls["done"]:
-            progress(calls["done"], max(total, calls["done"]))
+            progress(calls["done"], calls["total"])
 
-    calls["total"] = _eval_calls(len(learning_objects)) + _remaining_bound(len(learning_objects), max_attempts - 1)
+    n = len(learning_objects)
+    calls["total"] = _eval_calls(n) + max_attempts * _round_calls(n) + _mc_calls(n)
+
     print(f"[Filter] Evaluating {len(learning_objects)} LOs with {eval_models}...")
 
-    # On the first attempt evaluate everything, on subsequent attempts evaluate only the newly regenerated LOs, no point re-scoring ones that already passed.
+    unit_map = {u["statement"]: u for u in atomic_units}
+    evals_by_id = {}   # lo_id -> evaluations of the CURRENT version only
+    best = {}          # source_statement -> (rank, lo, reasons) of the best failing version seen so far
+    regenerated = set()  # id() of every LO object created by regeneration (they need MC variants at the end)
     los_to_eval = learning_objects
-    passed_evals = {}  # lo_id -> eval results, carried over between attempts
 
-    for attempt in range(max_attempts):
-        # Collect evals for the current batch only
-        all_evals = []
+    for attempt in range(max_attempts + 1):
+        # Evaluate only the LOs that are new in this round; their old scores are replaced, not merged
+        for lo in los_to_eval:
+            evals_by_id.pop(lo["id"], None)
         for model in eval_models:
-            model_evals = evaluate_learning_objects_batch(
-                los_to_eval, model, progress=_tick
-            )
-            all_evals.extend(model_evals)
-
-        # Merge with evals from previous attempts
-        for e in all_evals:
-            lid = e["lo_id"]
-            if lid not in passed_evals:
-                passed_evals[lid] = []
-            passed_evals[lid].append(e)
-
-        # Build by_lo from the full merged set
-        by_lo = {lid: evals for lid, evals in passed_evals.items()}
+            for e in evaluator.evaluate_learning_objects_batch(los_to_eval, model, progress=_tick):
+                evals_by_id.setdefault(e["lo_id"], []).append(e)
 
         # Find failing LOs
         failing = []
         for lo in learning_objects:
-            model_evals = by_lo.get(lo["id"], [])
+            model_evals = evals_by_id.get(lo["id"], [])
             if not model_evals:
                 print(f"[Filter] No eval found for LO {lo['id']}, skipping.")
                 continue
@@ -179,21 +180,28 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
                 fails = True
 
             if fails:
-                lo["_fail_reasons"] = reasons
                 failing.append(lo)
+                rank = _rank(model_evals, reasons)
+                key = lo["source_statement"]
+                if key not in best or rank < best[key][0]:
+                    best[key] = (rank, lo, reasons)
                 print(f"[Filter] FAIL {lo['id']}: {'; '.join(reasons)}")
 
         if not failing:
-            print(f"[Filter] All LOs passed quality threshold on attempt {attempt + 1}.")
+            print(f"[Filter] All LOs passed quality threshold after {attempt} regeneration round(s).")
             break
 
-        print(f"[Filter] Attempt {attempt + 1}: {len(failing)} LOs flagged, regenerating...")
+        if attempt == max_attempts:
+            print(f"[Filter] {len(failing)} LO(s) still fail after {max_attempts} regeneration round(s); keeping their best version.")
+            failing_keys = {lo["source_statement"] for lo in failing}
+            learning_objects = [best[lo["source_statement"]][1] if lo["source_statement"] in failing_keys else lo
+                                for lo in learning_objects]
+            break
+
+        print(f"[Filter] Round {attempt + 1}: {len(failing)} LOs flagged, regenerating...")
 
         # Find source units for failing LOs
-        unit_map = {u["statement"]: u for u in atomic_units}
-
-        failing_units = []
-        unmatched = []
+        failing_units, unmatched = [], []
         for lo in failing:
             unit = unit_map.get(lo["source_statement"])
             if unit:
@@ -208,36 +216,35 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
             print(f"[Filter] No source units found for any failing LO, stopping.")
             break
 
-        # Regenerate. Only these LOs are re-evaluated next, so later attempts can't fail more than this.
-        _set_total(calls["done"] + _remaining_bound(len(failing_units), max_attempts - 1 - attempt))
+        # Later rounds can only re-check these LOs, so the bound shrinks to them
+        k = len(failing_units)
+        _set_total(calls["done"] + (max_attempts - attempt) * _round_calls(k) + _mc_calls(k))
+
+        # Regenerate (MC variants are added once at the end, for the versions that are kept)
         new_los_raw = generate_learning_object_batch(failing_units, batch_size=5)
-        for _ in range(_regen_calls(len(failing_units))):
+        for _ in range(-(-len(failing_units) // 5)):
             _tick()
+        pairs = list(zip(failing_units, new_los_raw))  # shorter than failing_units if a batch came back empty
+        new_los = [postprocess_lo(lo, unit) for unit, lo in pairs]
+        regenerated.update(id(lo) for lo in new_los)
 
-        # Replace failing LOs
-        failing_ids = {lo["id"] for lo in failing}
-        surviving = [lo for lo in learning_objects if lo["id"] not in failing_ids]
+        # Replace failing LOs that got a new version (by source unit; a regenerated LO usually keeps the same id).
+        # Failing LOs without a new version stay and are re-checked against their best version at the end.
+        regenerated_keys = {unit["statement"] for unit, _ in pairs}
+        learning_objects = [lo for lo in learning_objects if lo["source_statement"] not in regenerated_keys] + new_los
+        print(f"[Filter] Regenerated {len(new_los)} LOs. Total now: {len(learning_objects)}")
 
-        for unit, lo in zip(failing_units, new_los_raw):
-            lo.pop("_fail_reasons", None)
-            surviving.append(postprocess_lo(lo, unit))
+        los_to_eval = new_los
 
-        learning_objects = surviving
-        print(f"[Filter] Regenerated {len(failing_units)} LOs. Total now: {len(learning_objects)}")
-
-        # Next attempt: only evaluate the newly regenerated LOs.
-        # Since regenerated LOs come from the same source statements, their IDs will be identical to the failed ones, so track by source_statement instead.
-        regen_source_statements = {u["statement"] for u in failing_units}
-        los_to_eval = [lo for lo in learning_objects
-                       if lo.get("source_statement") in regen_source_statements]
-        print(f"[Filter] Next attempt will evaluate only {len(los_to_eval)} regenerated LOs.")
+    # Regenerated LOs don't have MC variants yet: add them once, for the final versions only
+    missing_mc = [lo for lo in learning_objects
+                  if id(lo) in regenerated and lo.get("type") in MC_ELIGIBLE_TYPES]
+    _set_total(calls["done"] + -(-len(missing_mc) // mc_batch_size))
+    if missing_mc:
+        print(f"[Filter] Generating MC variants for {len(missing_mc)} regenerated LO(s)...")
+        generate_mc_variants_batch(missing_mc, batch_size=mc_batch_size, progress=lambda d, t: _tick())
 
     _set_total(calls["done"])  # the upper bound wasn't needed in full
-
-    # Strip any leftover internal fields
-    for lo in learning_objects:
-        lo.pop("_fail_reasons", None)
-
     return learning_objects
 
 

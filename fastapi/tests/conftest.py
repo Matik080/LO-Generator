@@ -38,9 +38,11 @@ class Cassette:
         self.entries = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
         self.real_backend = llm_service._openai_call
         self.misses = []
+        self.used = set()
 
     def __call__(self, messages, model=None, temperature=0.2, **kwargs):
         key = _key(messages, model, temperature)
+        self.used.add(key)
         if key in self.entries:
             return self.entries[key]["response"]
         if self.mode != "record":
@@ -55,8 +57,11 @@ class Cassette:
         return response
 
     def save(self):
+        # Keep only answers this run used, so outdated prompts drop out of the cassette.
+        # Answers already in the cassette are reused, so only new prompts call the real LLM.
         if self.mode == "record":
-            self.path.write_text(json.dumps(self.entries, indent=1, ensure_ascii=False), encoding="utf-8")
+            used = {k: v for k, v in self.entries.items() if k in self.used}
+            self.path.write_text(json.dumps(used, indent=1, ensure_ascii=False), encoding="utf-8")
 
 
 @pytest.fixture
