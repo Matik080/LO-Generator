@@ -1,6 +1,9 @@
 import json
 import re
 from typing import Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def parse_json(text: str) -> Any:
@@ -19,7 +22,6 @@ def parse_json(text: str) -> Any:
             cleaned = re.sub(r'\\(?!["\\/bfnrtu])', r'\\\\', text)
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            print("\n=== RAW MODEL OUTPUT START ===")
-            print(text)
-            print("=== RAW MODEL OUTPUT END ===\n")
+            # Debug only: the output contains document text
+            logger.debug("Model output that is not valid JSON:\n=== RAW MODEL OUTPUT START ===\n%s\n=== RAW MODEL OUTPUT END ===", text)
             raise

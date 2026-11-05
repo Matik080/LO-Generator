@@ -7,6 +7,9 @@ import re
 import json
 from lo_pipeline.llm.service import call_llm
 from lo_pipeline.files import load_json, export_json
+import logging
+
+logger = logging.getLogger(__name__)
 
 TYPE_LEVEL = {
     "definition": 1,
@@ -128,7 +131,7 @@ def build_prerequisite_edges(learning_objects, centrality):
     import re, json
 
     texts = [lo["question"] + " " + lo["answer"] for lo in learning_objects]
-    print(f"[Graph] Computing embeddings for {len(texts)} learning objects...")
+    logger.info(f"[Graph] Computing embeddings for {len(texts)} learning objects...")
     embeddings = get_embeddings_batch(texts)
 
     for lo, emb in zip(learning_objects, embeddings):
@@ -160,7 +163,7 @@ def build_prerequisite_edges(learning_objects, centrality):
 
             candidates.append((i, j, sim))
 
-    print(f"[Graph] {len(candidates)} candidate pairs — sending to LLM...")
+    logger.info(f"[Graph] {len(candidates)} candidate pairs — sending to LLM...")
 
     # Stage 2: LLM verification of candidates only
     edges = []
@@ -170,12 +173,12 @@ def build_prerequisite_edges(learning_objects, centrality):
 
         if llm_determine_prerequisite(lo_a, lo_b):
             edges.append((lo_a["id"], lo_b["id"]))
-            print(f"[Graph] PREREQUISITE: {lo_a['question'][:50]} -> {lo_b['question'][:50]}")
+            logger.debug(f"[Graph] PREREQUISITE: {lo_a['question'][:50]} -> {lo_b['question'][:50]}")
 
     for lo in learning_objects:
         lo.pop("_embedding", None)
 
-    print(f"[Graph] Generated {len(edges)} verified prerequisite edges.")
+    logger.info(f"[Graph] Generated {len(edges)} verified prerequisite edges.")
     return edges
 
 
@@ -209,7 +212,7 @@ def build_layered_learning_paths(learning_objects, centrality):
 
     # Embed all LOs for within-layer similarity
     texts = [lo["question"] + " " + lo["answer"] for lo in learning_objects]
-    print(f"[Graph] Computing embeddings for {len(texts)} learning objects...")
+    logger.info(f"[Graph] Computing embeddings for {len(texts)} learning objects...")
     embeddings = get_embeddings_batch(texts)
     for lo, emb in zip(learning_objects, embeddings):
         lo["_embedding"] = emb
@@ -270,14 +273,14 @@ def build_layered_learning_paths(learning_objects, centrality):
 
     # Remove cycles if any exist using feedback arc set
     if not nx.is_directed_acyclic_graph(KG):
-        print("[Graph] Cycle detected, removing feedback edges...")
+        logger.warning("[Graph] Cycle detected, removing feedback edges...")
         cycles = list(nx.simple_cycles(KG))
         for cycle in cycles:
             # Remove the last edge in the cycle
             KG.remove_edge(cycle[-1], cycle[0])
 
-    print(f"[Graph] Generated {KG.number_of_edges()} layered prerequisite edges.")
-    print(f"[Graph] Is DAG: {nx.is_directed_acyclic_graph(KG)}")
+    logger.info(f"[Graph] Generated {KG.number_of_edges()} layered prerequisite edges.")
+    logger.info(f"[Graph] Is DAG: {nx.is_directed_acyclic_graph(KG)}")
 
     return list(KG.edges())
 
@@ -316,8 +319,8 @@ def verify_prerequisites_batched(candidate_edges, learning_objects, batch_size=1
         if lo_a and lo_b:
             pairs.append((lo_a, lo_b))
 
-    print(f"[Graph] Verifying {len(pairs)} candidate edges with LLM...")
-    print(f"[Graph] Will use ~{-(-len(pairs) // batch_size)} API calls.")
+    logger.info(f"[Graph] Verifying {len(pairs)} candidate edges with LLM...")
+    logger.info(f"[Graph] Will use ~{-(-len(pairs) // batch_size)} API calls.")
 
     for batch_start in range(0, len(pairs), batch_size):
         batch = pairs[batch_start:batch_start + batch_size]
@@ -365,7 +368,7 @@ Return JSON array only. No markdown. No explanation.
             }
         ]
 
-        print(f"[Graph] Verifying batch {batch_start // batch_size + 1} ({len(batch)} pairs)...")
+        logger.info(f"[Graph] Verifying batch {batch_start // batch_size + 1} ({len(batch)} pairs)...")
         response = call_llm(messages, temperature=0.0)
         if progress:
             progress(batch_start // batch_size + 1, -(-len(pairs) // batch_size))
@@ -382,12 +385,12 @@ Return JSON array only. No markdown. No explanation.
                 if result.get("is_prerequisite") and result.get("confidence") in ["high", "medium"]:
                     lo_a, lo_b = batch[pair_idx]
                     verified_edges.append((lo_a["id"], lo_b["id"]))
-                    print(f"[Graph] CONFIRMED: {lo_a['question'][:45]} -> {lo_b['question'][:45]}")
+                    logger.debug(f"[Graph] CONFIRMED: {lo_a['question'][:45]} -> {lo_b['question'][:45]}")
         except json.JSONDecodeError as e:
-            print(f"[Graph] JSON parse error in batch: {e}, skipping...")
+            logger.warning(f"[Graph] JSON parse error in batch: {e}, skipping...")
             continue
 
-    print(f"[Graph] Verified {len(verified_edges)} / {len(pairs)} candidate edges.")
+    logger.info(f"[Graph] Verified {len(verified_edges)} / {len(pairs)} candidate edges.")
     return verified_edges
 
 def store_prerequisites(KG, learning_objects):
@@ -401,6 +404,7 @@ def store_prerequisites(KG, learning_objects):
     return learning_objects
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     output_dir = os.path.join(os.path.dirname(__file__), "output")
     units = load_json(os.path.join(output_dir, "atomic_units.json"))
     G = build_concept_graph(units)

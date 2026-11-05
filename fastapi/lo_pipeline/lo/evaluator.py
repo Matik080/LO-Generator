@@ -2,6 +2,9 @@ import json
 import re
 from lo_pipeline.files import load_json, export_json
 from lo_pipeline.llm.service import call_llm
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Per-model batch sizes, GPT OSS truncates on long prompts, Kimi rate limits
 MODEL_BATCH_SIZES = {
@@ -211,7 +214,7 @@ Return JSON array only. No markdown. No explanation.
             }
         ]
 
-        print(f"[Eval] Batch {batch_start // batch_size + 1} ({len(batch)} LOs) with {model}...")
+        logger.info(f"[Eval] Batch {batch_start // batch_size + 1} ({len(batch)} LOs) with {model}...")
         delay = MODEL_INTER_BATCH_DELAY.get(model, 0)
         if delay > 0 and batch_start > 0:
             import time
@@ -239,18 +242,18 @@ Return JSON array only. No markdown. No explanation.
                 # Remove JS-style line comments
                 cleaned = re.sub(r'//[^\n]*', '', cleaned)
                 batch_results = json.loads(cleaned)
-                print(f"[Eval] Parsed after cleanup.")
+                logger.info(f"[Eval] Parsed after cleanup.")
             except json.JSONDecodeError as e:
-                print(f"[Eval] JSON parse error: {e}, attempting partial recovery...")
+                logger.warning(f"[Eval] JSON parse error: {e}, attempting partial recovery...")
                 batch_results = _recover_partial_json(response)
                 if batch_results:
-                    print(f"[Eval] Recovered {len(batch_results)} / {len(batch)} results.")
+                    logger.info(f"[Eval] Recovered {len(batch_results)} / {len(batch)} results.")
                 else:
-                    print(f"[Eval] Recovery failed, skipping batch.")
+                    logger.warning(f"[Eval] Recovery failed, skipping batch.")
                     continue
 
         if not isinstance(batch_results, list):
-            print(f"[Eval] Expected list, got {type(batch_results)}, skipping batch...")
+            logger.warning(f"[Eval] Expected list, got {type(batch_results)}, skipping batch...")
             continue
 
         for result, lo in zip(batch_results, batch):
@@ -262,6 +265,7 @@ Return JSON array only. No markdown. No explanation.
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     learning_objects = load_json("./output/learning_objects.json")
 
     models = [

@@ -40,6 +40,16 @@ class _LogCapture(io.TextIOBase):
 
 sys.stdout = _LogCapture(sys.stdout)
 
+# Pipeline modules log through `logging`; send their messages (INFO and up) to the captured stdout so they
+# still appear in the UI's log panel. Created after the stdout swap so the handler writes to _LogCapture.
+import logging
+_pipeline_log = logging.getLogger("lo_pipeline")
+_pipeline_log.setLevel(logging.INFO)
+_handler = logging.StreamHandler(sys.stdout)
+_handler.setFormatter(logging.Formatter("%(message)s"))
+_pipeline_log.addHandler(_handler)
+_pipeline_log.propagate = False
+
 from lo_pipeline.units.normalizer import normalize_units
 from lo_pipeline.units.extractor import extract_atomic_units_batch, clean_atomic_units
 from lo_pipeline.graph.prerequisites import build_prerequisite_graph, graph_to_json

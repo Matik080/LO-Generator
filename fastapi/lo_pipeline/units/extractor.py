@@ -4,6 +4,9 @@ from typing import List, Dict, Any
 from lo_pipeline.llm.service import call_llm
 from lo_pipeline.llm.json_load import parse_json
 from lo_pipeline.llm.embeddings import get_embeddings_batch, cosine_similarity
+import logging
+
+logger = logging.getLogger(__name__)
 
 def extract_atomic_units(section_text: str) -> List[Dict[str, Any]]:
     prompt = f"""
@@ -139,7 +142,7 @@ Textbook sections:
             }
         ]
 
-        print(f"[Extraction] Processing sections {batch_start + 1}-{min(batch_start + batch_size, len(sections))}...")
+        logger.info(f"[Extraction] Processing sections {batch_start + 1}-{min(batch_start + batch_size, len(sections))}...")
         response = call_llm(messages, temperature=0.2)
         if progress:
             progress(batch_start // batch_size + 1, total_batches)
@@ -147,9 +150,9 @@ Textbook sections:
 
         if isinstance(units, list):
             all_units.extend(units)
-            print(f"[Extraction] Got {len(units)} units from this batch.")
+            logger.info(f"[Extraction] Got {len(units)} units from this batch.")
         else:
-            print(f"[Extraction] Unexpected response format, skipping batch.")
+            logger.warning(f"[Extraction] Unexpected response format, skipping batch.")
 
     return all_units
 
@@ -170,7 +173,7 @@ def clean_atomic_units(units: List[Dict[str, Any]],
 
     # Embed all statements in one batch
     statements = [u["statement"] for u in units]
-    print(f"[Dedup] Computing embeddings for {len(statements)} units...")
+    logger.info(f"[Dedup] Computing embeddings for {len(statements)} units...")
     embeddings = get_embeddings_batch(statements)
 
     kept_indices = []
@@ -181,9 +184,9 @@ def clean_atomic_units(units: List[Dict[str, Any]],
         for j, kept_embedding in enumerate(kept_embeddings):
             sim = cosine_similarity(embedding, kept_embedding)
             if sim >= similarity_threshold:
-                print(f"[Dedup] Dropping duplicate (sim={sim:.3f}):")
-                print(f"  KEEP: {units[kept_indices[j]]['statement'][:80]}")
-                print(f"  DROP: {unit['statement'][:80]}")
+                logger.debug(f"[Dedup] Dropping duplicate (sim={sim:.3f}):")
+                logger.debug(f"  KEEP: {units[kept_indices[j]]['statement'][:80]}")
+                logger.debug(f"  DROP: {unit['statement'][:80]}")
                 is_duplicate = True
                 break
 
@@ -192,7 +195,7 @@ def clean_atomic_units(units: List[Dict[str, Any]],
             kept_embeddings.append(embedding)
 
     cleaned = [units[i] for i in kept_indices]
-    print(f"[Dedup] Kept {len(cleaned)} / {len(units)} units after semantic dedup.")
+    logger.info(f"[Dedup] Kept {len(cleaned)} / {len(units)} units after semantic dedup.")
     return cleaned
 
 def are_similar(a: str, b: str, threshold: float = 0.6) -> bool:

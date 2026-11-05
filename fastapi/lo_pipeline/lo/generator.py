@@ -8,6 +8,9 @@ from nltk.corpus import stopwords
 from lo_pipeline.llm.json_load import parse_json
 from lo_pipeline.lo.lexical import tokenize
 from lo_pipeline.llm.service import call_llm
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def generate_id(source_statement):
@@ -249,11 +252,11 @@ def generate_learning_object_batch(units, batch_size=5):
             }
         ]
 
-        print(f"[Generation] Processing batch {batch_start // batch_size + 1} ({len(batch)} units)...")
+        logger.info(f"[Generation] Processing batch {batch_start // batch_size + 1} ({len(batch)} units)...")
         response = call_llm(messages, temperature=0.3)
 
         if not response:
-            print(f"[Generation] Empty response for batch starting at {batch_start}, skipping...")
+            logger.warning(f"[Generation] Empty response for batch starting at {batch_start}, skipping...")
             continue
 
         response = re.sub(r"^```(?:json)?\s*", "", response.strip())
@@ -262,13 +265,13 @@ def generate_learning_object_batch(units, batch_size=5):
         try:
             batch_results = json.loads(response)
             if not isinstance(batch_results, list):
-                print(f"[Generation] Expected list, got {type(batch_results)}, skipping batch...")
+                logger.warning(f"[Generation] Expected list, got {type(batch_results)}, skipping batch...")
                 continue
             if len(batch_results) != len(batch):
-                print(f"[Generation] Expected {len(batch)} results, got {len(batch_results)}, using what we have...")
+                logger.warning(f"[Generation] Expected {len(batch)} results, got {len(batch_results)}, using what we have...")
             results.extend(batch_results[:len(batch)])
         except json.JSONDecodeError as e:
-            print(f"[Generation] JSON parse error in batch: {e}, skipping...")
+            logger.warning(f"[Generation] JSON parse error in batch: {e}, skipping...")
             continue
 
     return results
@@ -391,7 +394,7 @@ def generate_mc_variants_batch(learning_objects, batch_size=5, progress=None):
                 if lo.get("type") in MC_ELIGIBLE_TYPES]
     total_batches = -(-len(eligible) // batch_size)
 
-    print(f"[MC] Generating variants for {len(eligible)} eligible LOs "
+    logger.info(f"[MC] Generating variants for {len(eligible)} eligible LOs "
           f"({len(learning_objects) - len(eligible)} skipped as code types)...")
 
     for batch_start in range(0, len(eligible), batch_size):
@@ -437,7 +440,7 @@ Return JSON array only. No markdown. No explanation.
             {"role": "user", "content": prompt}
         ]
 
-        print(f"[MC] Processing batch {batch_start // batch_size + 1} ({len(batch)} LOs)...")
+        logger.info(f"[MC] Processing batch {batch_start // batch_size + 1} ({len(batch)} LOs)...")
         response = call_llm(messages, temperature=0.4)
         if progress:
             progress(batch_start // batch_size + 1, total_batches)
@@ -460,10 +463,10 @@ Return JSON array only. No markdown. No explanation.
                     lo["mc_correct_index"] = options.index(lo["answer"])
                 results.append(original_idx)
         except json.JSONDecodeError as e:
-            print(f"[MC] JSON parse error: {e}, skipping batch...")
+            logger.warning(f"[MC] JSON parse error: {e}, skipping batch...")
             continue
 
-    print(f"[MC] Done. {len(results)} LOs got MC variants.")
+    logger.info(f"[MC] Done. {len(results)} LOs got MC variants.")
     return learning_objects
 
 # if __name__ == "__main__":

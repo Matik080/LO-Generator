@@ -5,6 +5,9 @@ from typing import Dict, List
 
 from openai import OpenAI, RateLimitError
 from dotenv import load_dotenv
+import logging
+
+logger = logging.getLogger(__name__)
 # fastapi/.env (this file is fastapi/lo_pipeline/llm/service.py)
 load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env", override=True)
 
@@ -57,8 +60,8 @@ def _get_primary_client():
     if _PRIMARY is None:
         raise LLMConfigError("No API key found. Set GROQ_API_KEY, OPENROUTER_API_KEY, GITHUB_TOKEN, or OPENAI_API_KEY.")
     name, key, base_url, _ = _PRIMARY
-    print(f"[Config] Primary provider: {name}")
-    print(f"[Config] Default generation model: {DEFAULT_MODEL}")
+    logger.info(f"[Config] Primary provider: {name}")
+    logger.info(f"[Config] Default generation model: {DEFAULT_MODEL}")
     _client = OpenAI(api_key=key, base_url=base_url) if base_url else OpenAI(api_key=key)
     return _client
 
@@ -161,7 +164,7 @@ def _openai_call(
 
         except RateLimitError as e:
             if attempt < max_retries - 1:
-                print(f"[RATE LIMIT] Hit rate limit. Waiting {rate_limit_backoff}s before retry ({attempt+1}/{max_retries})...")
+                logger.warning(f"[RATE LIMIT] Hit rate limit. Waiting {rate_limit_backoff}s before retry ({attempt+1}/{max_retries})...")
                 time.sleep(rate_limit_backoff)
                 rate_limit_backoff = min(rate_limit_backoff * 1.5, 600)
             else:
@@ -170,7 +173,7 @@ def _openai_call(
         except Exception as e:
             if attempt < max_retries - 1:
                 wait = 2 ** attempt
-                print(f"[LLM ERROR] Attempt {attempt+1} failed. Retrying in {wait}s...")
+                logger.warning(f"[LLM ERROR] Attempt {attempt+1} failed. Retrying in {wait}s...")
                 time.sleep(wait)
             else:
                 raise Exception(f"LLM call failed after {max_retries} attempts: {e}")

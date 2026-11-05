@@ -1,4 +1,7 @@
 from lo_pipeline.lo.generator import generate_id, extract_keywords
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def postprocess_lo(lo: dict, unit: dict) -> dict:
@@ -29,7 +32,7 @@ def generate_learning_objects(units: list, batch_size: int = 5, progress=None) -
         batch = units[batch_start:batch_start + batch_size]
         for unit, lo in zip(batch, generate_learning_object_batch(batch, batch_size=batch_size)):
             los.append(postprocess_lo(lo, unit))
-        print(f"[Generate] Batch {i}/{total_batches} done -- {len(los)} LOs so far.")
+        logger.info(f"[Generate] Batch {i}/{total_batches} done -- {len(los)} LOs so far.")
         if progress:
             progress(i, total_batches)
     return los

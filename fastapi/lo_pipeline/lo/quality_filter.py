@@ -9,6 +9,9 @@ from lo_pipeline.lo.postprocess import postprocess_lo
 from lo_pipeline.extraction.documents import extract_text_from_source, split_into_sections
 from lo_pipeline.files import export_json
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _aggregate_evals(evals):
@@ -148,7 +151,7 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
     n = len(learning_objects)
     calls["total"] = _eval_calls(n) + max_attempts * _round_calls(n) + _mc_calls(n)
 
-    print(f"[Filter] Evaluating {len(learning_objects)} LOs with {eval_models}...")
+    logger.info(f"[Filter] Evaluating {len(learning_objects)} LOs with {eval_models}...")
 
     unit_map = {u["statement"]: u for u in atomic_units}
     evals_by_id = {}   # lo_id -> evaluations of the CURRENT version only
@@ -169,7 +172,7 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
         for lo in learning_objects:
             model_evals = evals_by_id.get(lo["id"], [])
             if not model_evals:
-                print(f"[Filter] No eval found for LO {lo['id']}, skipping.")
+                logger.warning(f"[Filter] No eval found for LO {lo['id']}, skipping.")
                 continue
             fails, reasons = _lo_fails_threshold(model_evals, faithfulness_threshold, hint_quality_threshold)
 
@@ -185,20 +188,20 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
                 key = lo["source_statement"]
                 if key not in best or rank < best[key][0]:
                     best[key] = (rank, lo, reasons)
-                print(f"[Filter] FAIL {lo['id']}: {'; '.join(reasons)}")
+                logger.info(f"[Filter] FAIL {lo['id']}: {'; '.join(reasons)}")
 
         if not failing:
-            print(f"[Filter] All LOs passed quality threshold after {attempt} regeneration round(s).")
+            logger.info(f"[Filter] All LOs passed quality threshold after {attempt} regeneration round(s).")
             break
 
         if attempt == max_attempts:
-            print(f"[Filter] {len(failing)} LO(s) still fail after {max_attempts} regeneration round(s); keeping their best version.")
+            logger.warning(f"[Filter] {len(failing)} LO(s) still fail after {max_attempts} regeneration round(s); keeping their best version.")
             failing_keys = {lo["source_statement"] for lo in failing}
             learning_objects = [best[lo["source_statement"]][1] if lo["source_statement"] in failing_keys else lo
                                 for lo in learning_objects]
             break
 
-        print(f"[Filter] Round {attempt + 1}: {len(failing)} LOs flagged, regenerating...")
+        logger.info(f"[Filter] Round {attempt + 1}: {len(failing)} LOs flagged, regenerating...")
 
         # Find source units for failing LOs
         failing_units, unmatched = [], []
@@ -210,10 +213,10 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
                 unmatched.append(lo["id"])
 
         if unmatched:
-            print(f"[Filter] Could not find source units for {len(unmatched)} LOs: {unmatched[:5]}")
+            logger.warning(f"[Filter] Could not find source units for {len(unmatched)} LOs: {unmatched[:5]}")
 
         if not failing_units:
-            print(f"[Filter] No source units found for any failing LO, stopping.")
+            logger.warning(f"[Filter] No source units found for any failing LO, stopping.")
             break
 
         # Later rounds can only re-check these LOs, so the bound shrinks to them
@@ -232,7 +235,7 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
         # Failing LOs without a new version stay and are re-checked against their best version at the end.
         regenerated_keys = {unit["statement"] for unit, _ in pairs}
         learning_objects = [lo for lo in learning_objects if lo["source_statement"] not in regenerated_keys] + new_los
-        print(f"[Filter] Regenerated {len(new_los)} LOs. Total now: {len(learning_objects)}")
+        logger.info(f"[Filter] Regenerated {len(new_los)} LOs. Total now: {len(learning_objects)}")
 
         los_to_eval = new_los
 
@@ -241,7 +244,7 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
                   if id(lo) in regenerated and lo.get("type") in MC_ELIGIBLE_TYPES]
     _set_total(calls["done"] + -(-len(missing_mc) // mc_batch_size))
     if missing_mc:
-        print(f"[Filter] Generating MC variants for {len(missing_mc)} regenerated LO(s)...")
+        logger.info(f"[Filter] Generating MC variants for {len(missing_mc)} regenerated LO(s)...")
         generate_mc_variants_batch(missing_mc, batch_size=mc_batch_size, progress=lambda d, t: _tick())
 
     _set_total(calls["done"])  # the upper bound wasn't needed in full
@@ -261,7 +264,7 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
     if os.path.exists(checkpoint_path):
         with open(checkpoint_path) as f:
             checkpoint = json.load(f)
-        print(f"[Checkpoint] Resuming — {len(checkpoint['raw_units'])} units extracted, "
+        logger.info(f"[Checkpoint] Resuming — {len(checkpoint['raw_units'])} units extracted, "
               f"{len(checkpoint['learning_objects'])} LOs generated so far.")
     else:
         checkpoint = {
@@ -275,14 +278,14 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
     # Stage 1: Extract from all sources
     for source_idx, source in enumerate(sources):
         if source_idx < checkpoint.get("last_source_index", 0):
-            print(f"[Book] Skipping already completed source: {source['title']}")
+            logger.info(f"[Book] Skipping already completed source: {source['title']}")
             continue
 
         title = source["title"]
         extracted_text = extract_text_from_source(source["path"], document_title=title)
         sections = split_into_sections(extracted_text)
         total_sections = len(sections)
-        print(f"[Book] Source: {title} — {total_sections} sections.")
+        logger.info(f"[Book] Source: {title} — {total_sections} sections.")
 
         start_section = checkpoint["last_section"] if source_idx == checkpoint.get("last_source_index", 0) else 0
 
@@ -296,9 +299,9 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
                         unit["source_title"] = batch[0].get("source", title) if isinstance(batch[0], dict) else title
                         unit["source_page"] = batch[0].get("page") if isinstance(batch[0], dict) else None
                     checkpoint["raw_units"].extend(units)
-                    print(f"[Extraction] +{len(units)} units, total raw: {len(checkpoint['raw_units'])}")
+                    logger.info(f"[Extraction] +{len(units)} units, total raw: {len(checkpoint['raw_units'])}")
             except Exception as e:
-                print(f"[Extraction] Parse error, skipping batch: {e}")
+                logger.warning(f"[Extraction] Parse error, skipping batch: {e}")
 
             checkpoint["last_source_index"] = source_idx
             checkpoint["last_section"] = batch_start + extraction_batch_size
@@ -311,10 +314,10 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
             json.dump(checkpoint, f)
 
     # Dedup and normalize
-    print(f"[Book] Deduplicating {len(checkpoint['raw_units'])} raw units...")
+    logger.info(f"[Book] Deduplicating {len(checkpoint['raw_units'])} raw units...")
     atomic_units = clean_atomic_units(checkpoint["raw_units"])
     atomic_units = normalize_units(atomic_units)
-    print(f"[Book] {len(atomic_units)} units after dedup.")
+    logger.info(f"[Book] {len(atomic_units)} units after dedup.")
     export_json(atomic_units, os.path.join(output_dir, "atomic_units.json"))
 
     # Stage 2: Generate LOs
@@ -323,7 +326,7 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
     remaining_units = atomic_units[start_lo:]
 
     if remaining_units:
-        print(f"[Book] Generating LOs for {len(remaining_units)} remaining units (starting at {start_lo})...")
+        logger.info(f"[Book] Generating LOs for {len(remaining_units)} remaining units (starting at {start_lo})...")
         for batch_start in range(0, len(remaining_units), generation_batch_size):
             batch = remaining_units[batch_start:batch_start + generation_batch_size]
             los_raw = generate_learning_object_batch(batch, batch_size=generation_batch_size)
@@ -336,16 +339,16 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
             with open(checkpoint_path, "w") as f:
                 json.dump(checkpoint, f)
 
-            print(f"[Generation] Batch {batch_start // generation_batch_size + 1}/{-(-len(remaining_units) // generation_batch_size)} — {len(learning_objects)} LOs total so far...")
+            logger.info(f"[Generation] Batch {batch_start // generation_batch_size + 1}/{-(-len(remaining_units) // generation_batch_size)} — {len(learning_objects)} LOs total so far...")
     else:
-        print(f"[Book] LO generation already complete, skipping.")
+        logger.info(f"[Book] LO generation already complete, skipping.")
 
     # Stage 3: MC variants
-    print(f"[Book] Generating multiple choice variants...")
+    logger.info(f"[Book] Generating multiple choice variants...")
     learning_objects = generate_mc_variants_batch(learning_objects, batch_size=5)
 
     # Stage 4: Filter and regenerate with two-model consensus
-    print(f"[Book] Filtering and regenerating low-quality LOs...")
+    logger.info(f"[Book] Filtering and regenerating low-quality LOs...")
     learning_objects = filter_and_regenerate(
         learning_objects,
         atomic_units,
@@ -360,13 +363,14 @@ def process_book_with_checkpoints(sources, output_dir, extraction_batch_size=3, 
     export_json(learning_objects, os.path.join(output_dir, "learning_objects.json"))
 
     os.remove(checkpoint_path)
-    print(f"[Book] Complete. {len(atomic_units)} units, {len(learning_objects)} LOs.")
+    logger.info(f"[Book] Complete. {len(atomic_units)} units, {len(learning_objects)} LOs.")
 
     return atomic_units, learning_objects
 
 
 # Testing
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     sources = [
         # Lecture modules
         {"path": "./input/Example.pdf",

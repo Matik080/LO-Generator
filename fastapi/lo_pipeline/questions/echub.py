@@ -3,6 +3,9 @@ import re
 from collections import defaultdict
 from lo_pipeline.files import load_json, export_json
 from lo_pipeline.llm.service import call_llm
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Helpers
 def _source_prefix(source_title: str) -> str:
@@ -110,9 +113,9 @@ JSON array only. No markdown. No explanation.
         results = json.loads(response)
         if isinstance(results, list) and len(results) == len(los):
             return results
-        print(f"[Enrich] Got {len(results)} results for {len(los)} LOs, padding with defaults.")
+        logger.warning(f"[Enrich] Got {len(results)} results for {len(los)} LOs, padding with defaults.")
     except json.JSONDecodeError as e:
-        print(f"[Enrich] JSON parse error: {e}, using defaults for this batch.")
+        logger.warning(f"[Enrich] JSON parse error: {e}, using defaults for this batch.")
 
     # Safe fallback
     return [{"name": "Learning Object", "time_to_handle": 90, "time_to_explain": 45}
@@ -126,11 +129,11 @@ def enrich_learning_objects(learning_objects: list, batch_size: int = 10, progre
     `progress(done, total)` is called after each LLM batch (optional).
     """
     total = len(learning_objects)
-    print(f"[Enrich] Generating names and time estimates for {total} LOs...")
+    logger.info(f"[Enrich] Generating names and time estimates for {total} LOs...")
 
     for batch_start in range(0, total, batch_size):
         batch = learning_objects[batch_start:batch_start + batch_size]
-        print(f"[Enrich] Batch {batch_start // batch_size + 1} ({len(batch)} LOs)...")
+        logger.info(f"[Enrich] Batch {batch_start // batch_size + 1} ({len(batch)} LOs)...")
         enriched = _enrich_batch(batch)
         if progress:
             progress(batch_start // batch_size + 1, -(-total // batch_size))
@@ -140,7 +143,7 @@ def enrich_learning_objects(learning_objects: list, batch_size: int = 10, progre
             lo["time_to_handle"] = meta.get("time_to_handle", 90)
             lo["time_to_explain"] = meta.get("time_to_explain", 45)
 
-    print(f"[Enrich] Done.")
+    logger.info(f"[Enrich] Done.")
     return learning_objects
 
 
@@ -233,6 +236,7 @@ def convert_los_to_units(learning_objects: list, unit_title: str, unit_descripti
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     learning_objects = load_json("./output/learning_objects.json")
     print(f"Loaded {len(learning_objects)} learning objects")
 

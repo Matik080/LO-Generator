@@ -11,6 +11,9 @@ import os
 import time
 from dataclasses import dataclass, field, asdict
 from typing import Callable, List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 # (stage, done, total): done/total is the stage's progress, counted in LLM calls.
 # (stage, 0, 0) = stage started; done == total = stage finished. `total` can change while a stage runs
@@ -92,7 +95,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
         for i, src in enumerate(sources, 1):
             text = extract_text_from_source(src.path, document_title=src.title)
             sections_per_source.append(split_into_sections(text))
-            print(f'[Extract] "{src.title}" -> {len(sections_per_source[-1])} sections.')
+            logger.info(f'[Extract] "{src.title}" -> {len(sections_per_source[-1])} sections.')
             progress.report("extract", i, len(sources))
 
     # 2. Atomic units: extracted per document (a batch never mixes two documents), deduplicated across all
@@ -105,9 +108,9 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                 progress=progress.step("units", offset, total - offset - _ceil_div(len(sections), opts.extraction_batch_size)),
             )
             offset += _ceil_div(len(sections), opts.extraction_batch_size)
-        print(f"[Extract] Deduplicating {len(raw_units)} raw units...")
+        logger.info(f"[Extract] Deduplicating {len(raw_units)} raw units...")
         units = normalize_units(clean_atomic_units(raw_units))
-        print(f"[Extract] {len(units)} units after dedup.")
+        logger.info(f"[Extract] {len(units)} units after dedup.")
 
     # 3. LOs + multiple-choice variants
     with timed("learning_objects"):
@@ -193,11 +196,13 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Run the whole LO pipeline on one or more documents.")
     parser.add_argument("files", nargs="+", help="PDF, PPTX or HTML files")
     parser.add_argument("--out", default="pipeline_result.json", help="where to write the result JSON")
+    parser.add_argument("--debug", action="store_true", help="also log debug details (includes document text)")
     args = parser.parse_args(argv)
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO, format="%(message)s")
 
     def show(stage, done, total):
         if total:
-            print(f"[Progress] {stage}: {done}/{total}")
+            logger.info(f"[Progress] {stage}: {done}/{total}")
 
     result = run_pipeline(args.files, progress_callback=show)
     with open(args.out, "w", encoding="utf-8") as f:

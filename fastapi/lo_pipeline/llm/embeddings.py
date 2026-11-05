@@ -1,6 +1,9 @@
 from typing import List
 import numpy as np
 from sentence_transformers import SentenceTransformer
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Loading once at module level, slow to load, fast to use
 _model = None
@@ -8,9 +11,9 @@ _model = None
 def get_model() -> SentenceTransformer:
     global _model
     if _model is None:
-        print("[Embeddings] Loading model...")
+        logger.info("[Embeddings] Loading model...")
         _model = SentenceTransformer("all-MiniLM-L6-v2")
-        print("[Embeddings] Model loaded.")
+        logger.info("[Embeddings] Model loaded.")
     return _model
 
 def get_embedding(text: str) -> np.ndarray:

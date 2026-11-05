@@ -8,6 +8,9 @@ from lo_pipeline.graph.builder import (
     build_concept_graph, assign_anchor, build_layered_learning_paths,
     verify_prerequisites_batched, store_prerequisites,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _page_number(lo):
@@ -51,16 +54,16 @@ def build_prerequisite_graph(units: list, learning_objects: list, verify_batch_s
     Returns a dict with the LOs, both graphs, and counts for stats/reporting.
     `progress(done, total)` is called after each LLM verification batch (optional).
     """
-    print(f"[Graph] Building concept graph from {len(units)} units...")
+    logger.info(f"[Graph] Building concept graph from {len(units)} units...")
     G = build_concept_graph(units)
     centrality = nx.degree_centrality(G)
-    print(f"[Graph] Concept graph: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges.")
+    logger.info(f"[Graph] Concept graph: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges.")
     for lo in learning_objects:
         lo["anchor"] = assign_anchor(lo, centrality)
 
-    print(f"[Graph] Building layered learning paths for {len(learning_objects)} LOs...")
+    logger.info(f"[Graph] Building layered learning paths for {len(learning_objects)} LOs...")
     candidate_edges = build_layered_learning_paths(learning_objects, centrality)
-    print(f"[Graph] {len(candidate_edges)} candidate edges.")
+    logger.info(f"[Graph] {len(candidate_edges)} candidate edges.")
     verified = set(verify_prerequisites_batched(candidate_edges, learning_objects,
                                                 batch_size=verify_batch_size, progress=progress))
 
@@ -72,10 +75,10 @@ def build_prerequisite_graph(units: list, learning_objects: list, verify_batch_s
 
     removed = break_cycles(KG, learning_objects)
     if removed:
-        print(f"[Graph] Removed {len(removed)} edge(s) to break cycles: {removed}")
+        logger.warning(f"[Graph] Removed {len(removed)} edge(s) to break cycles: {removed}")
 
     learning_objects = store_prerequisites(KG, learning_objects)
-    print(f"[Graph] Complete. {KG.number_of_nodes()} nodes, {KG.number_of_edges()} edges.")
+    logger.info(f"[Graph] Complete. {KG.number_of_nodes()} nodes, {KG.number_of_edges()} edges.")
     return {
         "learning_objects": learning_objects,
         "concept_graph": G,
