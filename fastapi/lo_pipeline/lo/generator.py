@@ -189,7 +189,9 @@ def generate_learning_object(unit: Dict[str, Any]) -> Dict[str, Any]:
 def generate_learning_object_batch(units, batch_size=5):
     """
     Generate learning objects for multiple atomic units in a single API call.
-    Returns list of learning objects in same order as input units.
+    Returns a list with exactly one entry per input unit, in the same order: the unit's learning object,
+    or None if none came back for it (failed batch, or a result that couldn't be matched to the unit).
+    Callers must skip the None entries; pairing results with units by position is then always correct.
     """
     results = []
 
@@ -269,6 +271,7 @@ def generate_learning_object_batch(units, batch_size=5):
 
         if not response:
             logger.warning(f"[Generation] Empty response for batch starting at {batch_start}, skipping...")
+            results.extend([None] * len(batch))
             continue
 
         response = re.sub(r"^```(?:json)?\s*", "", response.strip())
@@ -278,15 +281,40 @@ def generate_learning_object_batch(units, batch_size=5):
             batch_results = json.loads(response)
             if not isinstance(batch_results, list):
                 logger.warning(f"[Generation] Expected list, got {type(batch_results)}, skipping batch...")
+                results.extend([None] * len(batch))
                 continue
-            if len(batch_results) != len(batch):
-                logger.warning(f"[Generation] Expected {len(batch)} results, got {len(batch_results)}, using what we have...")
-            results.extend(batch_results[:len(batch)])
+            results.extend(_align_to_units(batch, batch_results))
         except json.JSONDecodeError as e:
             logger.warning(f"[Generation] JSON parse error in batch: {e}, skipping...")
+            results.extend([None] * len(batch))
             continue
 
     return results
+
+
+def _normalized(text):
+    return " ".join(str(text or "").lower().split())
+
+
+def _align_to_units(batch, batch_results):
+    """
+    One result per unit of the batch, in unit order (None where missing).
+    Same count: positional, as the prompt asks for the same order. Different count: the position no longer
+    says which unit a result belongs to, so each result is matched by the source statement it echoes back.
+    """
+    batch_results = [r if isinstance(r, dict) else None for r in batch_results]
+    if len(batch_results) == len(batch):
+        return batch_results
+    logger.warning(f"[Generation] Expected {len(batch)} results, got {len(batch_results)}; matching them to units by source statement.")
+    by_statement = {}
+    for r in batch_results:
+        if r is not None:
+            by_statement.setdefault(_normalized(r.get("source_statement")), r)
+    aligned = [by_statement.pop(_normalized(u.get("statement")), None) for u in batch]
+    unmatched = len([r for r in batch_results if r is not None]) - sum(1 for a in aligned if a is not None)
+    if unmatched:
+        logger.warning(f"[Generation] {unmatched} result(s) could not be matched to a unit and were dropped.")
+    return aligned
 
 
 def extract_defined_concept(question, answer):

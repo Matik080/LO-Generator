@@ -180,28 +180,31 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
     logger.info(f"[Filter] Evaluating {len(learning_objects)} LOs with {eval_models}...")
 
     unit_map = {u["statement"]: u for u in atomic_units}
-    evals_by_id = {}   # lo_id -> evaluations of the CURRENT version only
     best = {}          # source_statement -> (rank, lo, reasons) of the best failing version seen so far
     regenerated = set()  # id() of every LO object created by regeneration (they need MC variants at the end)
-    version_evals = {}   # id() of an LO object -> its evaluations (each version keeps its own)
+    # Scores are kept per LO object (each version its own), not per LO id: two different LOs can end up
+    # with the same id (it is a hash of the LLM's source_statement), and their scores must not mix.
+    version_evals = {}   # id() of an LO object -> its evaluations
     version_fails = {}   # id() of an LO object -> True/False once it has been judged
     initial = None
     los_to_eval = learning_objects
 
     for attempt in range(max_attempts + 1):
-        # Evaluate only the LOs that are new in this round; their old scores are replaced, not merged
+        # Evaluate only the LOs that are new in this round. The evaluator gets copies with a unique
+        # temporary id (not part of the prompt), so each result maps back to exactly one LO object.
+        tagged = [dict(lo, id=f"#{i}") for i, lo in enumerate(los_to_eval)]
         for lo in los_to_eval:
-            evals_by_id.pop(lo["id"], None)
+            version_evals[id(lo)] = []
         for model in eval_models:
-            for e in evaluator.evaluate_learning_objects_batch(los_to_eval, model, progress=_tick):
-                evals_by_id.setdefault(e["lo_id"], []).append(e)
-        for lo in los_to_eval:
-            version_evals[id(lo)] = list(evals_by_id.get(lo["id"], []))
+            for e in evaluator.evaluate_learning_objects_batch(tagged, model, progress=_tick):
+                lo = los_to_eval[int(e["lo_id"][1:])]
+                e["lo_id"] = lo["id"]
+                version_evals[id(lo)].append(e)
 
         # Find failing LOs
         failing = []
         for lo in learning_objects:
-            model_evals = evals_by_id.get(lo["id"], [])
+            model_evals = version_evals.get(id(lo), [])
             if not model_evals:
                 logger.warning(f"[Filter] No eval found for LO {lo['id']}, skipping.")
                 continue
@@ -262,7 +265,8 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
         new_los_raw = generate_learning_object_batch(failing_units, batch_size=5)
         for _ in range(-(-len(failing_units) // 5)):
             _tick()
-        pairs = list(zip(failing_units, new_los_raw))  # shorter than failing_units if a batch came back empty
+        # One entry per unit (None if no new version came back), so pairing by position is safe
+        pairs = [(unit, lo) for unit, lo in zip(failing_units, new_los_raw) if lo is not None]
         new_los = [postprocess_lo(lo, unit) for unit, lo in pairs]
         regenerated.update(id(lo) for lo in new_los)
 

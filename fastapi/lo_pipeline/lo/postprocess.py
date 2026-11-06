@@ -31,7 +31,8 @@ def generate_learning_objects(units: list, batch_size: int = 5, progress=None) -
     for i, batch_start in enumerate(range(0, len(units), batch_size), 1):
         batch = units[batch_start:batch_start + batch_size]
         for unit, lo in zip(batch, generate_learning_object_batch(batch, batch_size=batch_size)):
-            los.append(postprocess_lo(lo, unit))
+            if lo is not None:  # None: no LO came back for this unit
+                los.append(postprocess_lo(lo, unit))
         logger.info(f"[Generate] Batch {i}/{total_batches} done -- {len(los)} LOs so far.")
         if progress:
             progress(i, total_batches)

@@ -23,18 +23,26 @@ def _lo(n, version=0):
 @pytest.fixture
 def fake(monkeypatch):
     """faith[(n, version)] = faithfulness score both models give that version (default 5 = passes)."""
-    state = {"faith": {}, "eval_calls": [], "versions": {}, "mc_calls": []}
+    state = {"faith": {}, "eval_calls": [], "versions": {}, "mc_calls": [], "failed_batches": set()}
+
+    def real_id(lo):
+        # The filter hands the evaluator copies with temporary ids; the LO is identified by its statement
+        return "id" + lo["source_statement"].split()[-1]
 
     def evaluate(los, model, batch_size=None, progress=None):
-        state["eval_calls"].append([(lo["id"], lo["version"]) for lo in los])
+        state["eval_calls"].append([(real_id(lo), lo["version"]) for lo in los])
         if progress:
             progress()
         return [{"lo_id": lo["id"], "model": model, "atomic": "yes", "self_contained": "yes",
-                 "faithfulness": state["faith"].get((lo["id"], lo["version"]), 5)} for lo in los]
+                 "faithfulness": state["faith"].get((real_id(lo), lo["version"]), 5)} for lo in los]
 
     def regenerate(units, batch_size=5):
+        """Like the real generator: one entry per unit, None for units in a batch listed in failed_batches."""
         out = []
-        for u in units:
+        for i, u in enumerate(units):
+            if i // batch_size in state["failed_batches"]:
+                out.append(None)
+                continue
             n = u["statement"].split()[-1]
             state["versions"][n] = state["versions"].get(n, 0) + 1
             lo = _lo(n, state["versions"][n])
@@ -142,3 +150,28 @@ def test_quality_summary_counts_lo_kept_in_best_failing_version(fake):
     assert (q["final"]["passed"], q["final"]["still_failing"]) == (2, 1)
     # The kept version (v1, faithfulness 2) is what the final scores describe
     assert q["final"]["scores"]["by_model"]["m1"]["faithfulness"] == 4.0
+
+
+def test_failed_regeneration_batch_loses_or_duplicates_nothing(fake):
+    # Baseline run bug: 7 LOs fail, the first regeneration batch (LOs 1-5) comes back unparseable.
+    # Before the fix, results were paired with units by position: 5 LOs vanished and 5 were duplicated.
+    for i in range(1, 8):
+        fake["faith"][(f"id{i}", 0)] = 1
+    fake["failed_batches"].add(0)
+    result = _run(n_los=7)
+
+    ids = [lo["id"] for lo in result]
+    assert sorted(ids) == [f"id{i}" for i in range(1, 8)], "every LO exactly once"
+    versions = {lo["id"]: lo["version"] for lo in result}
+    assert all(versions[f"id{i}"] == 0 for i in range(1, 6)), "LOs without a new version keep their old one"
+    assert versions["id6"] == versions["id7"] == 1
+
+
+def test_lo_ids_shared_by_two_los_do_not_mix_scores(fake):
+    # Two different LOs with the same id: one passes (5), one fails (1). Each must be judged on its own score.
+    los = [{**_lo(1), "id": "same"}, {**_lo(2), "id": "same"}]
+    fake["faith"][("id2", 0)] = 1
+    quality = {}
+    filter_and_regenerate(los, [_unit(1), _unit(2)], eval_models=MODELS, max_attempts=0, quality=quality)
+    assert (quality["initial"]["passed"], quality["final"]["still_failing"]) == (1, 1)
+    assert quality["initial"]["scores"]["by_model"]["m1"]["n"] == 2
