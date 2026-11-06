@@ -8,7 +8,7 @@ Východisková hodnota pre metriku **„Kvalita sa nezhorší“** z [návrhu](a
 | --- | --- |
 | Dátum | 6. 11. 2026 |
 | Dokument | `Testing_text.pdf` – OZNAL, kapitola 3 *Exploratory Data Analysis*, 26 strán (rovnaký testovací dokument ako v bakalárskej práci) |
-| Kód | commit `ea0eed2` + oprava párovania regenerovaných LO s jednotkami *(doplniť hash po commite)* |
+| Kód | commit `4b3b425` + oprava párovania regenerovaných LO s jednotkami |
 | Generovanie | `qwen/qwen3.8-27b` (Groq) |
 | Hodnotenie | `qwen/qwen3.8-27b`, `openai/gpt-oss-120b` (Groq) |
 | Embeddingy | `all-MiniLM-L6-v2` (lokálne) |
