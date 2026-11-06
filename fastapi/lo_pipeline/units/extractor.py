@@ -84,19 +84,56 @@ def extract_atomic_units_batch(sections, batch_size=3, progress=None, stats=None
     Returns flat list of all atomic units found, each with `source_title` and `source_page` of its section
     (see units/sources.py for how the section is determined and checked).
     `progress(done, total)` is called after each LLM batch (optional).
-    `stats` (optional dict) receives counts of corrected/missing section numbers.
+    `stats` (optional dict) receives counts of corrected/missing section numbers, and of sections whose
+    units could not be extracted ("sections_failed").
+
+    If the LLM's answer for a batch is not a valid JSON array (e.g. cut off because it got too long), the
+    batch is asked once more; if that fails too, each section is extracted on its own (shorter answers).
+    A section that still fails is skipped with a warning instead of stopping the whole run.
     """
     from lo_pipeline.units.sources import assign_sections
 
+    stats = stats if stats is not None else {}
     all_units = []
     total_batches = -(-len(sections) // batch_size)
 
     for batch_start in range(0, len(sections), batch_size):
         batch = sections[batch_start:batch_start + batch_size]
-        batch_content = [s["content"] if isinstance(s, dict) else s for s in batch]
-        combined_text = "\n\n".join(f"[SECTION {i}]\n{content}" for i, content in enumerate(batch_content, 1))
+        label = f"{batch_start + 1}-{min(batch_start + batch_size, len(sections))}"
+        logger.info(f"[Extraction] Processing sections {label}...")
 
-        prompt = f"""
+        units = _extract_units_once(batch)
+        if progress:
+            progress(batch_start // batch_size + 1, total_batches)
+        if units is None:
+            logger.warning(f"[Extraction] Invalid answer for sections {label}, asking again...")
+            units = _extract_units_once(batch)
+
+        if units is not None:
+            all_units.extend(assign_sections(units, batch, stats))
+            logger.info(f"[Extraction] Got {len(units)} units from this batch.")
+            continue
+
+        # Still invalid: extract section by section, so each answer is shorter
+        logger.warning(f"[Extraction] Sections {label} still invalid; extracting them one by one.")
+        for section in batch:
+            single = _extract_units_once([section])
+            if single is None:
+                page = section.get("page") if isinstance(section, dict) else None
+                logger.warning(f"[Extraction] Skipping section (page {page}): no valid answer from the LLM.")
+                stats["sections_failed"] = stats.get("sections_failed", 0) + 1
+                continue
+            all_units.extend(assign_sections(single, [section], stats))
+
+    return all_units
+
+
+def _extract_units_once(batch):
+    """One LLM call for the sections in `batch`. Returns the list of unit dicts, or None if the answer is invalid."""
+    batch_content = [s["content"] if isinstance(s, dict) else s for s in batch]
+    combined_text = "\n\n".join(f"[SECTION {i}]\n{content}" for i, content in enumerate(batch_content, 1))
+
+    prompt = f"""
 You are extracting atomic knowledge units from computer science textbook sections.
 
 An atomic knowledge unit is exactly ONE testable idea — a single definition, rule, 
@@ -132,37 +169,32 @@ Textbook sections:
 \"\"\"
 """
 
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You extract atomic knowledge units from textbook text. "
-                    "Be selective — quality over quantity. "
-                    "Do not extract duplicate or near-duplicate concepts. "
-                    "For code-heavy sections, prioritize algorithm_step and example types. "
-                    "Return ONLY a valid JSON array. No markdown. No explanation."
-                )
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You extract atomic knowledge units from textbook text. "
+                "Be selective — quality over quantity. "
+                "Do not extract duplicate or near-duplicate concepts. "
+                "For code-heavy sections, prioritize algorithm_step and example types. "
+                "Return ONLY a valid JSON array. No markdown. No explanation."
+            )
+        },
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
 
-        logger.info(f"[Extraction] Processing sections {batch_start + 1}-{min(batch_start + batch_size, len(sections))}...")
-        response = call_llm(messages, temperature=0.2)
-        if progress:
-            progress(batch_start // batch_size + 1, total_batches)
-        units = parse_json(response)
+    response = call_llm(messages, temperature=0.2)
+    try:
+        units = parse_json(response or "")
+    except (ValueError, TypeError):  # json.JSONDecodeError is a ValueError
+        return None
+    if not isinstance(units, list):
+        return None
+    return [u for u in units if isinstance(u, dict)]
 
-        if isinstance(units, list):
-            units = [u for u in units if isinstance(u, dict)]
-            all_units.extend(assign_sections(units, batch, stats))
-            logger.info(f"[Extraction] Got {len(units)} units from this batch.")
-        else:
-            logger.warning(f"[Extraction] Unexpected response format, skipping batch.")
-
-    return all_units
 
 def clean_atomic_units(units: List[Dict[str, Any]],
                        similarity_threshold: float = 0.82) -> List[Dict[str, Any]]:

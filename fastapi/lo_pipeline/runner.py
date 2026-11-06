@@ -118,6 +118,10 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
             )
             offset += _ceil_div(len(sections), opts.extraction_batch_size)
         warnings = list(state["warnings"])
+        if source_stats.get("sections_failed"):
+            warnings.append({"code": "sections_skipped",
+                             "message": f"{source_stats['sections_failed']} section(s) were skipped: the LLM gave "
+                                        f"no valid answer for them, so they have no units."})
         fixed = source_stats.get("section_corrected", 0) + source_stats.get("section_missing", 0)
         if fixed:
             warnings.append({"code": "unit_section_reassigned",
