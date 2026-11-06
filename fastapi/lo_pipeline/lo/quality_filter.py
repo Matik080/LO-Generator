@@ -99,8 +99,38 @@ def _rank(model_evals, reasons):
     return len(reasons), -(sum(faith) / len(faith) if faith else 0.0)
 
 
+SCORE_FIELDS = ("faithfulness", "question_clarity", "hint_quality", "distractor_plausibility")
+
+
+def score_averages(eval_lists):
+    """
+    Average of each numeric score, per evaluating model and over all models.
+    `eval_lists`: one list of evaluations (one per model) per LO.
+    Returns {"by_model": {model: {field: avg, "n": count}}, "all_models": {field: avg}}.
+    """
+    sums, counts, all_sums, all_counts = {}, {}, {}, {}
+    for evals in eval_lists:
+        for e in evals:
+            model = e.get("model", "?")
+            for field in SCORE_FIELDS:
+                value = e.get(field)
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    sums.setdefault(model, {}).setdefault(field, 0.0)
+                    counts.setdefault(model, {}).setdefault(field, 0)
+                    sums[model][field] += value
+                    counts[model][field] += 1
+                    all_sums[field] = all_sums.get(field, 0.0) + value
+                    all_counts[field] = all_counts.get(field, 0) + 1
+    by_model = {m: {f: round(sums[m][f] / counts[m][f], 3) for f in sums[m]} for m in sums}
+    for m in by_model:
+        by_model[m]["n"] = max(counts[m].values())
+    return {"by_model": by_model,
+            "all_models": {f: round(all_sums[f] / all_counts[f], 3) for f in all_sums}}
+
+
 def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, faithfulness_threshold=3.0,
-                          hint_quality_threshold=2.0, max_attempts=2, mc_batch_size=5, progress=None):
+                          hint_quality_threshold=2.0, max_attempts=2, mc_batch_size=5, progress=None,
+                          quality=None):
     """
     Evaluates all LOs with one or more models, flags those that fail the quality threshold by consensus, and regenerates them from source units.
     `atomic_units` are the units the LOs were generated from (matched by statement for regeneration).
@@ -108,6 +138,9 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
     still fails after the last round is kept in its best-scoring version. Regenerated LOs get MC variants once,
     at the end (so their distractors are not scored; distractor quality is not a pass/fail criterion).
     `progress(done, total)` counts LLM calls (optional); `total` only shrinks, so done/total never goes backwards.
+    `quality` (optional dict) is filled with a summary for the baseline / report:
+      initial: first evaluation, before any regeneration (LO count, evaluated, passed, pass rate, score averages)
+      final:   the versions that are returned (same fields, plus regenerated / still_failing counts)
 
     Failure logic (conservative):
       - Faithfulness average across models < faithfulness_threshold
@@ -150,6 +183,9 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
     evals_by_id = {}   # lo_id -> evaluations of the CURRENT version only
     best = {}          # source_statement -> (rank, lo, reasons) of the best failing version seen so far
     regenerated = set()  # id() of every LO object created by regeneration (they need MC variants at the end)
+    version_evals = {}   # id() of an LO object -> its evaluations (each version keeps its own)
+    version_fails = {}   # id() of an LO object -> True/False once it has been judged
+    initial = None
     los_to_eval = learning_objects
 
     for attempt in range(max_attempts + 1):
@@ -159,6 +195,8 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
         for model in eval_models:
             for e in evaluator.evaluate_learning_objects_batch(los_to_eval, model, progress=_tick):
                 evals_by_id.setdefault(e["lo_id"], []).append(e)
+        for lo in los_to_eval:
+            version_evals[id(lo)] = list(evals_by_id.get(lo["id"], []))
 
         # Find failing LOs
         failing = []
@@ -175,6 +213,7 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
                 reasons = list(reasons) + [sc_reason]
                 fails = True
 
+            version_fails[id(lo)] = fails
             if fails:
                 failing.append(lo)
                 rank = _rank(model_evals, reasons)
@@ -182,6 +221,9 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
                 if key not in best or rank < best[key][0]:
                     best[key] = (rank, lo, reasons)
                 logger.info(f"[Filter] FAIL {lo['id']}: {'; '.join(reasons)}")
+
+        if attempt == 0:
+            initial = _quality_section(learning_objects, version_evals, version_fails)
 
         if not failing:
             logger.info(f"[Filter] All LOs passed quality threshold after {attempt} regeneration round(s).")
@@ -241,4 +283,29 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
         generate_mc_variants_batch(missing_mc, batch_size=mc_batch_size, progress=lambda d, t: _tick())
 
     _set_total(calls["done"])  # the upper bound wasn't needed in full
+
+    if quality is not None:
+        final = _quality_section(learning_objects, version_evals, version_fails)
+        final["regenerated"] = sum(1 for lo in learning_objects if id(lo) in regenerated)
+        final["still_failing"] = sum(1 for lo in learning_objects if version_fails.get(id(lo)))
+        quality.update({
+            "eval_models": list(eval_models),
+            "thresholds": {"faithfulness": faithfulness_threshold, "hint_quality": hint_quality_threshold,
+                           "max_attempts": max_attempts},
+            "initial": initial,
+            "final": final,
+        })
     return learning_objects
+
+
+def _quality_section(los, version_evals, version_fails):
+    """LO count, how many were evaluated / passed, pass rate and score averages for these LO versions."""
+    evaluated = [lo for lo in los if version_evals.get(id(lo))]
+    passed = sum(1 for lo in evaluated if version_fails.get(id(lo)) is False)
+    return {
+        "los": len(los),
+        "evaluated": len(evaluated),
+        "passed": passed,
+        "pass_rate": round(passed / len(evaluated), 3) if evaluated else None,
+        "scores": score_averages(version_evals[id(lo)] for lo in evaluated),
+    }

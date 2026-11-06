@@ -68,7 +68,8 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                  progress_callback: Optional[ProgressCallback] = None, checkpoint=None) -> dict:
     """
     Runs every step on the given documents and returns all results in memory:
-    atomic_units, learning_objects, knowledge_graph / concept_graph (node-link JSON), echub, timings, warnings.
+    atomic_units, learning_objects, knowledge_graph / concept_graph (node-link JSON), echub,
+    quality (evaluation summary, see filter_and_regenerate), timings, warnings.
 
     `sources`: list of Source, {"path", "title"} dicts or plain paths (PDF, PPTX, HTML).
     `progress_callback(stage, done, total)`: optional; called after each LLM batch and at stage boundaries.
@@ -142,6 +143,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
 
     # 4. Quality evaluation and regeneration
     def lo_evaluation():
+        quality = {}
         los = filter_and_regenerate(
             state["learning_objects"], state["atomic_units"], eval_models=opts.eval_models,
             faithfulness_threshold=opts.faithfulness_threshold,
@@ -149,8 +151,9 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
             max_attempts=opts.max_attempts,
             mc_batch_size=opts.mc_batch_size,
             progress=progress.step("lo_evaluation"),
+            quality=quality,
         )
-        return {"learning_objects": los}
+        return {"learning_objects": los, "quality": quality}
 
     # 5. Prerequisite graph
     def graph():
@@ -203,6 +206,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
         "knowledge_graph": state["knowledge_graph"],
         "concept_graph": state["concept_graph"],
         "echub": state["echub"],
+        "quality": state["quality"],
         "timings": timings,
         "warnings": state["warnings"],
         "options": asdict(opts),

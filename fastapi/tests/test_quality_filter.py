@@ -109,3 +109,36 @@ def test_progress_never_goes_backwards(fake, monkeypatch):
     fractions = [d / t for d, t in events]
     assert fractions == sorted(fractions)
     assert events[-1][0] == events[-1][1]
+
+
+def _run_with_quality(max_attempts=2):
+    quality = {}
+    los = [{**_lo(i), "id": f"id{i}"} for i in range(1, 4)]
+    result = filter_and_regenerate(los, [_unit(i) for i in range(1, 4)], eval_models=MODELS,
+                                   max_attempts=max_attempts, quality=quality)
+    return result, quality
+
+
+def test_quality_summary_initial_and_final(fake):
+    fake["faith"].update({("id1", 0): 1, ("id1", 1): 4})
+    _, q = _run_with_quality()
+
+    assert q["eval_models"] == MODELS
+    assert (q["initial"]["los"], q["initial"]["evaluated"], q["initial"]["passed"]) == (3, 3, 2)
+    assert q["initial"]["pass_rate"] == 0.667
+    # Initial scores are the first versions: (1 + 5 + 5) / 3; final ones are the kept versions: (4 + 5 + 5) / 3
+    assert q["initial"]["scores"]["by_model"]["m1"]["faithfulness"] == 3.667
+    assert q["final"]["scores"]["by_model"]["m1"]["faithfulness"] == 4.667
+    assert q["final"]["scores"]["all_models"]["faithfulness"] == 4.667
+    assert (q["final"]["passed"], q["final"]["regenerated"], q["final"]["still_failing"]) == (3, 1, 0)
+    assert q["final"]["pass_rate"] == 1.0
+
+
+def test_quality_summary_counts_lo_kept_in_best_failing_version(fake):
+    fake["faith"].update({("id1", 0): 1, ("id1", 1): 2, ("id1", 2): 1})
+    result, q = _run_with_quality()
+
+    assert {lo["id"]: lo["version"] for lo in result}["id1"] == 1
+    assert (q["final"]["passed"], q["final"]["still_failing"]) == (2, 1)
+    # The kept version (v1, faithfulness 2) is what the final scores describe
+    assert q["final"]["scores"]["by_model"]["m1"]["faithfulness"] == 4.0
