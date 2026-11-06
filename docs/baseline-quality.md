@@ -8,43 +8,62 @@ Východisková hodnota pre metriku **„Kvalita sa nezhorší“** z [návrhu](a
 | --- | --- |
 | Dátum | 6. 11. 2026 |
 | Dokument | `Testing_text.pdf` – OZNAL, kapitola 3 *Exploratory Data Analysis*, 26 strán (rovnaký testovací dokument ako v bakalárskej práci) |
-| Kód | commit `4b3b425` + oprava párovania regenerovaných LO s jednotkami |
+| Kód | beh 2: commit `4b3b425`; beh 3: `8b4c63c` + zotavenie extrakcie pri neplatnej odpovedi LLM |
 | Generovanie | `qwen/qwen3.8-27b` (Groq) |
 | Hodnotenie | `qwen/qwen3.8-27b`, `openai/gpt-oss-120b` (Groq) |
 | Embeddingy | `all-MiniLM-L6-v2` (lokálne) |
 | Filter kvality | faithfulness ≥ 3,0 (priemer modelov), hint quality ≥ 2,0, najviac 2 kolá regenerácie |
-| Trvanie | približne 17 minút |
+| Trvanie | približne 15–17 minút na beh |
+
+Platné sú dva behy (2 a 3) s rovnakými podmienkami. Prečo nie beh 1, je opísané nižšie.
 
 ## Výsledky
 
-140 atomických jednotiek → 140 LO (každá jednotka má práve jedno LO, ID sú unikátne). 130 LO má otázku s možnosťami (všetky LO typov vhodných pre `choice`).
+**Prvé hodnotenie** = LO z prvého generovania, pred regeneráciou. **Konečný stav** = verzie LO, ktoré pipeline vráti. Skóre sú na škále 1–5.
 
-**Prvé hodnotenie** = LO z prvého generovania, pred regeneráciou. **Konečný stav** = verzie LO, ktoré pipeline vráti.
+| Metrika | Beh 2 | Beh 3 | Priemer |
+| --- | --- | --- | --- |
+| **Konečný stav** | | | |
+| Podiel LO, ktoré prejdú filtrom | 93,6 % (131 / 140) | 95,9 % (142 / 148) | **94,8 %** |
+| Faithfulness – `gpt-oss-120b` | 4,31 | 4,33 | **4,32** |
+| Faithfulness – `qwen3.8-27b` | 4,15 | 4,35 | 4,25 |
+| Faithfulness – priemer oboch modelov | 4,23 | 4,34 | 4,29 |
+| Question clarity – priemer | 4,35 | 4,55 | 4,45 |
+| Hint quality – priemer | 4,28 | 4,28 | 4,28 |
+| Distractor plausibility – priemer | 2,52 | 2,63 | 2,58 |
+| **Prvé hodnotenie** | | | |
+| Podiel LO, ktoré prejdú filtrom | 74,3 % | 87,2 % | 80,8 % |
+| Faithfulness – `gpt-oss-120b` | 4,21 | 4,27 | 4,24 |
+| Faithfulness – `qwen3.8-27b` | 4,07 | 4,32 | 4,20 |
+| **Rozsah** | | | |
+| Atomické jednotky = LO | 140 | 148 | |
+| LO s otázkou s možnosťami | 130 | 139 | |
+| Regenerované LO | 31 | 15 | |
+| Po 2 kolách stále neprešlo | 9 | 6 | |
+| Hrany grafu prerekvizít | 128 | 123 | |
 
-| Metrika | Prvé hodnotenie | Konečný stav |
-| --- | --- | --- |
-| Podiel LO, ktoré prejdú filtrom | 74,3 % (104 / 140) | **93,6 %** (131 / 140) |
-| Faithfulness – `gpt-oss-120b` | 4,21 | **4,31** |
-| Faithfulness – `qwen3.8-27b` | 4,07 | 4,15 |
-| Faithfulness – priemer oboch modelov | 4,14 | 4,23 |
-| Question clarity – priemer | 4,32 | 4,35 |
-| Hint quality – priemer | 4,27 | 4,28 |
-| Distractor plausibility – priemer | 2,52 | 2,52 |
+Čo z porovnania behov vyplýva:
 
-- Regenerovaných LO: 31. Po dvoch kolách stále neprešlo 9 LO; vo výsledku sú v najlepšie hodnotenej verzii.
-- Skóre sú na škále 1–5.
-- `gpt-oss-120b` vrátil v prvom hodnotení pre 2 LO poškodený JSON. Tieto 2 LO v prvom kole posúdil iba `qwen3.8-27b`.
-- Strana zdroja: pri 2 zo 151 jednotiek sa číslo sekcie od LLM opravilo podľa zhody s textom.
-- Graf prerekvizít: 128 hrán.
+- **Faithfulness podľa `gpt-oss-120b` v konečnom stave je stabilná** (4,31 a 4,33). Je to najspoľahlivejšie číslo na porovnávanie.
+- **Podiel LO, ktoré prejdú v konečnom stave, sa líši o 2,3 percentuálneho bodu.** Regenerácia vyrovnáva rozdiely v prvom generovaní.
+- **Podiel LO, ktoré prejdú na prvý pokus, kolíše výrazne** (74 % a 87 %). Preto sa nehodí ako cieľ.
+- **`qwen3.8-27b` ako hodnotiaci model kolíše viac** ako `gpt-oss-120b`.
+
+Poznámky k behom:
+
+- Každá jednotka má práve jedno LO, ID sú unikátne a všetkých 26 strán má jednotky.
+- Beh 2: `gpt-oss-120b` vrátil v prvom hodnotení pre 2 LO poškodený JSON. Tieto 2 LO v prvom kole posúdil iba `qwen3.8-27b`.
+- Beh 3: LLM dvakrát vrátil pre strany 13–15 odrezanú odpoveď. Tieto strany sa preto extrahovali po jednej, čo dalo po odstránení duplicít 25 jednotiek (beh 2: 21). Beh 3 bol po páde obnovený z checkpointu.
+- Strana zdroja: v oboch behoch sa pri 2 jednotkách opravilo číslo sekcie od LLM podľa zhody s textom.
 
 ## Porovnanie s bakalárskou prácou
 
 Číslo z bakalárskej práce je z `OZNAL_GENERATION_OUTPUTS/output/evaluations_final_metrics_OZNAL.json` (hodnotenie konečných LO):
 
-| | Bakalárska práca | Baseline |
+| | Bakalárska práca | Baseline (priemer behov 2 a 3) |
 | --- | --- | --- |
-| Rozsah | celý predmet OZNAL, 695 LO | kapitola 3, 140 LO |
-| Faithfulness – `gpt-oss-120b` | 4,19 | 4,31 |
+| Rozsah | celý predmet OZNAL, 695 LO | kapitola 3, 140 a 148 LO |
+| Faithfulness – `gpt-oss-120b` | 4,19 | 4,32 |
 
 Porovnanie je iba orientačné:
 
@@ -55,14 +74,17 @@ Porovnanie je iba orientačné:
 
 ## Cieľ pre ďalšie zmeny
 
-Na rovnakom dokumente a s rovnakými modelmi (generovanie aj hodnotenie):
+Na rovnakom dokumente a s rovnakými modelmi (generovanie aj hodnotenie), konečný stav:
 
-- faithfulness (`gpt-oss-120b`, konečný stav) aspoň **4,31**,
-- podiel LO, ktoré prejdú filtrom (konečný stav), aspoň **93,6 %**.
+- faithfulness (`gpt-oss-120b`) aspoň **4,31**,
+- podiel LO, ktoré prejdú filtrom, aspoň **93,6 %**.
 
-Výstupy LLM sa medzi behmi líšia. Toto je jeden platný beh, preto ešte nevieme, aký rozdiel je iba náhodný. Pred prísnym porovnaním odporúčam druhý beh na odhad rozptylu.
+Ciele sú nižšia hodnota z dvoch behov, teda „aspoň taký ako dnes“. Dva behy sú stále malá vzorka. Výsledok tesne pod cieľom (napr. faithfulness 4,29) ešte neznamená zhoršenie, kým ho nepotvrdí ďalší beh.
 
-**Neplatný beh:** prvý beh (`baseline_run1`) sa do výsledkov nezapočítava. Odhalil chybu: keď sa v regenerácii nepodarilo spracovať jednu dávku LO, výsledky sa priradili k nesprávnym jednotkám, 5 LO sa stratilo a 5 bolo dvakrát. Chyba je opravená a pokrytá testami.
+## Neplatný a prerušený beh
+
+- **Beh 1 sa nezapočítava.** Odhalil chybu: keď sa v regenerácii nepodarilo spracovať jednu dávku LO, výsledky sa priradili k nesprávnym jednotkám, 5 LO sa stratilo a 5 bolo dvakrát. Chyba je opravená a pokrytá testami (commit `4b3b425`).
+- **Beh 3 najprv spadol.** LLM vrátil pri extrakcii jednotiek odrezanú odpoveď a extrakcia na to nebola pripravená. Teraz sa neplatná odpoveď skúsi znova, potom sa strany extrahujú po jednej a stranu bez platnej odpovede služba preskočí s varovaním `sections_skipped`. Beh 3 potom pokračoval z checkpointu a pri stranách 13–15 túto opravu použil.
 
 ## Ako meranie zopakovať
 
