@@ -5,6 +5,10 @@ python-multipart
 
 # Data validation
 pydantic
+jsonschema  # checks the units/report output against schemas/*.json
+
+# HTML cleaning of hints[].url
+nh3
 
 # LLM providers
 openai

@@ -10,7 +10,7 @@ def test_pipeline_code_uses_logging_not_print():
     """print() is only allowed in __main__ blocks, the CLI output and explicit print_* report helpers."""
     allowed_funcs = {"main", "print_graph_summary"}
     offenders = []
-    for f in (ROOT / "lo_pipeline").rglob("*.py"):
+    for f in [*(ROOT / "lo_pipeline").rglob("*.py"), *(ROOT / "service").rglob("*.py")]:
         if f.name == "files.py":  # helpers for standalone scripts
             continue
         tree = ast.parse(f.read_text(encoding="utf-8"))

@@ -1,0 +1,48 @@
+{
+  "units": [
+    {
+      "title": "Smerníky a dynamická pamäť",
+      "description": "Smerníky, alokácia pamäte pomocou malloc a jej uvoľnenie pomocou free.",
+      "questions": [
+        {
+          "name": "Návratová hodnota malloc",
+          "description": "Ktoré tvrdenia o návratovej hodnote funkcie malloc sú pravdivé?",
+          "type": "choice",
+          "time_to_handle": 90,
+          "time_to_explain": 30,
+          "hints": [
+            { "name": "Zdroj", "url": "<p>modul1.pdf, strana 12</p>" }
+          ],
+          "choices": [
+            { "text": "Vráti smerník na začiatok alokovaného bloku", "is_correct": true },
+            { "text": "Ak alokácia zlyhá, vráti NULL", "is_correct": true },
+            { "text": "Vráti počet alokovaných bajtov", "is_correct": false },
+            { "text": "Vráti kópiu dát", "is_correct": false }
+          ]
+        },
+        {
+          "name": "Uvoľňovanie dynamickej pamäte",
+          "description": "Prečo by každé volanie malloc malo mať zodpovedajúce volanie free?",
+          "type": "open",
+          "time_to_handle": 180,
+          "time_to_explain": 60,
+          "hints": [
+            { "name": "Zdroj", "url": "<p>modul1.pdf, strany 12 – 13</p>" }
+          ],
+          "choices": [
+            { "text": "Inak program stráca pamäť (memory leak).", "is_correct": true }
+          ]
+        },
+        {
+          "name": "Esej: manuálna vs. automatická správa pamäte",
+          "description": "Napíšte krátku úvahu (5-10 viet), v ktorej porovnáte manuálnu správu pamäte v C s garbage collection.",
+          "type": "no_answer",
+          "time_to_handle": 600,
+          "time_to_explain": 0,
+          "hints": [],
+          "choices": []
+        }
+      ]
+    }
+  ]
+}

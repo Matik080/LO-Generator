@@ -1,0 +1,28 @@
+{
+  "running": {
+    "job_id": "3f6b1c2e-8d4a-4f7b-9c1e-5a2d7e9b0c41",
+    "external_ref": "gen-01JB7Q3K",
+    "status": "running",
+    "stage": "learning_objects",
+    "progress": 0.62,
+    "created_at": "2026-11-03T10:12:01Z",
+    "updated_at": "2026-11-03T10:16:40Z",
+    "error": null,
+    "retryable_until": null
+  },
+  "failed": {
+    "job_id": "3f6b1c2e-8d4a-4f7b-9c1e-5a2d7e9b0c41",
+    "external_ref": "gen-01JB7Q3K",
+    "status": "failed",
+    "stage": "extract",
+    "progress": 0.02,
+    "created_at": "2026-11-03T10:12:01Z",
+    "updated_at": "2026-11-03T10:12:09Z",
+    "error": {
+      "code": "extraction_failed",
+      "message": "No text could be extracted from 'sken.pdf'. The document may be a scan.",
+      "details": { "file": "sken.pdf" }
+    },
+    "retryable_until": "2026-11-04T10:12:09Z"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "sections": [
+    {
+      "id": "S-1",
+      "title": "Pointer Versus Standard Variable",
+      "statement": "A pointer is a variable that stores the memory address of another variable.",
+      "lo_type": "definition",
+      "prerequisites": [],
+      "topic": null
+    },
+    {
+      "id": "S-2",
+      "title": "Malloc Return Value",
+      "statement": "malloc returns a pointer to the allocated block, or NULL when the allocation fails.",
+      "lo_type": "rule",
+      "prerequisites": ["S-1"],
+      "topic": null
+    }
+  ],
+  "question_meta": [
+    {
+      "unit": 0,
+      "question": 0,
+      "section_id": "S-1",
+      "bloom_level": null,
+      "keywords": ["pointer", "memory address"],
+      "source": [{ "file": "modul1.pdf", "pages": [12] }],
+      "topic": null
+    },
+    {
+      "unit": 0,
+      "question": 1,
+      "section_id": "S-2",
+      "bloom_level": null,
+      "keywords": ["malloc", "NULL"],
+      "source": [{ "file": "modul1.pdf", "pages": [12, 13] }],
+      "topic": null
+    }
+  ],
+  "quality": {
+    "section_faithfulness_avg": null,
+    "question_faithfulness_avg": 0.83,
+    "answerability_avg": null,
+    "topic_coverage": null
+  },
+  "warnings": [
+    { "code": "split_mode_unsupported", "message": "Split mode 'topics' is not supported yet; all questions are in one lesson." }
+  ],
+  "timings": { "extract": 1.2, "units": 141.0, "learning_objects": 220.7, "lo_evaluation": 310.2, "graph": 95.3, "questions": 12.4, "output": 0.3 }
+}

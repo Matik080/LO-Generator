@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Quality": {
+      "additionalProperties": false,
+      "description": "Averages on a 0–1 scale (a 1–5 score x becomes (x − 1) / 4); null = not measured.",
+      "properties": {
+        "section_faithfulness_avg": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section Faithfulness Avg"
+        },
+        "question_faithfulness_avg": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Question Faithfulness Avg"
+        },
+        "answerability_avg": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Answerability Avg"
+        },
+        "topic_coverage": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Topic Coverage"
+        }
+      },
+      "title": "Quality",
+      "type": "object"
+    },
+    "QuestionMeta": {
+      "additionalProperties": false,
+      "description": "Metadata of the question units[unit].questions[question].",
+      "properties": {
+        "unit": {
+          "description": "Index in units.",
+          "minimum": 0,
+          "title": "Unit",
+          "type": "integer"
+        },
+        "question": {
+          "description": "Index in units[unit].questions.",
+          "minimum": 0,
+          "title": "Question",
+          "type": "integer"
+        },
+        "section_id": {
+          "description": "Section id, e.g. 'S-12'.",
+          "pattern": "^S-\\d+$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "bloom_level": {
+          "anyOf": [
+            {
+              "enum": [
+                "remember",
+                "understand",
+                "apply",
+                "analyze",
+                "evaluate",
+                "create"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Bloom level; B always sends null.",
+          "title": "Bloom Level"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Keywords",
+          "type": "array"
+        },
+        "source": {
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          },
+          "title": "Source",
+          "type": "array"
+        },
+        "topic": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Topic"
+        }
+      },
+      "required": [
+        "unit",
+        "question",
+        "section_id",
+        "bloom_level",
+        "keywords",
+        "source"
+      ],
+      "title": "QuestionMeta",
+      "type": "object"
+    },
+    "ReportWarning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "description": "Machine-readable code, e.g. 'field_too_long'.",
+          "minLength": 1,
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ReportWarning",
+      "type": "object"
+    },
+    "Section": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Section id, e.g. 'S-12'.",
+          "pattern": "^S-\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        },
+        "lo_type": {
+          "description": "Type of the LO, e.g. 'definition', 'rule', 'algorithm_step'.",
+          "title": "Lo Type",
+          "type": "string"
+        },
+        "prerequisites": {
+          "description": "Sections this one builds on.",
+          "items": {
+            "description": "Section id, e.g. 'S-12'.",
+            "pattern": "^S-\\d+$",
+            "type": "string"
+          },
+          "title": "Prerequisites",
+          "type": "array"
+        },
+        "topic": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Topic"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "statement",
+        "lo_type",
+        "prerequisites"
+      ],
+      "title": "Section",
+      "type": "object"
+    },
+    "SourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "description": "Name of the uploaded file, e.g. 'modul1.pdf'.",
+          "minLength": 1,
+          "title": "File",
+          "type": "string"
+        },
+        "pages": {
+          "description": "Cited pages, 1-based.",
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Pages",
+          "type": "array"
+        }
+      },
+      "required": [
+        "file",
+        "pages"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "sections": {
+      "items": {
+        "$ref": "#/$defs/Section"
+      },
+      "title": "Sections",
+      "type": "array"
+    },
+    "question_meta": {
+      "items": {
+        "$ref": "#/$defs/QuestionMeta"
+      },
+      "title": "Question Meta",
+      "type": "array"
+    },
+    "quality": {
+      "$ref": "#/$defs/Quality"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/ReportWarning"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
+    "timings": {
+      "additionalProperties": {
+        "minimum": 0.0,
+        "type": "number"
+      },
+      "description": "Seconds per stage.",
+      "title": "Timings",
+      "type": "object"
+    }
+  },
+  "required": [
+    "sections",
+    "question_meta",
+    "quality",
+    "warnings",
+    "timings"
+  ],
+  "title": "Report",
+  "type": "object"
+}

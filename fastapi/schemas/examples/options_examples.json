@@ -1,0 +1,32 @@
+{
+  "minimal": {},
+  "single": {
+    "external_ref": "gen-01JB7Q3K",
+    "callback_url": "http://eceh-backend/api/internal/qgen/webhook",
+    "language": "auto",
+    "extraction": { "ocr": false },
+    "questions": { "types": ["choice", "open", "no_answer"], "per_section": 3, "choice_options": 4, "hints": 2 },
+    "split": { "mode": "single" }
+  },
+  "full_shape_with_nulls": {
+    "external_ref": "gen-02",
+    "split": { "mode": "topics", "lesson_count": null, "lesson_minutes": 45, "syllabus": null }
+  },
+  "lessons": {
+    "external_ref": "gen-03",
+    "questions": { "types": ["choice", "open"] },
+    "split": { "mode": "lessons", "lesson_count": 6, "lesson_minutes": 45 }
+  },
+  "syllabus_list": {
+    "external_ref": "gen-04",
+    "split": { "mode": "syllabus", "syllabus": [
+      { "title": "Úvod do C", "pages": "D1:1-10" },
+      { "title": "Smerníky a pamäť", "description": "malloc, free, smerníková aritmetika", "pages": "D1:11-20, D2:3" },
+      { "title": "Štruktúry" }
+    ] }
+  },
+  "syllabus_text": {
+    "external_ref": "gen-05",
+    "split": { "mode": "syllabus", "syllabus_text": "3 hodiny: najprv smerníky, potom pamäť, štruktúry vynechaj" }
+  }
+}
