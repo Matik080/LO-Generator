@@ -22,7 +22,17 @@ logger = logging.getLogger(__name__)
 def make_backend(settings: ServiceSettings) -> JobBackend:
     if settings.backend == "mock":
         return MockBackend(duration_s=settings.mock_duration_s, max_active_jobs=settings.max_active_jobs)
-    raise ValueError(f"LOGEN_BACKEND={settings.backend!r} is not available yet (only 'mock')")
+    if settings.backend == "redis":
+        # imported here, so the mock runs without redis/rq (connections open on first use)
+        from service.jobqueue import enqueue_job, make_queue
+        from service.redis_backend import RedisBackend
+        from service.worker import store_from_settings
+
+        queue = make_queue(settings.redis_url)
+        return RedisBackend(store_from_settings(settings),
+                            lambda job_id: enqueue_job(queue, job_id, settings.job_timeout_s),
+                            max_active_jobs=settings.max_active_jobs)
+    raise ValueError(f"LOGEN_BACKEND={settings.backend!r} is unknown (use 'mock' or 'redis')")
 
 
 def create_app(settings: Optional[ServiceSettings] = None, backend: Optional[JobBackend] = None) -> FastAPI:

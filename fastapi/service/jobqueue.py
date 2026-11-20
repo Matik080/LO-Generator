@@ -1,0 +1,21 @@
+"""The RQ queue between the API and the worker (sprint task 4a).
+
+The queue carries only the job id; the job itself is in the job folder and Redis (store.py).
+RQ needs its own Redis connection without decode_responses (it stores bytes).
+"""
+
+from redis import Redis
+from rq import Queue
+
+QUEUE_NAME = "logen"
+DEFAULT_JOB_TIMEOUT_S = 6 * 60 * 60  # RQ's default (180 s) would stop every real job
+FAILURE_TTL_S = 24 * 60 * 60         # RQ's own record of a crashed job; our state is in the store
+
+
+def make_queue(redis_url: str) -> Queue:
+    return Queue(QUEUE_NAME, connection=Redis.from_url(redis_url))
+
+
+def enqueue_job(queue: Queue, job_id: str, timeout_s: int = DEFAULT_JOB_TIMEOUT_S) -> None:
+    queue.enqueue("service.worker.process_job", job_id,
+                  job_timeout=timeout_s, result_ttl=0, failure_ttl=FAILURE_TTL_S)

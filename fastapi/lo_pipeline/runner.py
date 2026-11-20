@@ -76,7 +76,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     `checkpoint`: optional lo_pipeline.checkpoint.Checkpoint. With it, an interrupted run continues where it
     stopped when called again with the same files and options; it is cleared after a successful run.
     """
-    from lo_pipeline.extraction.documents import extract_text_from_source, split_into_sections
+    from lo_pipeline.extraction.documents import ExtractionError, extract_text_from_source, split_into_sections
     from lo_pipeline.units.extractor import extract_atomic_units_batch, clean_atomic_units
     from lo_pipeline.units.normalizer import normalize_units
     from lo_pipeline.lo.postprocess import generate_learning_objects
@@ -103,6 +103,9 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
             sections_per_source.append(split_into_sections(text))
             logger.info(f'[Extract] "{src.title}" -> {len(sections_per_source[-1])} sections.')
             progress.report("extract", i, len(sources))
+        if not any(sections_per_source):
+            # e.g. a scanned PDF without a text layer (no OCR yet): nothing to send to the LLM
+            raise ExtractionError("No text could be extracted from the documents.")
         return {"sections_per_source": sections_per_source}
 
     # 2. Atomic units: extracted per document (a batch never mixes two documents), deduplicated across all

@@ -51,7 +51,11 @@ else:
 DEFAULT_MODEL = GEN_MODEL or (_PRIMARY[3] if _PRIMARY else None)
 
 
-class LLMConfigError(RuntimeError):
+class LLMError(RuntimeError):
+    """The LLM provider failed even after retries (job error code llm_error)."""
+
+
+class LLMConfigError(LLMError):
     """No usable provider/API key is configured. Raised on the first call instead of exiting at import."""
 
 
@@ -110,7 +114,7 @@ def _client_for_model(model: str):
     if target in OPENROUTER_MODELS:
         c = _get_openrouter_client()
         if c is None:
-            raise ValueError(
+            raise LLMConfigError(
                 f"Model '{model}' is now served via OpenRouter ('{target}') but OPENROUTER_API_KEY is not set. "
                 f"Add OPENROUTER_API_KEY to .env, or use a Groq model such as 'openai/gpt-oss-120b'."
             )
@@ -231,7 +235,7 @@ def _openai_call(
                 time.sleep(rate_limit_backoff)
                 rate_limit_backoff = min(rate_limit_backoff * 1.5, 600)
             else:
-                raise Exception(f"Rate limit persisted after {max_retries} attempts: {e}")
+                raise LLMError(f"Rate limit persisted after {max_retries} attempts: {e}") from e
 
         except Exception as e:
             if attempt < max_retries - 1:
@@ -239,7 +243,7 @@ def _openai_call(
                 logger.warning(f"[LLM ERROR] Attempt {attempt+1} failed. Retrying in {wait}s...")
                 time.sleep(wait)
             else:
-                raise Exception(f"LLM call failed after {max_retries} attempts: {e}")
+                raise LLMError(f"LLM call failed after {max_retries} attempts: {e}") from e
 
     return None
 

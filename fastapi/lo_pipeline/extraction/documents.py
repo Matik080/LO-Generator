@@ -4,6 +4,10 @@ from typing import List, Dict, Any
 import PyPDF2
 
 
+class ExtractionError(Exception):
+    """A document could not be read, or no text was found in it (job error code extraction_failed)."""
+
+
 def extract_text_from_pdf(pdf_path: str, document_title: str = None) -> str:
     try:
         with open(pdf_path, "rb") as f:
@@ -17,7 +21,7 @@ def extract_text_from_pdf(pdf_path: str, document_title: str = None) -> str:
                     text += page_text
             return text
     except Exception as e:
-        raise Exception(f"Failed to extract text from {pdf_path}: {e}")
+        raise ExtractionError(f"Failed to extract text from {pdf_path}: {e}") from e
 
 def extract_text_from_html(html_path: str, document_title: str = None) -> str:
     try:
@@ -59,9 +63,9 @@ def extract_text_from_html(html_path: str, document_title: str = None) -> str:
 
         return text
     except ImportError:
-        raise Exception("beautifulsoup4 not installed. Run: pip install beautifulsoup4")
+        raise ExtractionError("beautifulsoup4 not installed. Run: pip install beautifulsoup4")
     except Exception as e:
-        raise Exception(f"Failed to extract text from {html_path}: {e}")
+        raise ExtractionError(f"Failed to extract text from {html_path}: {e}") from e
 
 
 def extract_text_from_pptx(pptx_path: str, document_title: str = None) -> str:
@@ -104,9 +108,9 @@ def extract_text_from_pptx(pptx_path: str, document_title: str = None) -> str:
 
         return text
     except ImportError:
-        raise Exception("python-pptx not installed. Run: pip install python-pptx")
+        raise ExtractionError("python-pptx not installed. Run: pip install python-pptx")
     except Exception as e:
-        raise Exception(f"Failed to extract text from {pptx_path}: {e}")
+        raise ExtractionError(f"Failed to extract text from {pptx_path}: {e}") from e
 
 
 def extract_text_from_source(path: str, document_title: str = None) -> str:

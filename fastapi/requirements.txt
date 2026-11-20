@@ -3,6 +3,11 @@ fastapi
 uvicorn[standard]
 python-multipart
 
+# Job queue: job state in Redis, worker via RQ
+redis
+rq
+fakeredis  # tests only: Redis in memory (small, pure Python)
+
 # Data validation
 pydantic
 jsonschema  # checks the units/report output against schemas/*.json
