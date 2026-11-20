@@ -48,6 +48,7 @@ Akceptačné kritériá:
 
 - zmena poskytovateľa alebo modelu je iba zmena `.env` (`LOGEN_LLM_BASE_URL`, `LOGEN_LLM_MODEL`, …), mimo `lo_pipeline/llm` sa neimportuje knižnica výrobcu,
 - chýbajúci alebo neplatný kľúč a zlyhanie LLM po opakovaniach ukončí úlohu ako `failed` s kódom `llm_error` (aj odmietnutý kľúč; kódy chýb rovnaké ako Mlynček A), nikdy nie prázdny výsledok,
+- nezávislé batche volaní LLM v rámci úlohy bežia súbežne (najviac `LOGEN_LLM_MAX_CONCURRENCY`, predvolene 4); výsledok, poradie a pokračovanie z checkpointu sú rovnaké ako pri postupnom behu,
 - modely pre hodnotenie, prahy filtra a veľkosti batchov sú v konfigurácii, nie napevno v kóde; staré premenné (`GROQ_API_KEY`, `GEN_MODEL`, …) fungujú ako náhradné,
 - `env_template` je premenovaný na `.env.example` a obsahuje všetky premenné,
 - kvalita na referenčnom dokumente je aspoň na úrovni baseline (úloha 1).
@@ -121,3 +122,4 @@ Akceptačné kritériá:
 - Nové typy otázok: `choice` s viacerými správnymi odpoveďami, `no_answer`, 1–2 nápovedy, `per_learning_object` (kap. 7).
 - Rozdelenie do hodín: režimy `lessons`, `topics`, `syllabus` (kap. 8).
 - Voliteľné OCR a jazyk výstupu (`options.language`, slovenské zdroje).
+- Viac workerov naraz (`LOGEN_WORKERS`, `docker compose up --scale worker=N`): worker počas behu obnovuje heartbeat úlohy v Redise s expiráciou a obnova po reštarte preberá iba úlohy s vypršaným heartbeatom (dnes obnova predpokladá jedného workera).
