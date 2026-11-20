@@ -1,4 +1,4 @@
-# Integračný test Mlynček B ↔ ECEH (s Adelou a Ladislavom)
+# Integračný test Mlynček B ↔ ECEH
 
 Postup na spoločné stretnutie: nasadiť Mlynček B vedľa ECEH a overiť, že Laravel vytvorí úlohu, dostane webhooky a stiahne výsledok vo formáte `units`. Tým sa splní posledné kritérium úlohy 6 („Laravel vytvorí úlohu a stiahne výsledok vo formáte `units`“).
 
@@ -20,7 +20,6 @@ Všetky príkazy sú z priečinka `fastapi/`. Popis API je v [README](../README.
 ### Na čo sa opýtať vopred
 
 **Adela (nasadenie):**
-- Kde to pobeží (jej server, môj počítač)? Je tam Docker s `docker compose` (v2)?
 - Ako sa volá Docker sieť ECEH (`docker network ls`)? To bude `LOGEN_ECEH_NETWORK`.
 - Pod akým menom je kontajner Laravelu v tejto sieti? To bude `LOGEN_WEBHOOK_ALLOWED_HOSTS`.
 - Je v sieti ECEH už služba s menom `lo-generator`? (Mlynček B sa v nej ohlási pod týmto menom.)
@@ -34,7 +33,7 @@ Všetky príkazy sú z priečinka `fastapi/`. Popis API je v [README](../README.
 
 ---
 
-## 2. Nasadenie (s Adelou)
+## 2. Nasadenie
 
 1. Kód a konfigurácia:
    ```bash
@@ -72,7 +71,7 @@ Všetky príkazy sú z priečinka `fastapi/`. Popis API je v [README](../README.
 
 ---
 
-## 3. Test z Laravelu (s Ladislavom)
+## 3. Test z Laravelu
 
 Poradie je od lacného po drahé. Body a–c nestoja nič, body d a ďalej volajú LLM.
 
