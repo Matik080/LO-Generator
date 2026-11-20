@@ -85,9 +85,9 @@ Mapovanie výsledku spracovania do spoločného formátu `units` (Príloha A) a 
 
 Akceptačné kritériá:
 
-- výsledok prejde JSON schémou `units` (`additionalProperties: false`, `maxLength` podľa DB ECEH); výsledok, ktorý schémou neprejde, ukončí úlohu ako `failed` s kódom `invalid_output`,
-- HTML v `hints[].url` je prečistené (iba povolené značky); zdroj `[Source: …]` nie je v nápovede ani v názve otázky, je v reporte,
-- report obsahuje `learning_objects`, `question_map`, `quality`, `warnings`, `timings` a `extensions` (graf prerekvizít ako JSON, skóre hodnotenia),
+- výsledok prejde JSON schémou `units` (`additionalProperties: false`, `maxLength` podľa DB ECEH); výsledok, ktorý schémou neprejde, ukončí úlohu ako `failed` s kódom `internal_error` (`details.reason = invalid_output`; kódy chýb rovnaké ako Mlynček A) – napojenie na úlohu v úlohe 4,
+- HTML v `hints[].url` je prečistené (iba povolené značky); zdroj `[Source: …]` nie je v nápovede ani v názve otázky, je v reporte (`question_meta.source`),
+- report má rovnaký tvar ako v Mlynčeku A: `sections` (LO ako `S-<n>` s prerekvizitami z grafu), `question_meta` (väzba otázky na LO a zdrojové strany), `quality` (0–1), `warnings`, `timings`,
 - `split.mode = single` vráti práve jeden unit s `title` a `description`,
 - unit testy mapovania a test schémy, aj s dlhými textami a nebezpečným HTML z falošného LLM.
 
