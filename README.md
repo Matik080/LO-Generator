@@ -92,7 +92,7 @@ These names still work. The newer `LOGEN_*` variables (any OpenAI-compatible pro
 
 ## Running as a service (/v1 API)
 
-The service for the ECEH platform (Mlynček B): Laravel uploads documents to `/v1/jobs`, a worker processes them in the background and the result comes back in the `units` format. Three containers: `api`, `worker` and `redis`. Everything runs from the `fastapi/` folder:
+The service for the ECEH platform (Mlynček B): Laravel uploads documents to `/v1/jobs`, a worker processes them in the background and the result comes back in the `units` format. Four containers: `api`, `worker` (runs the pipeline), `scheduler` (webhooks and cleanup) and `redis`. Everything runs from the `fastapi/` folder:
 
 ```bash
 cd fastapi
@@ -131,6 +131,10 @@ The first build takes several minutes (PyTorch, MiniLM, spaCy and NLTK are downl
 | `LOGEN_JOB_TIMEOUT_S` | `21600` | a longer job fails with `internal_error` (`reason: timeout`) |
 | `LOGEN_DOCS_ENABLED` | `true` | `/docs` and `/openapi.json` |
 | `LOGEN_ECEH_NETWORK` | `eceh` | ECEH's Docker network (`docker-compose.eceh.yml`) |
+| `LOGEN_WEBHOOK_ALLOWED_HOSTS` / `LOGEN_WEBHOOK_SECRET` | empty / - | hosts allowed in `callback_url` (empty = webhooks off) and the HMAC key; the secret is required when hosts are set |
+| `LOGEN_WEBHOOK_TIMEOUT_S` | `5` | one webhook delivery attempt |
+| `LOGEN_FAILED_INPUT_TTL_HOURS` / `LOGEN_RESULT_TTL_DAYS` | `24` / `7` | how long a failed job keeps its document (retry) / how long finished jobs are kept |
+| `LOGEN_CLEANUP_INTERVAL_S` | `600` | how often old documents and jobs are deleted |
 
 `LOGEN_BACKEND`, `LOGEN_REDIS_URL` and `LOGEN_DATA_DIR` are set by `docker-compose.yml`. Without compose, `LOGEN_BACKEND=mock` (the default) runs a mock with the same endpoints and example answers.
 
@@ -154,10 +158,24 @@ curl -s -H "X-API-Key: $KEY" http://localhost:8000/v1/jobs/3f6b…/report
 
 Other endpoints: `GET /v1/jobs?external_ref=gen-1` (find a job), `DELETE /v1/jobs/{id}` (cancel a running job, delete a finished one), `POST /v1/jobs/{id}/retry` (run a failed job again within 24 h, it continues where it stopped), `GET /v1/schema/{lesson|report|options}`, `GET /v1/info`, `GET /health` (no key). Every error has the form `{"error": {"code", "message", "details"}}`.
 
+**Webhooks.** With `callback_url` in the options (its host must be in `LOGEN_WEBHOOK_ALLOWED_HOSTS`), the service POSTs the job state there on `job.stage_changed`, `job.completed`, `job.failed` and `job.cancelled`; the result itself is fetched from `/result`. Headers and body are the same as Mlynček A's:
+
+```http
+X-QGen-Event: job.completed
+X-QGen-Delivery: 5b0e9c1a-…            (the same in every retry)
+X-QGen-Timestamp: 1793701125
+X-QGen-Signature: sha256=<HMAC-SHA256(LOGEN_WEBHOOK_SECRET, timestamp + "." + body)>
+```
+
+Without a 2xx answer within `LOGEN_WEBHOOK_TIMEOUT_S` the delivery is retried after 10 s, 60 s and 300 s, each attempt signed with its own timestamp. Messages can arrive out of order or twice: compare `occurred_at` and `X-QGen-Delivery`. Polling `GET /v1/jobs/{id}` always works as a fallback.
+
+**What is kept and for how long.** The uploaded documents (and the checkpoint, which holds LLM answers about them) are deleted right after `completed` or `cancelled`, and 24 h after `failed` (until then `POST /retry` works). Finished jobs (result, report, state) are deleted after 7 days; `GET` then answers `404 job_not_found`.
+
 **Logs and stopping:**
 
 ```bash
 docker compose logs -f worker      # progress of the jobs
+docker compose logs -f scheduler   # webhook deliveries and cleanup
 docker compose down                # stop (jobs and Redis data are kept in volumes)
 docker compose down -v             # stop and delete all jobs
 ```

@@ -108,11 +108,13 @@ def run_job(store: JobStore, job_id: str, pipeline: Callable = _default_pipeline
     except JobCancelled:
         logger.info(f"[Worker] Job {job_id} cancelled during '{current['stage']}'.")
         store.update(job_id, status="cancelled")
+        store.delete_inputs(job_id)  # a cancelled job keeps no document
         return
     except Exception as exc:
         if store.cancel_requested(job_id):  # e.g. the folder was deleted under the running job
             logger.info(f"[Worker] Job {job_id} was cancelled; error after that ignored: {type(exc).__name__}")
             store.update(job_id, status="cancelled")
+            store.delete_inputs(job_id)
             return
         error = _job_error(exc, current["stage"], attempt)
         log = logger.exception if error.code == "internal_error" else logger.warning
@@ -123,6 +125,7 @@ def run_job(store: JobStore, job_id: str, pipeline: Callable = _default_pipeline
         checkpoint.close()
 
     store.update(job_id, status="completed", stage="output", progress=1.0)
+    store.delete_inputs(job_id)  # the uploaded document is not needed any more (result stays 7 days)
     logger.info(f"[Worker] Job {job_id} completed: "
                 f"{sum(len(u['questions']) for u in units['units'])} question(s).")
 
@@ -163,8 +166,13 @@ def recover_jobs(store: JobStore, enqueue: Callable[[str], None]) -> dict[str, i
 
 
 def store_from_settings(settings) -> JobStore:
+    """The job store of the API and the worker; with webhooks on, every state change is reported."""
+    from datetime import timedelta
     from redis import Redis
-    return JobStore(Redis.from_url(settings.redis_url, decode_responses=True), settings.data_dir)
+    from service.webhooks import notifier_from_settings
+    return JobStore(Redis.from_url(settings.redis_url, decode_responses=True), settings.data_dir,
+                    on_event=notifier_from_settings(settings),
+                    retryable_for=timedelta(hours=settings.failed_input_ttl_hours))
 
 
 def process_job(job_id: str) -> None:

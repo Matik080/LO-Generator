@@ -5,7 +5,7 @@ The pipeline's own settings (LLM provider, models, thresholds) are in lo_pipelin
 
 from typing import Annotated, Literal, Mapping, Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from lo_pipeline.config import ENV_FILE
@@ -26,7 +26,12 @@ class ServiceSettings(BaseSettings):
     max_upload_mb: int = Field(50, ge=1)          # per file
     max_active_jobs: int = Field(10, ge=1)        # queued + running; more -> 429
     docs_enabled: bool = True                     # /docs and /openapi.json
-    webhook_allowed_hosts: CommaList = ()         # hosts allowed in callback_url
+    webhook_allowed_hosts: CommaList = ()         # hosts allowed in callback_url; empty = webhooks off
+    webhook_secret: Optional[SecretStr] = None    # HMAC key of the webhook signature (Laravel has the same)
+    webhook_timeout_s: float = Field(5.0, gt=0)   # one delivery attempt
+    result_ttl_days: float = Field(7, gt=0)        # finished jobs (result, report, state) are deleted after this
+    failed_input_ttl_hours: float = Field(24, gt=0)  # inputs of a failed job stay this long (retry)
+    cleanup_interval_s: int = Field(600, ge=10)   # how often the scheduler deletes old inputs and jobs
     mock_duration_s: float = Field(30.0, ge=0)    # how long a mock job runs
 
     @field_validator("api_keys", "webhook_allowed_hosts", mode="before")
@@ -35,6 +40,20 @@ class ServiceSettings(BaseSettings):
         if isinstance(value, str):
             return tuple(item.strip() for item in value.split(",") if item.strip())
         return value
+
+    @model_validator(mode="after")
+    def _webhooks_need_a_secret(self) -> "ServiceSettings":
+        if self.webhook_allowed_hosts and not self.secret():
+            raise ValueError("LOGEN_WEBHOOK_ALLOWED_HOSTS is set, so LOGEN_WEBHOOK_SECRET is required "
+                             "(Laravel checks the signature of every webhook)")
+        return self
+
+    def secret(self) -> str:
+        return self.webhook_secret.get_secret_value().strip() if self.webhook_secret else ""
+
+    @property
+    def webhooks_enabled(self) -> bool:
+        return bool(self.webhook_allowed_hosts)
 
     @classmethod
     def from_env(cls, env: Optional[Mapping[str, str]] = None) -> "ServiceSettings":

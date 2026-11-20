@@ -172,7 +172,7 @@ def test_invalid_options(client, options):
 
 
 def test_callback_url_on_allowed_host(clock):
-    client = make_client(clock, webhook_allowed_hosts=("eceh-backend",))
+    client = make_client(clock, webhook_allowed_hosts=("eceh-backend",), webhook_secret="s3cret")
     response = post_job(client, {"callback_url": "http://eceh-backend/api/internal/qgen/webhook"})
     assert response.status_code == 202
 
@@ -241,7 +241,8 @@ def test_docs_can_be_disabled(clock):
 
 def test_settings_from_env():
     settings = ServiceSettings.from_env({"LOGEN_API_KEYS": " a, b ,", "LOGEN_MAX_FILES": "3",
-                                         "LOGEN_DOCS_ENABLED": "false", "LOGEN_WEBHOOK_ALLOWED_HOSTS": "eceh"})
+                                         "LOGEN_DOCS_ENABLED": "false", "LOGEN_WEBHOOK_ALLOWED_HOSTS": "eceh",
+                                         "LOGEN_WEBHOOK_SECRET": "s3cret"})
     assert settings.api_keys == ("a", "b")
     assert settings.max_files == 3 and settings.docs_enabled is False
     assert settings.webhook_allowed_hosts == ("eceh",)

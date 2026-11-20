@@ -41,6 +41,10 @@ services:
     <<: *app
     command: ["python", "-m", "service.worker"]   # recovers unfinished jobs, then processes the queue
 
+  scheduler:
+    <<: *app
+    command: ["python", "-m", "service.scheduler"]  # webhook deliveries and their retries
+
   redis:
     image: redis:7-alpine
     # appendonly: the queue and job states survive a restart; requirepass: no access without the password

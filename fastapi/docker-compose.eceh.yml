@@ -1,5 +1,5 @@
-# Deployment next to ECEH: api and worker also join ECEH's Docker network, so Laravel calls
-# http://lo-generator:8000 (and the worker can send webhooks to Laravel, task 7).
+# Deployment next to ECEH: api and scheduler also join ECEH's Docker network, so Laravel calls
+# http://lo-generator:8000 and the scheduler can send webhooks to Laravel (task 7).
 #
 #   docker compose -f docker-compose.yml -f docker-compose.eceh.yml up -d
 #
@@ -11,8 +11,8 @@ services:
       logen: {}
       eceh:
         aliases: [lo-generator]   # a unique name in ECEH's network ("api" may already exist there)
-  worker:
-    networks: [logen, eceh]
+  scheduler:
+    networks: [logen, eceh]   # sends the webhooks
 
 networks:
   eceh:

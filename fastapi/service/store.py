@@ -1,9 +1,9 @@
 """Where jobs live (sprint task 4a): files in a job folder, live state in Redis.
 
 Job folder  <data_dir>/jobs/{id}/
-    input/          the uploaded files
+    input/          the uploaded files                } deleted after completed / cancelled, and
+    checkpoint/     FileCheckpoint of run_pipeline     } 24 h after failed (service/cleanup.py)
     job.json        job id, complete options (resolve_options) and file names; written once
-    checkpoint/     FileCheckpoint of run_pipeline (resume after a crash or retry)
     result.json     the `units` result   } written when the job completes
     report.json     the report           }
     pipeline_result.json   everything run_pipeline returned (diagnostics, not in the API)
@@ -19,6 +19,7 @@ created always has its files on disk.
 """
 
 import json
+import logging
 import os
 import shutil
 import uuid
@@ -30,8 +31,10 @@ from typing import Callable, Optional
 from lo_pipeline.contract import JobError, JobOptions, JobStatus
 from service.uploads import Upload
 
+logger = logging.getLogger(__name__)
+
 PREFIX = "logen"
-RETRYABLE_FOR = timedelta(hours=24)  # task 7 deletes inputs after this; until then retry works
+RETRYABLE_FOR = timedelta(hours=24)  # default; inputs of a failed job are deleted after this (no retry then)
 ACTIVE = ("queued", "running")
 
 
@@ -78,12 +81,23 @@ def _write_json_atomic(path: Path, data) -> None:
     os.replace(tmp, path)
 
 
+FINAL_EVENTS = {"completed": "job.completed", "failed": "job.failed", "cancelled": "job.cancelled"}
+
+
 class JobStore:
-    def __init__(self, redis, data_dir: str, clock: Callable[[], datetime] = utc_now):
-        """`redis`: a redis.Redis client created with decode_responses=True (or fakeredis in tests)."""
+    def __init__(self, redis, data_dir: str, clock: Callable[[], datetime] = utc_now,
+                 on_event: Optional[Callable[["JobStore", str, str], None]] = None,
+                 retryable_for: timedelta = RETRYABLE_FOR):
+        """`redis`: a redis.Redis client created with decode_responses=True (or fakeredis in tests).
+        `on_event(store, job_id, event)`: called after a real change of the job (webhooks, service/webhooks.py):
+        job.stage_changed (a running job reached a new stage), job.completed, job.failed, job.cancelled.
+        `retryable_for`: how long a failed job keeps its inputs and can be retried (LOGEN_FAILED_INPUT_TTL_HOURS).
+        """
         self.redis = redis
         self.jobs_dir = Path(data_dir) / "jobs"
         self.clock = clock
+        self.on_event = on_event
+        self.retryable_for = retryable_for
 
     # --- paths ------------------------------------------------------------------------------
 
@@ -193,6 +207,7 @@ class JobStore:
         """
         if not self.exists(job_id):
             return
+        before = self.redis.hmget(self._key(job_id), "status", "stage") if self.on_event else None
         values = {"updated_at": self.clock().isoformat()}
         for name, value in fields.items():
             if name == "error":
@@ -203,9 +218,26 @@ class JobStore:
                 value = ""
             values[name] = value
         self.redis.hset(self._key(job_id), mapping=values)
+        if before is not None:
+            self._emit(job_id, before, values)
+
+    def _emit(self, job_id: str, before: list, values: dict) -> None:
+        """Calls on_event for a real change: a final status, or a new stage of a running job."""
+        old_status, old_stage = before[0] or "", before[1] or ""
+        status, stage = values.get("status", old_status), values.get("stage", old_stage)
+        if status != old_status and status in FINAL_EVENTS:
+            event = FINAL_EVENTS[status]
+        elif status == "running" and stage and (stage != old_stage or old_status != "running"):
+            event = "job.stage_changed"
+        else:
+            return
+        try:
+            self.on_event(self, job_id, event)
+        except Exception:  # a webhook problem must never stop or fail the job
+            logger.exception(f"[Store] Event {event} of job {job_id} could not be handed over.")
 
     def mark_failed(self, job_id: str, error: JobError) -> None:
-        self.update(job_id, status="failed", error=error, retryable_until=self.clock() + RETRYABLE_FOR)
+        self.update(job_id, status="failed", error=error, retryable_until=self.clock() + self.retryable_for)
 
     def increment_attempts(self, job_id: str) -> int:
         return int(self.redis.hincrby(self._key(job_id), "attempts", 1))
@@ -232,6 +264,16 @@ class JobStore:
         return json.loads((self.job_dir(job_id) / f"{name}.json").read_text(encoding="utf-8"))
 
     # --- delete -----------------------------------------------------------------------------
+
+    def delete_inputs(self, job_id: str) -> bool:
+        """Deletes the uploaded files and the checkpoint (it holds LLM answers about the document).
+        The state, job.json and the outputs stay. Returns True when something was deleted."""
+        deleted = False
+        for folder in (self.job_dir(job_id) / "input", self.checkpoint_dir(job_id)):
+            if folder.exists():
+                shutil.rmtree(folder, ignore_errors=True)
+                deleted = True
+        return deleted
 
     def delete(self, job_id: str) -> None:
         ref = (self.fields(job_id) or {}).get("external_ref")

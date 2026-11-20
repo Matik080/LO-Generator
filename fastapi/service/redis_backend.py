@@ -109,6 +109,8 @@ class RedisBackend:
         if status.status in ACTIVE:
             self.store.request_cancel(job_id)
             self.store.update(job_id, status="cancelled")
+            if status.status == "queued":
+                self.store.delete_inputs(job_id)  # never started; a running job's worker deletes them itself
             logger.info(f"[API] Job {job_id} cancelled (was {status.status}).")
             return self._status(job_id)
         self.store.delete(job_id)
@@ -119,7 +121,8 @@ class RedisBackend:
         status = self._status(job_id)
         if status.status != "failed":
             raise ApiError(409, "job_not_retryable", f"Job is {status.status}; only a failed job can be retried.")
-        if status.retryable_until is not None and self.store.clock() >= status.retryable_until:
+        inputs_gone = not (self.store.job_dir(job_id) / "input").exists()
+        if inputs_gone or (status.retryable_until is not None and self.store.clock() >= status.retryable_until):
             raise ApiError(409, "job_not_retryable", "The input was already deleted; create a new job.")
         self._check_capacity()
         # a manual retry starts a new series of attempts (worker_lost counts only lost workers)
