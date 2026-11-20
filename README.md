@@ -86,6 +86,8 @@ INTER_CALL_DELAY=0.1
 
 You only need to fill in the keys you have. The pipeline selects the first available provider in priority order. `moonshotai/kimi-k2-instruct` always routes through OpenRouter regardless of which provider is primary.
 
+These names still work. The newer `LOGEN_*` variables (any OpenAI-compatible provider via `LOGEN_LLM_BASE_URL`, models, thresholds, batch sizes, embeddings) are all listed with their defaults in [`fastapi/.env.example`](fastapi/.env.example) and in the table under [Running as a service](#running-as-a-service-v1-api).
+
 ---
 
 ## Running as a service (/v1 API)
@@ -113,9 +115,15 @@ The first build takes several minutes (PyTorch, MiniLM, spaCy and NLTK are downl
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `GROQ_API_KEY` (or `OPENROUTER_API_KEY`, `GITHUB_TOKEN`, `OPENAI_API_KEY`) | - | LLM provider key |
-| `GEN_MODEL`, `INTER_CALL_DELAY`, `REASONING_EFFORT` | see `.env.example` | generation model, pause between LLM calls, GPT-OSS reasoning effort |
+| `LOGEN_LLM_BASE_URL` / `LOGEN_LLM_API_KEY` | - | any OpenAI-compatible API (Groq, OpenRouter, OpenAI, a vLLM or Ollama server); a local server needs no key |
+| `GROQ_API_KEY` (or `OPENROUTER_API_KEY`, `GITHUB_TOKEN`, `OPENAI_API_KEY`) | - | older way to choose the provider, used when the two above are not set |
+| `LOGEN_LLM_MODEL` (older: `GEN_MODEL`) | provider's default | generation model |
+| `LOGEN_LLM_MODEL_EVAL` | `qwen/qwen3.8-27b,openai/gpt-oss-120b` | evaluation models of the quality filter |
 | `LOGEN_LLM_MAX_CONCURRENCY` | `4` | independent LLM batches sent at the same time within one job; `1` = one after another |
+| `LOGEN_LLM_MAX_RETRIES` | `6` | attempts per LLM call; a rejected key or unknown model fails at once (`llm_error`) |
+| `LOGEN_INTER_CALL_DELAY` / `LOGEN_REASONING_EFFORT` (older: without `LOGEN_`) | `0` / - | pause between LLM calls; GPT-OSS reasoning effort on Groq |
+| `LOGEN_EMBED_PROVIDER` / `LOGEN_EMBED_MODEL` | `local` / `all-MiniLM-L6-v2` | embeddings: local MiniLM, or `openai_compatible` with `LOGEN_EMBED_BASE_URL` / `_API_KEY` (Groq has no embeddings API; the similarity thresholds are calibrated for MiniLM) |
+| `LOGEN_FAITHFULNESS_THRESHOLD`, `LOGEN_MAX_ATTEMPTS`, `LOGEN_DEDUP_THRESHOLD`, `LOGEN_*_BATCH_SIZE` | see `.env.example` | quality filter, deduplication and batch sizes |
 | `LOGEN_REDIS_PASSWORD` | - (required) | Redis password, letters and digits only |
 | `LOGEN_API_KEYS` | empty | comma-separated keys accepted in `X-API-Key`; empty = no key needed (local only) |
 | `LOGEN_MAX_FILES` / `LOGEN_MAX_UPLOAD_MB` | `10` / `50` | files per job / MB per file |

@@ -67,6 +67,24 @@ class Cassette:
             self.path.write_text(json.dumps(used, indent=1, ensure_ascii=False), encoding="utf-8")
 
 
+@pytest.fixture(autouse=True)
+def fresh_settings(monkeypatch):
+    """
+    Settings are read once and cached; a test that changes LOGEN_* variables gets them re-read.
+    Tests do not read fastapi/.env (the developer's keys and limits must not change test results),
+    except when recording real LLM answers (LLM_MODE=record needs the API key from .env).
+    """
+    from lo_pipeline.config import PipelineSettings, get_settings
+    from service.settings import ServiceSettings
+
+    if os.getenv("LLM_MODE") != "record":
+        monkeypatch.setitem(PipelineSettings.model_config, "env_file", None)
+        monkeypatch.setitem(ServiceSettings.model_config, "env_file", None)
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
 @pytest.fixture
 def fake_llm(monkeypatch):
     mode = os.getenv("LLM_MODE", "replay")

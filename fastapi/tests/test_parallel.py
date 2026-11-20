@@ -43,10 +43,20 @@ def test_concurrency_1_is_sequential(monkeypatch):
     assert counter.most == 1
 
 
-@pytest.mark.parametrize("value, expected", [("", 4), ("8", 8), ("0", 1), ("x", 4)])
-def test_max_concurrency_setting(monkeypatch, value, expected):
-    monkeypatch.setenv("LOGEN_LLM_MAX_CONCURRENCY", value)
-    assert max_concurrency() == expected
+def test_max_concurrency_setting(monkeypatch):
+    from pydantic import ValidationError
+    from lo_pipeline.config import get_settings
+
+    monkeypatch.delenv("LOGEN_LLM_MAX_CONCURRENCY", raising=False)
+    assert max_concurrency() == 4
+    monkeypatch.setenv("LOGEN_LLM_MAX_CONCURRENCY", "8")
+    get_settings.cache_clear()
+    assert max_concurrency() == 8
+    for bad in ("0", "x"):  # a wrong setting is an error, not silently ignored
+        monkeypatch.setenv("LOGEN_LLM_MAX_CONCURRENCY", bad)
+        get_settings.cache_clear()
+        with pytest.raises(ValidationError):
+            max_concurrency()
 
 
 def test_error_in_a_batch_stops_new_batches(monkeypatch):

@@ -1,49 +1,45 @@
-"""Service settings from environment variables (LOGEN_*).
+"""Service settings (/v1 API, job queue, worker) from LOGEN_* variables and fastapi/.env.
 
-Temporary: sprint task 3 moves all configuration (service and pipeline) to pydantic-settings.
+The pipeline's own settings (LLM provider, models, thresholds) are in lo_pipeline/config.py.
 """
 
-import os
-from dataclasses import dataclass, field
-from typing import Mapping, Optional
+from typing import Annotated, Literal, Mapping, Optional
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+from lo_pipeline.config import ENV_FILE
+
+CommaList = Annotated[tuple[str, ...], NoDecode]  # "a, b" in the environment -> ("a", "b")
 
 
-def _list(value: str) -> tuple[str, ...]:
-    return tuple(item.strip() for item in value.split(",") if item.strip())
+class ServiceSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="LOGEN_", env_file=ENV_FILE, env_file_encoding="utf-8",
+                                      extra="ignore", frozen=True)
 
+    backend: Literal["mock", "redis"] = "mock"     # mock: example answers; redis: real jobs (worker)
+    redis_url: str = "redis://localhost:6379/0"   # job state and queue
+    data_dir: str = "/data"                       # job folders (<data_dir>/jobs/{id}/)
+    job_timeout_s: int = Field(6 * 60 * 60, ge=1)  # a job running longer fails (internal_error)
+    api_keys: CommaList = ()                      # accepted X-API-Key values; empty = no key needed
+    max_files: int = Field(10, ge=1)              # files per job
+    max_upload_mb: int = Field(50, ge=1)          # per file
+    max_active_jobs: int = Field(10, ge=1)        # queued + running; more -> 429
+    docs_enabled: bool = True                     # /docs and /openapi.json
+    webhook_allowed_hosts: CommaList = ()         # hosts allowed in callback_url
+    mock_duration_s: float = Field(30.0, ge=0)    # how long a mock job runs
 
-def _bool(value: str) -> bool:
-    return value.strip().lower() in ("1", "true", "yes", "on")
-
-
-@dataclass(frozen=True)
-class ServiceSettings:
-    backend: str = "mock"                    # LOGEN_BACKEND: "mock" or "redis" (real jobs, task 4)
-    redis_url: str = "redis://localhost:6379/0"  # LOGEN_REDIS_URL: job state and queue
-    data_dir: str = "/data"                  # LOGEN_DATA_DIR: job folders (<data_dir>/jobs/{id}/)
-    job_timeout_s: int = 6 * 60 * 60         # LOGEN_JOB_TIMEOUT_S: a job running longer fails (internal_error)
-    api_keys: tuple[str, ...] = ()           # LOGEN_API_KEYS (comma-separated); empty = no key needed
-    max_files: int = 10                      # LOGEN_MAX_FILES
-    max_upload_mb: int = 50                  # LOGEN_MAX_UPLOAD_MB, per file
-    max_active_jobs: int = 10                # LOGEN_MAX_ACTIVE_JOBS
-    docs_enabled: bool = True                # LOGEN_DOCS_ENABLED: /docs and /openapi.json
-    webhook_allowed_hosts: tuple[str, ...] = field(default=())  # LOGEN_WEBHOOK_ALLOWED_HOSTS
-    mock_duration_s: float = 30.0            # LOGEN_MOCK_DURATION_S: how long a mock job runs
+    @field_validator("api_keys", "webhook_allowed_hosts", mode="before")
+    @classmethod
+    def _comma_list(cls, value):
+        if isinstance(value, str):
+            return tuple(item.strip() for item in value.split(",") if item.strip())
+        return value
 
     @classmethod
     def from_env(cls, env: Optional[Mapping[str, str]] = None) -> "ServiceSettings":
-        env = os.environ if env is None else env
-        defaults = cls()
-        return cls(
-            backend=env.get("LOGEN_BACKEND", defaults.backend),
-            redis_url=env.get("LOGEN_REDIS_URL", defaults.redis_url),
-            data_dir=env.get("LOGEN_DATA_DIR", defaults.data_dir),
-            job_timeout_s=int(env.get("LOGEN_JOB_TIMEOUT_S", defaults.job_timeout_s)),
-            api_keys=_list(env.get("LOGEN_API_KEYS", "")),
-            max_files=int(env.get("LOGEN_MAX_FILES", defaults.max_files)),
-            max_upload_mb=int(env.get("LOGEN_MAX_UPLOAD_MB", defaults.max_upload_mb)),
-            max_active_jobs=int(env.get("LOGEN_MAX_ACTIVE_JOBS", defaults.max_active_jobs)),
-            docs_enabled=_bool(env.get("LOGEN_DOCS_ENABLED", "true")),
-            webhook_allowed_hosts=_list(env.get("LOGEN_WEBHOOK_ALLOWED_HOSTS", "")),
-            mock_duration_s=float(env.get("LOGEN_MOCK_DURATION_S", defaults.mock_duration_s)),
-        )
+        """From the environment and fastapi/.env, or only from `env` (a mapping, for tests)."""
+        if env is None:
+            return cls()
+        values = {name: env[f"LOGEN_{name.upper()}"] for name in cls.model_fields if f"LOGEN_{name.upper()}" in env}
+        return cls(_env_file=None, **values)

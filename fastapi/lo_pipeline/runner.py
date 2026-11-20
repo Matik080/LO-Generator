@@ -27,7 +27,9 @@ STAGES = ["extract", "units", "learning_objects", "lo_evaluation", "graph", "que
 
 @dataclass
 class PipelineOptions:
-    """Today's hard-coded values. M2 moves the defaults to environment config."""
+    """Settings of one run. The defaults here are the built-in values; run_pipeline without options
+    uses from_settings() (LOGEN_* variables, lo_pipeline/config.py). They are part of the checkpoint
+    fingerprint, so a changed setting never mixes with an older checkpoint."""
     extraction_batch_size: int = 3
     generation_batch_size: int = 5
     mc_batch_size: int = 5
@@ -37,6 +39,19 @@ class PipelineOptions:
     max_attempts: int = 2
     verify_batch_size: int = 10
     enrich_batch_size: int = 10
+    dedup_threshold: float = 0.82
+
+    @classmethod
+    def from_settings(cls, settings=None) -> "PipelineOptions":
+        from lo_pipeline.config import get_settings
+        s = settings or get_settings()
+        return cls(
+            extraction_batch_size=s.extraction_batch_size, generation_batch_size=s.generation_batch_size,
+            mc_batch_size=s.mc_batch_size, eval_models=list(s.eval_models),
+            faithfulness_threshold=s.faithfulness_threshold, hint_quality_threshold=s.hint_quality_threshold,
+            max_attempts=s.max_attempts, verify_batch_size=s.verify_batch_size,
+            enrich_batch_size=s.enrich_batch_size, dedup_threshold=s.dedup_threshold,
+        )
 
 
 @dataclass
@@ -87,7 +102,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     from lo_pipeline.checkpoint import fingerprint
     from lo_pipeline.llm.service import use_response_cache
 
-    opts = options or PipelineOptions()
+    opts = options or PipelineOptions.from_settings()
     sources = [_as_source(s) for s in sources]
     progress = _Progress(progress_callback)
     timings = {}
@@ -132,7 +147,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                                         f"instead of the LLM's section number.",
                              "details": source_stats})
         logger.info(f"[Extract] Deduplicating {len(raw_units)} raw units...")
-        atomic_units = normalize_units(clean_atomic_units(raw_units))
+        atomic_units = normalize_units(clean_atomic_units(raw_units, similarity_threshold=opts.dedup_threshold))
         logger.info(f"[Extract] {len(atomic_units)} units after dedup.")
         return {"atomic_units": atomic_units, "warnings": warnings}
 

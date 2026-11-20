@@ -245,3 +245,20 @@ def test_settings_from_env():
     assert settings.api_keys == ("a", "b")
     assert settings.max_files == 3 and settings.docs_enabled is False
     assert settings.webhook_allowed_hosts == ("eceh",)
+
+
+def test_settings_from_env_file(tmp_path, monkeypatch):
+    monkeypatch.delenv("LOGEN_MAX_FILES", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text("LOGEN_API_KEYS=k1,k2\nLOGEN_MAX_FILES=4\nGROQ_API_KEY=not-a-service-setting\n", encoding="utf-8")
+    settings = ServiceSettings(_env_file=env_file)
+    assert settings.api_keys == ("k1", "k2") and settings.max_files == 4
+    monkeypatch.setenv("LOGEN_MAX_FILES", "6")  # the environment wins over the file
+    assert ServiceSettings(_env_file=env_file).max_files == 6
+
+
+@pytest.mark.parametrize("values", [{"LOGEN_BACKEND": "postgres"}, {"LOGEN_MAX_FILES": "0"}, {"LOGEN_MAX_FILES": "x"}])
+def test_wrong_service_settings_are_errors(values):
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError):
+        ServiceSettings.from_env(values)

@@ -55,7 +55,9 @@ def _recover_partial_json(raw: str) -> list:
 
 
 def eval_batch_size(model):
-    return MODEL_BATCH_SIZES.get(model, DEFAULT_BATCH_SIZE)
+    """LOGEN_EVAL_BATCH_SIZE for every model when set, otherwise the size that works for this model."""
+    from lo_pipeline.config import get_settings
+    return get_settings().eval_batch_size or MODEL_BATCH_SIZES.get(model, DEFAULT_BATCH_SIZE)
 
 
 def evaluate_learning_objects_batch(learning_objects, model, batch_size=None, progress=None):

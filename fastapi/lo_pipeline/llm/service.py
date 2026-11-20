@@ -1,55 +1,29 @@
+"""
+LLM calls of the whole pipeline: call_llm(messages, model, temperature) -> answer text.
+
+The provider is any OpenAI-compatible API (Groq, OpenRouter, OpenAI, GitHub Models, a local vLLM
+or Ollama server), chosen only by configuration (lo_pipeline/config.py): LOGEN_LLM_BASE_URL,
+LOGEN_LLM_API_KEY, LOGEN_LLM_MODEL, or the older GROQ_API_KEY / GEN_MODEL / ... This is the only
+module that imports a provider library (openai).
+
+Errors: LLMError when the provider still fails after the retries; LLMConfigError (a kind of
+LLMError) at once when nothing is configured, the key is rejected or the model does not exist,
+because retrying cannot help. A job then fails with llm_error (service/worker.py).
+"""
 import hashlib
 import json
-import os
+import logging
 import threading
 import time
 from contextlib import contextmanager
 from contextvars import ContextVar
-from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from openai import OpenAI, RateLimitError
-from dotenv import load_dotenv
-import logging
+from openai import AuthenticationError, NotFoundError, OpenAI, PermissionDeniedError, RateLimitError
+
+from lo_pipeline.config import GROQ_BASE_URL, OPENROUTER_BASE_URL, get_settings
 
 logger = logging.getLogger(__name__)
-# fastapi/.env (this file is fastapi/lo_pipeline/llm/service.py)
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env", override=True)
-
-GITHUB_TOKEN       = os.getenv("GITHUB_TOKEN")
-OPENAI_API_KEY     = os.getenv("OPENAI_API_KEY")
-GROQ_API_KEY       = os.getenv("GROQ_API_KEY")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-
-# Optional: add a base delay (in seconds) between ALL calls to stay under rate limits
-INTER_CALL_DELAY = float(os.getenv("INTER_CALL_DELAY", "0"))
-
-# Optional: override the default generation model without touching code
-GEN_MODEL = os.getenv("GEN_MODEL")
-
-# Optional: reasoning effort for GPT-OSS models on Groq ("low" | "medium" | "high")
-REASONING_EFFORT = os.getenv("REASONING_EFFORT")
-
-# Provider selection
-# Priority: GROQ > OpenRouter > GitHub > OpenAI
-# Groq shut down llama-3.3-70b-versatile for non-enterprise tiers on 2026-08-16.
-# The legacy name is still accepted everywhere and routed to OpenRouter's Llama 3.3 70B (see LEGACY_ROUTES below).
-# Default generator: Llama 3.3 70B (thesis model) when OpenRouter is available, otherwise GPT-OSS 120B on Groq.
-# The client is created on the first call, so importing this module never needs an API key (tests, tooling).
-# Each entry: (provider name, api key, base_url or None, default model)
-if GROQ_API_KEY:
-    _PRIMARY = ("Groq", GROQ_API_KEY, "https://api.groq.com/openai/v1",
-                "llama-3.3-70b-versatile" if OPENROUTER_API_KEY else "openai/gpt-oss-120b")
-elif OPENROUTER_API_KEY:
-    _PRIMARY = ("OpenRouter", OPENROUTER_API_KEY, "https://openrouter.ai/api/v1", "meta-llama/llama-3.3-70b-instruct")
-elif GITHUB_TOKEN:
-    _PRIMARY = ("GitHub Models", GITHUB_TOKEN, "https://models.inference.ai.azure.com", "gpt-4.1-nano")
-elif OPENAI_API_KEY:
-    _PRIMARY = ("OpenAI", OPENAI_API_KEY, None, "gpt-4.1-nano")
-else:
-    _PRIMARY = None
-
-DEFAULT_MODEL = GEN_MODEL or (_PRIMARY[3] if _PRIMARY else None)
 
 
 class LLMError(RuntimeError):
@@ -57,40 +31,8 @@ class LLMError(RuntimeError):
 
 
 class LLMConfigError(LLMError):
-    """No usable provider/API key is configured. Raised on the first call instead of exiting at import."""
+    """No provider configured, key rejected or model unknown: retrying cannot help."""
 
-
-_client = None
-
-def _get_primary_client():
-    global _client
-    if _client is not None:
-        return _client
-    if _PRIMARY is None:
-        raise LLMConfigError("No API key found. Set GROQ_API_KEY, OPENROUTER_API_KEY, GITHUB_TOKEN, or OPENAI_API_KEY.")
-    name, key, base_url, _ = _PRIMARY
-    logger.info(f"[Config] Primary provider: {name}")
-    logger.info(f"[Config] Default generation model: {DEFAULT_MODEL}")
-    _client = OpenAI(api_key=key, base_url=base_url) if base_url else OpenAI(api_key=key)
-    return _client
-
-# Secondary client for OpenRouter-only models (e.g. Kimi K2)
-# If primary is already OpenRouter, we reuse that client.
-# If primary is Groq/GitHub/OpenAI but OPENROUTER_API_KEY is also present,
-# a second client is created so Kimi K2 evaluations can still run.
-_openrouter_client = None
-
-def _get_openrouter_client():
-    global _openrouter_client
-    if _openrouter_client is not None:
-        return _openrouter_client
-    if OPENROUTER_API_KEY:
-        _openrouter_client = OpenAI(
-            api_key=OPENROUTER_API_KEY,
-            base_url="https://openrouter.ai/api/v1",
-        )
-        return _openrouter_client
-    return None
 
 # Legacy / logical model names used throughout the codebase -> the provider model ID that actually serves them now.
 # Callers keep passing the old names (eval lists, batch-size tables, saved results all key on them).
@@ -101,34 +43,135 @@ LEGACY_ROUTES = {
     "moonshotai/kimi-k2-instruct": "moonshotai/kimi-k2",
 }
 
-# Models that must always route through OpenRouter
-# Note: openai/gpt-oss-120b is available on BOTH Groq and OpenRouter
-# using the same model string, it routes through whichever is the primary provider
+# Models that must always route through OpenRouter (OPENROUTER_API_KEY).
+# openai/gpt-oss-120b exists on both Groq and OpenRouter and goes to the main provider.
 OPENROUTER_MODELS = {
     "meta-llama/llama-3.3-70b-instruct",
     "moonshotai/kimi-k2",
 }
 
+
+class OpenAICompatibleClient:
+    """One OpenAI-compatible API (base URL + key) with retries and waiting on rate limits."""
+
+    def __init__(self, name: str, api_key: str, base_url: Optional[str], client=None, sleep=time.sleep):
+        self.name = name
+        self.base_url = base_url
+        self.client = client or (OpenAI(api_key=api_key, base_url=base_url) if base_url else OpenAI(api_key=api_key))
+        self.sleep = sleep  # tests replace it, so retries do not wait
+
+    def chat(self, messages: List[Dict[str, str]], model: str, temperature: float, max_retries: int,
+             rate_limit_backoff: float = 60.0, inter_call_delay: float = 0.0,
+             reasoning_effort: Optional[str] = None) -> str:
+        """
+        - key rejected (401/403) or model unknown (404): LLMConfigError at once
+        - rate limit: waits `rate_limit_backoff` seconds (x1.5 each time, at most 600) and retries
+        - other errors (network, 5xx, empty answer): waits 1, 2, 4, … seconds and retries
+        After `max_retries` attempts: LLMError.
+        """
+        if inter_call_delay > 0:
+            self.sleep(inter_call_delay)
+        extra = {}
+        if reasoning_effort and model.startswith("openai/gpt-oss") and self.base_url == GROQ_BASE_URL:
+            extra["reasoning_effort"] = reasoning_effort
+
+        for attempt in range(max_retries):
+            last = attempt == max_retries - 1
+            try:
+                response = self.client.chat.completions.create(
+                    model=model, messages=messages, temperature=temperature, **extra)
+                if not response.choices:
+                    raise ValueError("No choices returned.")
+                content = response.choices[0].message.content
+                if not content:
+                    raise ValueError("Empty response content.")
+                return content.strip()
+
+            except (AuthenticationError, PermissionDeniedError) as e:
+                raise LLMConfigError(f"{self.name} rejected the API key (HTTP {e.status_code}). "
+                                     f"Check LOGEN_LLM_API_KEY / GROQ_API_KEY.") from e
+            except NotFoundError as e:
+                raise LLMConfigError(f"{self.name} does not know the model '{model}' (HTTP 404). "
+                                     f"Check LOGEN_LLM_MODEL / LOGEN_LLM_MODEL_EVAL.") from e
+
+            except RateLimitError as e:
+                if last:
+                    raise LLMError(f"Rate limit persisted after {max_retries} attempts: {e}") from e
+                logger.warning(f"[RATE LIMIT] Hit rate limit. Waiting {rate_limit_backoff}s before retry "
+                               f"({attempt + 1}/{max_retries})...")
+                self.sleep(rate_limit_backoff)
+                rate_limit_backoff = min(rate_limit_backoff * 1.5, 600)
+
+            except Exception as e:
+                if last:
+                    raise LLMError(f"LLM call failed after {max_retries} attempts: {e}") from e
+                wait = 2 ** attempt
+                logger.warning(f"[LLM ERROR] Attempt {attempt + 1} failed ({type(e).__name__}). Retrying in {wait}s...")
+                self.sleep(wait)
+        raise LLMError("LLM call made no attempt (max_retries < 1).")
+
+
+# One client per provider, shared by the parallel threads (llm/parallel.py)
+_clients: Dict[tuple, OpenAICompatibleClient] = {}
+_clients_lock = threading.Lock()
+
+
+def _client(name: str, api_key: str, base_url: Optional[str]) -> OpenAICompatibleClient:
+    key = (base_url, api_key)
+    with _clients_lock:
+        if key not in _clients:
+            logger.info(f"[Config] LLM provider: {name} ({base_url or 'api.openai.com'})")
+            _clients[key] = OpenAICompatibleClient(name, api_key, base_url)
+        return _clients[key]
+
+
+def default_model() -> Optional[str]:
+    """LOGEN_LLM_MODEL / GEN_MODEL, otherwise the provider's default model."""
+    return get_settings().default_model()
+
+
 def _client_for_model(model: str):
     """Return (client, provider_model_id) for a logical or provider model name."""
+    settings = get_settings()
+    provider = settings.provider()
     target = LEGACY_ROUTES.get(model, model)
-    if target in OPENROUTER_MODELS:
-        c = _get_openrouter_client()
-        if c is None:
+    if target in OPENROUTER_MODELS and not (provider and provider.base_url == OPENROUTER_BASE_URL):
+        key = settings.openrouter_api_key.get_secret_value().strip() if settings.openrouter_api_key else ""
+        if not key:
             raise LLMConfigError(
                 f"Model '{model}' is now served via OpenRouter ('{target}') but OPENROUTER_API_KEY is not set. "
                 f"Add OPENROUTER_API_KEY to .env, or use a Groq model such as 'openai/gpt-oss-120b'."
             )
-        return c, target
-    return _get_primary_client(), target
+        return _client("OpenRouter", key, OPENROUTER_BASE_URL), target
+    if provider is None:
+        raise LLMConfigError("No LLM provider configured. Set LOGEN_LLM_BASE_URL and/or LOGEN_LLM_API_KEY "
+                             "(or GROQ_API_KEY, OPENROUTER_API_KEY, GITHUB_TOKEN, OPENAI_API_KEY).")
+    return _client(provider.name, provider.api_key, provider.base_url), target
+
+
+def _openai_call(messages: List[Dict[str, str]], model: str | None = None, temperature: float = 0.2,
+                 max_retries: int | None = None, rate_limit_backoff: float = 60.0) -> str:
+    """The real LLM call (tests replace `_backend` with recorded answers)."""
+    settings = get_settings()
+    model = model or settings.default_model()
+    if not model:
+        raise LLMConfigError("No LLM model configured. Set LOGEN_LLM_MODEL (or GEN_MODEL).")
+    client, provider_model = _client_for_model(model)
+    return client.chat(messages, provider_model, temperature,
+                       max_retries=max_retries or settings.llm_max_retries,
+                       rate_limit_backoff=rate_limit_backoff,
+                       inter_call_delay=settings.inter_call_delay,
+                       reasoning_effort=settings.reasoning_effort)
 
 
 def call_llm(
-        messages: List[Dict[str, str]], model: str | None = None, temperature: float = 0.2, max_retries: int = 6, rate_limit_backoff: float = 60.0,
+        messages: List[Dict[str, str]], model: str | None = None, temperature: float = 0.2,
+        max_retries: int | None = None, rate_limit_backoff: float = 60.0,
 ) -> str | None:
     """
     Entry point used by all pipeline modules. Delegates to `_backend`, which tests swap for a fake
     (modules import `call_llm` by name, so patching this module attribute alone would not reach them).
+    `model=None` means the configured default model.
 
     If a response cache is active (see `use_response_cache`), an identical earlier call is answered from it.
     That is how a resumed pipeline run skips the LLM calls it already made.
@@ -136,7 +179,7 @@ def call_llm(
     cache = _response_cache.get()
     slot = None
     if cache is not None:
-        slot, hit = cache.lookup(call_key(messages, model or DEFAULT_MODEL, temperature))
+        slot, hit = cache.lookup(call_key(messages, model or default_model(), temperature))
         if hit is not None:
             return hit
     response = _backend(messages, model=model, temperature=temperature,
@@ -195,61 +238,6 @@ def use_response_cache(store):
     finally:
         _response_cache.reset(token)
 
-
-def _openai_call(
-        messages: List[Dict[str, str]], model: str | None = None, temperature: float = 0.2, max_retries: int = 6, rate_limit_backoff: float = 60.0,
-) -> str | None:
-    """
-    Stable LLM call wrapper with retries and rate limit handling.
-    Automatically routes models in OPENROUTER_MODELS through OpenRouter.
-    - General errors: exponential backoff (2^attempt seconds)
-    - RateLimitError: waits `rate_limit_backoff` seconds before retrying
-    Set INTER_CALL_DELAY env var to add a fixed pause between every call.
-    Returns raw string output.
-    """
-    if INTER_CALL_DELAY > 0:
-        time.sleep(INTER_CALL_DELAY)
-
-    selected_client, resolved_model = _client_for_model(model or DEFAULT_MODEL)
-
-    extra = {}
-    if REASONING_EFFORT and resolved_model.startswith("openai/gpt-oss") and selected_client is _client and GROQ_API_KEY:
-        extra["reasoning_effort"] = REASONING_EFFORT
-
-    for attempt in range(max_retries):
-        try:
-            response = selected_client.chat.completions.create(
-                model=resolved_model,
-                messages=messages,
-                temperature=temperature,
-                **extra,
-            )
-            if not response.choices:
-                raise Exception("No choices returned.")
-
-            content = response.choices[0].message.content
-            if not content:
-                raise Exception("Empty response content.")
-
-            return content.strip()
-
-        except RateLimitError as e:
-            if attempt < max_retries - 1:
-                logger.warning(f"[RATE LIMIT] Hit rate limit. Waiting {rate_limit_backoff}s before retry ({attempt+1}/{max_retries})...")
-                time.sleep(rate_limit_backoff)
-                rate_limit_backoff = min(rate_limit_backoff * 1.5, 600)
-            else:
-                raise LLMError(f"Rate limit persisted after {max_retries} attempts: {e}") from e
-
-        except Exception as e:
-            if attempt < max_retries - 1:
-                wait = 2 ** attempt
-                logger.warning(f"[LLM ERROR] Attempt {attempt+1} failed. Retrying in {wait}s...")
-                time.sleep(wait)
-            else:
-                raise LLMError(f"LLM call failed after {max_retries} attempts: {e}") from e
-
-    return None
 
 # Swappable in tests (see tests/conftest.py)
 _backend = _openai_call

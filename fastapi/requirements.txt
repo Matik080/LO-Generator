@@ -9,8 +9,9 @@ rq
 fakeredis  # tests only: Redis in memory (small, pure Python)
 pytest     # tests only: the image runs as a non-root user, so pytest is installed here
 
-# Data validation
+# Data validation and configuration (LOGEN_* environment variables)
 pydantic
+pydantic-settings
 jsonschema  # checks the units/report output against schemas/*.json
 
 # HTML cleaning of hints[].url

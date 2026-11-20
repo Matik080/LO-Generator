@@ -12,27 +12,19 @@ so a resumed run reuses the saved answers just like a sequential one.
 
 import contextvars
 import logging
-import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Optional, Sequence, TypeVar
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_MAX_CONCURRENCY = 4
 
 T = TypeVar("T")
 R = TypeVar("R")
 
 
 def max_concurrency() -> int:
-    """LOGEN_LLM_MAX_CONCURRENCY (default 4); 1 = one batch after another, as before."""
-    value = os.getenv("LOGEN_LLM_MAX_CONCURRENCY", "")
-    try:
-        return max(1, int(value))
-    except ValueError:
-        if value:
-            logger.warning(f"LOGEN_LLM_MAX_CONCURRENCY={value!r} is not a number; using {DEFAULT_MAX_CONCURRENCY}")
-        return DEFAULT_MAX_CONCURRENCY
+    """LOGEN_LLM_MAX_CONCURRENCY (default 4, lo_pipeline/config.py); 1 = one batch after another."""
+    from lo_pipeline.config import get_settings
+    return get_settings().llm_max_concurrency
 
 
 def map_batches(func: Callable[[T], R], batches: Sequence[T],
