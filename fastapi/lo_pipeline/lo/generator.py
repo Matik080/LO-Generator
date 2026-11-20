@@ -186,19 +186,20 @@ def generate_learning_object(unit: Dict[str, Any]) -> Dict[str, Any]:
     return json.loads(response)
 
 
-def generate_learning_object_batch(units, batch_size=5):
+def generate_learning_object_batch(units, batch_size=5, progress=None):
     """
     Generate learning objects for multiple atomic units in a single API call.
     Returns a list with exactly one entry per input unit, in the same order: the unit's learning object,
     or None if none came back for it (failed batch, or a result that couldn't be matched to the unit).
     Callers must skip the None entries; pairing results with units by position is then always correct.
+    Batches run in parallel (llm/parallel.py); `progress(done, total)` after each batch (optional).
     """
-    results = []
+    from lo_pipeline.llm.parallel import chunks, map_batches
 
-    # Process in batches
-    for batch_start in range(0, len(units), batch_size):
-        batch = units[batch_start:batch_start + batch_size]
-
+    def one_batch(numbered):
+        # One LLM call for one batch of units -> one entry (LO or None) per unit. Same indentation
+        # as the former loop body, so the prompt text (and the recorded test answers) is unchanged.
+        batch_start, batch = numbered
         # Build the batch prompt
         units_text = ""
         for idx, unit in enumerate(batch):
@@ -271,8 +272,7 @@ def generate_learning_object_batch(units, batch_size=5):
 
         if not response:
             logger.warning(f"[Generation] Empty response for batch starting at {batch_start}, skipping...")
-            results.extend([None] * len(batch))
-            continue
+            return [None] * len(batch)
 
         response = re.sub(r"^```(?:json)?\s*", "", response.strip())
         response = re.sub(r"\s*```$", "", response).strip()
@@ -281,14 +281,16 @@ def generate_learning_object_batch(units, batch_size=5):
             batch_results = json.loads(response)
             if not isinstance(batch_results, list):
                 logger.warning(f"[Generation] Expected list, got {type(batch_results)}, skipping batch...")
-                results.extend([None] * len(batch))
-                continue
-            results.extend(_align_to_units(batch, batch_results))
+                return [None] * len(batch)
+            return _align_to_units(batch, batch_results)
         except json.JSONDecodeError as e:
             logger.warning(f"[Generation] JSON parse error in batch: {e}, skipping...")
-            results.extend([None] * len(batch))
-            continue
+            return [None] * len(batch)
 
+    numbered = [(i * batch_size, batch) for i, batch in enumerate(chunks(units, batch_size))]
+    results = []
+    for batch_results in map_batches(one_batch, numbered, progress):
+        results.extend(batch_results)
     return results
 
 
@@ -425,18 +427,20 @@ def generate_mc_variants_batch(learning_objects, batch_size=5, progress=None):
     Skips algorithm_step and example types since code answers
     don't work well as multiple choice.
     `progress(done, total)` is called after each LLM batch (optional).
+    Batches run in parallel (llm/parallel.py); each batch changes only its own LOs.
     """
-    results = []
+    from lo_pipeline.llm.parallel import chunks, map_batches
+
     eligible = [(i, lo) for i, lo in enumerate(learning_objects)
                 if lo.get("type") in MC_ELIGIBLE_TYPES]
-    total_batches = -(-len(eligible) // batch_size)
 
     logger.info(f"[MC] Generating variants for {len(eligible)} eligible LOs "
           f"({len(learning_objects) - len(eligible)} skipped as code types)...")
 
-    for batch_start in range(0, len(eligible), batch_size):
-        batch = eligible[batch_start:batch_start + batch_size]
-
+    def one_batch(numbered):
+        # -> how many LOs of this batch got MC options
+        batch_start, batch = numbered
+        updated = 0
         los_text = ""
         for idx, (_, lo) in enumerate(batch):
             los_text += f"""
@@ -479,8 +483,6 @@ Return JSON array only. No markdown. No explanation.
 
         logger.info(f"[MC] Processing batch {batch_start // batch_size + 1} ({len(batch)} LOs)...")
         response = call_llm(messages, temperature=0.4)
-        if progress:
-            progress(batch_start // batch_size + 1, total_batches)
         response = re.sub(r"^```(?:json)?\s*", "", response.strip())
         response = re.sub(r"\s*```$", "", response).strip()
 
@@ -496,12 +498,14 @@ Return JSON array only. No markdown. No explanation.
                     options = shuffle_options(lo, distractors)
                     lo["mc_options"] = options
                     lo["mc_correct_index"] = options.index(lo["answer"])
-                results.append(original_idx)
+                updated += 1
         except json.JSONDecodeError as e:
             logger.warning(f"[MC] JSON parse error: {e}, skipping batch...")
-            continue
+        return updated
 
-    logger.info(f"[MC] Done. {len(results)} LOs got MC variants.")
+    numbered = [(i * batch_size, batch) for i, batch in enumerate(chunks(eligible, batch_size))]
+    updated = sum(map_batches(one_batch, numbered, progress))
+    logger.info(f"[MC] Done. {updated} LOs got MC variants.")
     return learning_objects
 
 # if __name__ == "__main__":

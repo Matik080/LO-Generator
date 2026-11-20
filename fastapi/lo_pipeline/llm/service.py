@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import threading
 import time
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -163,15 +164,18 @@ class _RunCache:
     def __init__(self, store):
         self.store = store  # object with get(slot) -> str | None and put(slot, response)
         self.seen = {}
+        self.lock = threading.Lock()  # batches run in parallel threads (llm/parallel.py)
 
     def lookup(self, key):
-        n = self.seen.get(key, 0)
-        self.seen[key] = n + 1
-        slot = f"{key}#{n}"
-        return slot, self.store.get(slot)
+        with self.lock:
+            n = self.seen.get(key, 0)
+            self.seen[key] = n + 1
+            slot = f"{key}#{n}"
+            return slot, self.store.get(slot)
 
     def save(self, slot, response):
-        self.store.put(slot, response)
+        with self.lock:
+            self.store.put(slot, response)
 
 
 # Response cache of the current pipeline run. A ContextVar, not a global, so concurrent runs in different

@@ -26,14 +26,9 @@ def generate_learning_objects(units: list, batch_size: int = 5, progress=None) -
     """Generates one LO per unit in batches and post-processes each. `progress(done, total)` is optional."""
     from lo_pipeline.lo.generator import generate_learning_object_batch
 
-    los = []
-    total_batches = -(-len(units) // batch_size)
-    for i, batch_start in enumerate(range(0, len(units), batch_size), 1):
-        batch = units[batch_start:batch_start + batch_size]
-        for unit, lo in zip(batch, generate_learning_object_batch(batch, batch_size=batch_size)):
-            if lo is not None:  # None: no LO came back for this unit
-                los.append(postprocess_lo(lo, unit))
-        logger.info(f"[Generate] Batch {i}/{total_batches} done -- {len(los)} LOs so far.")
-        if progress:
-            progress(i, total_batches)
+    # all batches in one call, so they run in parallel (llm/parallel.py); one entry per unit, in order
+    generated = generate_learning_object_batch(units, batch_size=batch_size, progress=progress)
+    los = [postprocess_lo(lo, unit) for unit, lo in zip(units, generated)
+           if lo is not None]  # None: no LO came back for this unit
+    logger.info(f"[Generate] {len(los)} LOs from {len(units)} units.")
     return los

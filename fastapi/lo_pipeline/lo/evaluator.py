@@ -59,15 +59,17 @@ def eval_batch_size(model):
 
 
 def evaluate_learning_objects_batch(learning_objects, model, batch_size=None, progress=None):
-    """`progress()` (no arguments) is called after each LLM batch (optional)."""
+    """`progress()` (no arguments) is called after each LLM batch (optional).
+    Batches run in parallel (llm/parallel.py); evaluations come back in the order of the LOs."""
+    from lo_pipeline.llm.parallel import chunks, map_batches
+
     if batch_size is None:
         batch_size = eval_batch_size(model)
 
-    all_evaluations = []
-
-    for batch_start in range(0, len(learning_objects), batch_size):
-        batch = learning_objects[batch_start:batch_start + batch_size]
-
+    def one_batch(numbered):
+        # -> the evaluations of this batch ([] when the answer cannot be read)
+        batch_start, batch = numbered
+        evaluations = []
         los_text = ""
         for idx, lo in enumerate(batch):
             has_hint = bool(lo.get("hint", "").strip())
@@ -220,8 +222,6 @@ Return JSON array only. No markdown. No explanation.
             import time
             time.sleep(delay)
         response = call_llm(messages, model=model, temperature=0.0)
-        if progress:
-            progress()
 
         response = re.sub(r"^```(?:json)?\s*", "", response.strip())
         response = re.sub(r"\s*```$", "", response).strip()
@@ -250,18 +250,21 @@ Return JSON array only. No markdown. No explanation.
                     logger.info(f"[Eval] Recovered {len(batch_results)} / {len(batch)} results.")
                 else:
                     logger.warning(f"[Eval] Recovery failed, skipping batch.")
-                    continue
+                    return evaluations
 
         if not isinstance(batch_results, list):
             logger.warning(f"[Eval] Expected list, got {type(batch_results)}, skipping batch...")
-            continue
+            return evaluations
 
         for result, lo in zip(batch_results, batch):
             result["model"] = model
             result["lo_id"] = lo["id"]
-            all_evaluations.append(result)
+            evaluations.append(result)
+        return evaluations
 
-    return all_evaluations
+    numbered = [(i * batch_size, batch) for i, batch in enumerate(chunks(learning_objects, batch_size))]
+    batch_progress = (lambda done, total: progress()) if progress else None
+    return [e for evaluations in map_batches(one_batch, numbered, batch_progress) for e in evaluations]
 
 
 if __name__ == "__main__":

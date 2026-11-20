@@ -115,6 +115,7 @@ The first build takes several minutes (PyTorch, MiniLM, spaCy and NLTK are downl
 |---|---|---|
 | `GROQ_API_KEY` (or `OPENROUTER_API_KEY`, `GITHUB_TOKEN`, `OPENAI_API_KEY`) | - | LLM provider key |
 | `GEN_MODEL`, `INTER_CALL_DELAY`, `REASONING_EFFORT` | see `.env.example` | generation model, pause between LLM calls, GPT-OSS reasoning effort |
+| `LOGEN_LLM_MAX_CONCURRENCY` | `4` | independent LLM batches sent at the same time within one job; `1` = one after another |
 | `LOGEN_REDIS_PASSWORD` | - (required) | Redis password, letters and digits only |
 | `LOGEN_API_KEYS` | empty | comma-separated keys accepted in `X-API-Key`; empty = no key needed (local only) |
 | `LOGEN_MAX_FILES` / `LOGEN_MAX_UPLOAD_MB` | `10` / `50` | files per job / MB per file |

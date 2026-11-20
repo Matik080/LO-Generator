@@ -1,3 +1,4 @@
+import threading
 from typing import List
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -7,26 +8,30 @@ logger = logging.getLogger(__name__)
 
 # Loading once at module level, slow to load, fast to use
 _model = None
+# LLM batches run in parallel threads (llm/parallel.py): the model is loaded once and used by one
+# thread at a time (encoding is fast and torch already uses several cores for it)
+_lock = threading.RLock()
 
 def get_model() -> SentenceTransformer:
     global _model
-    if _model is None:
-        logger.info("[Embeddings] Loading model...")
-        _model = SentenceTransformer("all-MiniLM-L6-v2")
-        logger.info("[Embeddings] Model loaded.")
-    return _model
+    with _lock:
+        if _model is None:
+            logger.info("[Embeddings] Loading model...")
+            _model = SentenceTransformer("all-MiniLM-L6-v2")
+            logger.info("[Embeddings] Model loaded.")
+        return _model
 
 def get_embedding(text: str) -> np.ndarray:
-    model = get_model()
-    return model.encode(text, convert_to_numpy=True)
+    with _lock:
+        return get_model().encode(text, convert_to_numpy=True)
 
 def get_embeddings_batch(texts: List[str]) -> List[np.ndarray]:
     """
     More efficient than calling get_embedding in a loop.
     Use this when you have multiple texts to embed at once.
     """
-    model = get_model()
-    return model.encode(texts, convert_to_numpy=True)
+    with _lock:
+        return get_model().encode(texts, convert_to_numpy=True)
 
 def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
     """

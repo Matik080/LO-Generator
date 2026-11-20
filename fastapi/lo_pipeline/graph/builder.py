@@ -307,9 +307,11 @@ def verify_prerequisites_batched(candidate_edges, learning_objects, batch_size=1
     """
     Takes candidate edges from the layered approach and verifies each one with an LLM. Returns only confirmed prerequisite edges.
     `progress(done, total)` is called after each LLM batch (optional).
+    Batches run in parallel (llm/parallel.py); edges come back in the order of the candidates.
     """
+    from lo_pipeline.llm.parallel import chunks, map_batches
+
     lo_map = {lo["id"]: lo for lo in learning_objects}
-    verified_edges = []
 
     # Convert edge list to list of (lo_a, lo_b) pairs
     pairs = []
@@ -322,9 +324,10 @@ def verify_prerequisites_batched(candidate_edges, learning_objects, batch_size=1
     logger.info(f"[Graph] Verifying {len(pairs)} candidate edges with LLM...")
     logger.info(f"[Graph] Will use ~{-(-len(pairs) // batch_size)} API calls.")
 
-    for batch_start in range(0, len(pairs), batch_size):
-        batch = pairs[batch_start:batch_start + batch_size]
-
+    def one_batch(numbered):
+        # -> the confirmed edges of this batch
+        batch_start, batch = numbered
+        confirmed = []
         pairs_text = ""
         for idx, (lo_a, lo_b) in enumerate(batch):
             pairs_text += f"""
@@ -370,8 +373,6 @@ Return JSON array only. No markdown. No explanation.
 
         logger.info(f"[Graph] Verifying batch {batch_start // batch_size + 1} ({len(batch)} pairs)...")
         response = call_llm(messages, temperature=0.0)
-        if progress:
-            progress(batch_start // batch_size + 1, -(-len(pairs) // batch_size))
 
         response = re.sub(r"^```(?:json)?\s*", "", response.strip())
         response = re.sub(r"\s*```$", "", response).strip()
@@ -384,12 +385,14 @@ Return JSON array only. No markdown. No explanation.
                     continue
                 if result.get("is_prerequisite") and result.get("confidence") in ["high", "medium"]:
                     lo_a, lo_b = batch[pair_idx]
-                    verified_edges.append((lo_a["id"], lo_b["id"]))
+                    confirmed.append((lo_a["id"], lo_b["id"]))
                     logger.debug(f"[Graph] CONFIRMED: {lo_a['question'][:45]} -> {lo_b['question'][:45]}")
         except json.JSONDecodeError as e:
             logger.warning(f"[Graph] JSON parse error in batch: {e}, skipping...")
-            continue
+        return confirmed
 
+    numbered = [(i * batch_size, batch) for i, batch in enumerate(chunks(pairs, batch_size))]
+    verified_edges = [edge for edges in map_batches(one_batch, numbered, progress) for edge in edges]
     logger.info(f"[Graph] Verified {len(verified_edges)} / {len(pairs)} candidate edges.")
     return verified_edges
 

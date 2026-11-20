@@ -128,16 +128,14 @@ def enrich_learning_objects(learning_objects: list, batch_size: int = 10, progre
     Batches LLM calls for efficiency.
     `progress(done, total)` is called after each LLM batch (optional).
     """
+    from lo_pipeline.llm.parallel import chunks, map_batches
+
     total = len(learning_objects)
     logger.info(f"[Enrich] Generating names and time estimates for {total} LOs...")
 
-    for batch_start in range(0, total, batch_size):
-        batch = learning_objects[batch_start:batch_start + batch_size]
-        logger.info(f"[Enrich] Batch {batch_start // batch_size + 1} ({len(batch)} LOs)...")
-        enriched = _enrich_batch(batch)
-        if progress:
-            progress(batch_start // batch_size + 1, -(-total // batch_size))
-
+    batches = chunks(learning_objects, batch_size)
+    # batches run in parallel (llm/parallel.py); results come back in batch order
+    for batch, enriched in zip(batches, map_batches(_enrich_batch, batches, progress)):
         for lo, meta in zip(batch, enriched):
             lo["generated_name"] = meta.get("name", "Learning Object")
             lo["time_to_handle"] = meta.get("time_to_handle", 90)

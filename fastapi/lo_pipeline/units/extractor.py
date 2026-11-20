@@ -90,41 +90,47 @@ def extract_atomic_units_batch(sections, batch_size=3, progress=None, stats=None
     If the LLM's answer for a batch is not a valid JSON array (e.g. cut off because it got too long), the
     batch is asked once more; if that fails too, each section is extracted on its own (shorter answers).
     A section that still fails is skipped with a warning instead of stopping the whole run.
+    Batches run in parallel (llm/parallel.py); the units come back in the order of the sections.
     """
+    from lo_pipeline.llm.parallel import chunks, map_batches
     from lo_pipeline.units.sources import assign_sections
 
     stats = stats if stats is not None else {}
-    all_units = []
-    total_batches = -(-len(sections) // batch_size)
 
-    for batch_start in range(0, len(sections), batch_size):
-        batch = sections[batch_start:batch_start + batch_size]
-        label = f"{batch_start + 1}-{min(batch_start + batch_size, len(sections))}"
+    def one_batch(numbered):
+        batch_start, batch = numbered
+        batch_stats = {}  # own counts per batch (batches run in parallel), added up below
+        label = f"{batch_start + 1}-{batch_start + len(batch)}"
         logger.info(f"[Extraction] Processing sections {label}...")
 
         units = _extract_units_once(batch)
-        if progress:
-            progress(batch_start // batch_size + 1, total_batches)
         if units is None:
             logger.warning(f"[Extraction] Invalid answer for sections {label}, asking again...")
             units = _extract_units_once(batch)
 
         if units is not None:
-            all_units.extend(assign_sections(units, batch, stats))
             logger.info(f"[Extraction] Got {len(units)} units from this batch.")
-            continue
+            return assign_sections(units, batch, batch_stats), batch_stats
 
         # Still invalid: extract section by section, so each answer is shorter
         logger.warning(f"[Extraction] Sections {label} still invalid; extracting them one by one.")
+        batch_units = []
         for section in batch:
             single = _extract_units_once([section])
             if single is None:
                 page = section.get("page") if isinstance(section, dict) else None
                 logger.warning(f"[Extraction] Skipping section (page {page}): no valid answer from the LLM.")
-                stats["sections_failed"] = stats.get("sections_failed", 0) + 1
+                batch_stats["sections_failed"] = batch_stats.get("sections_failed", 0) + 1
                 continue
-            all_units.extend(assign_sections(single, [section], stats))
+            batch_units.extend(assign_sections(single, [section], batch_stats))
+        return batch_units, batch_stats
 
+    numbered = [(i * batch_size, batch) for i, batch in enumerate(chunks(sections, batch_size))]
+    all_units = []
+    for batch_units, batch_stats in map_batches(one_batch, numbered, progress):
+        all_units.extend(batch_units)
+        for key, count in batch_stats.items():
+            stats[key] = stats.get(key, 0) + count
     return all_units
 
 
