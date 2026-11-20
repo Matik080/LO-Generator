@@ -87,12 +87,16 @@ def _links(job_id: str) -> JobLinks:
 async def create_job(
     backend: Backend,
     settings: Settings,
-    files: Annotated[list[UploadFile], File(description="Documents to process.")] = [],  # noqa: B006
-    files_brackets: Annotated[list[UploadFile], File(alias="files[]", include_in_schema=False)] = [],  # noqa: B006
+    # format "binary" makes the /docs page show a file picker for each item (FastAPI's
+    # default "contentMediaType" shows only a text box for a list of files)
+    files: Annotated[list[UploadFile], File(
+        description="Documents to process.",
+        json_schema_extra={"items": {"type": "string", "format": "binary"}},
+    )] = [],  # noqa: B006
     options: Annotated[Optional[str], Form(description="JSON object with the job options.")] = None,
 ):
     job_options = parse_options(options, settings)
-    uploads = await read_uploads(list(files) + list(files_brackets), settings)
+    uploads = await read_uploads(list(files), settings)
     created = backend.create(job_options, uploads)
     body = CreateJobResponse(job_id=created.status.job_id, status=created.status.status,
                              replayed=created.replayed, links=_links(created.status.job_id))

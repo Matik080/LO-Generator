@@ -188,10 +188,18 @@ def test_unsupported_files(client, name, content):
                  415, "unsupported_file")
 
 
-def test_accepts_pptx_and_html_and_files_with_brackets(client):
-    files = [("files[]", ("slides.pptx", b"PK\x03\x04 zip", "application/zip")),
-             ("files[]", ("page.html", "<p>Ahoj</p>".encode("utf-8"), "text/html"))]
+def test_accepts_pptx_and_html(client):
+    files = [("files", ("slides.pptx", b"PK\x03\x04 zip", "application/zip")),
+             ("files", ("page.html", "<p>Ahoj</p>".encode("utf-8"), "text/html"))]
     assert post_job(client, files=files).status_code == 202
+
+
+def test_docs_form_has_one_file_field(client):
+    """The /docs page builds its form from this; a second file field made Swagger send 422."""
+    schemas = client.get("/openapi.json").json()["components"]["schemas"]
+    body = next(schema for name, schema in schemas.items() if name.startswith("Body_create_job"))
+    assert set(body["properties"]) == {"files", "options"}
+    assert body["properties"]["files"]["items"]["format"] == "binary"  # file picker, not a text box
 
 
 def test_file_limits(clock):
