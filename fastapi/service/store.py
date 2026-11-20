@@ -6,6 +6,7 @@ Job folder  <data_dir>/jobs/{id}/
     checkpoint/     FileCheckpoint of run_pipeline (resume after a crash or retry)
     result.json     the `units` result   } written when the job completes
     report.json     the report           }
+    pipeline_result.json   everything run_pipeline returned (diagnostics, not in the API)
 
 Redis (state that changes while the job runs; RQ only carries the job id):
     logen:job:{id}         hash: status, stage, progress, error, attempts, cancel_requested,
@@ -221,6 +222,10 @@ class JobStore:
     def save_output(self, job_id: str, units: dict, report: dict) -> None:
         _write_json_atomic(self.job_dir(job_id) / "result.json", units)
         _write_json_atomic(self.job_dir(job_id) / "report.json", report)
+
+    def save_pipeline_result(self, job_id: str, result: dict) -> None:
+        """pipeline_result.json: the whole run_pipeline result (same as the CLI's output file)."""
+        _write_json_atomic(self.job_dir(job_id) / "pipeline_result.json", result)
 
     def read_output(self, job_id: str, name: str) -> dict:
         """name: 'result' or 'report'."""

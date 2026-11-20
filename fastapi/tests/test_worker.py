@@ -72,6 +72,8 @@ def test_job_completes_with_result_and_report(store, fake_llm, monkeypatch):
     stages = list(dict.fromkeys(u["stage"] for u in updates if u.get("stage")))
     assert stages == ["extract", "units", "learning_objects", "lo_evaluation", "graph", "questions", "output"]
     assert not store.checkpoint_dir(job_id).exists()  # cleared after success
+    full = store.read_output(job_id, "pipeline_result")
+    assert full["learning_objects"] and "final" in full["quality"]
 
 
 def test_retry_continues_from_checkpoint(store, fake_llm, monkeypatch):

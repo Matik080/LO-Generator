@@ -102,6 +102,9 @@ def run_job(store: JobStore, job_id: str, pipeline: Callable = _default_pipeline
         if store.cancel_requested(job_id):
             raise JobCancelled()  # DELETE came after the last progress report: no result
         store.save_output(job_id, units, report)
+        # everything run_pipeline returned (LOs, graphs, full quality summary per model): not part of
+        # the API, kept in the job folder for diagnostics and quality comparisons (baseline-quality.md)
+        store.save_pipeline_result(job_id, result)
     except JobCancelled:
         logger.info(f"[Worker] Job {job_id} cancelled during '{current['stage']}'.")
         store.update(job_id, status="cancelled")
