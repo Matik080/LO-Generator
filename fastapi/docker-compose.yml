@@ -1,0 +1,65 @@
+# LO-Generator (Mlynček B) as a service: /v1 API + worker + Redis (sprint task 6).
+#
+#   cd fastapi
+#   docker compose up -d --build                                    # internal network only
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d   # + http://localhost:8000
+#   docker compose -f docker-compose.yml -f docker-compose.eceh.yml up -d    # + ECEH's network
+#
+# Everything is configured in fastapi/.env (see .env.example); LOGEN_REDIS_PASSWORD is required.
+
+name: lo-generator
+
+x-app: &app
+  image: lo-generator-fastapi:latest
+  build: .
+  env_file: .env
+  environment:
+    # fixed for this setup (they override the same names in .env)
+    LOGEN_BACKEND: redis
+    LOGEN_REDIS_URL: redis://:${LOGEN_REDIS_PASSWORD:?Set LOGEN_REDIS_PASSWORD in fastapi/.env}@redis:6379/0
+    LOGEN_DATA_DIR: /data
+  volumes:
+    - data:/data
+  depends_on:
+    redis:
+      condition: service_healthy
+  networks: [logen]
+  restart: unless-stopped
+
+services:
+  api:
+    <<: *app
+    expose: ["8000"]   # only inside the Docker networks, no port on the host
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "service.worker"]   # recovers unfinished jobs, then processes the queue
+
+  redis:
+    image: redis:7-alpine
+    # appendonly: the queue and job states survive a restart; requirepass: no access without the password
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$LOGEN_REDIS_PASSWORD\""]
+    environment:
+      LOGEN_REDIS_PASSWORD: ${LOGEN_REDIS_PASSWORD:?Set LOGEN_REDIS_PASSWORD in fastapi/.env}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$LOGEN_REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - redis:/data
+    networks: [logen]
+    restart: unless-stopped
+
+networks:
+  logen:
+
+volumes:
+  data:    # job folders: /data/jobs/{id}/
+  redis:   # Redis append-only file

@@ -12,7 +12,8 @@ Built as part of a bachelor's thesis at FIIT STU Bratislava.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [Running with Docker](#running-with-docker)
+- [Running as a service (/v1 API)](#running-as-a-service-v1-api)
+- [Development UI with Docker](#development-ui-with-docker)
 - [Running without Docker](#running-without-docker)
 - [Using the Web UI](#using-the-web-ui)
 - [API Reference](#api-reference)
@@ -59,7 +60,7 @@ cd LO-Generator
 Copy the environment template and fill in your API keys:
 
 ```bash
-cp env_template fastapi/.env
+cp fastapi/.env.example fastapi/.env
 # then edit fastapi/.env with your keys
 ```
 
@@ -87,33 +88,84 @@ You only need to fill in the keys you have. The pipeline selects the first avail
 
 ---
 
-## Running with Docker
+## Running as a service (/v1 API)
 
-**Build and start:**
-
-```bash
-docker compose up --build
-```
-
-Open `http://localhost:8000` in your browser. The web UI loads directly.
-
-Input files and outputs are persisted on your host machine via volume mounts — they survive container restarts:
-- `fastapi/input/` - uploaded source files
-- `fastapi/output/` - generated outputs (`atomic_units.json`, `learning_objects.json`, `echub_export.json`)
-
-**Stop:**
+The service for the ECEH platform (Mlynček B): Laravel uploads documents to `/v1/jobs`, a worker processes them in the background and the result comes back in the `units` format. Three containers: `api`, `worker` and `redis`. Everything runs from the `fastapi/` folder:
 
 ```bash
-docker compose down
+cd fastapi
+cp .env.example .env          # fill in GROQ_API_KEY, LOGEN_REDIS_PASSWORD and LOGEN_API_KEYS
+docker compose up -d --build
+docker compose ps             # api becomes "healthy" within about 20 s
 ```
 
-**Rebuild after code changes:**
+The first build takes several minutes (PyTorch, MiniLM, spaCy and NLTK are downloaded into the image, so the service needs no internet when it starts; it still needs it for the LLM provider). Containers run as a non-root user; Redis has a password and keeps its data on disk (`appendonly`), so jobs survive a restart.
+
+**Reaching the API.** By default the API port is **not** published on the host, only inside Docker networks. Two optional files add access:
+
+| Command | API reachable at |
+|---|---|
+| `docker compose up -d` | only inside the stack's network |
+| `docker compose -f docker-compose.yml -f docker-compose.local.yml up -d` | `http://localhost:8000` (this computer only); `/docs` shows all endpoints |
+| `docker compose -f docker-compose.yml -f docker-compose.eceh.yml up -d` | `http://lo-generator:8000` from ECEH's Docker network (`LOGEN_ECEH_NETWORK`, default `eceh`) |
+
+**Environment variables** (`fastapi/.env`, all listed in `.env.example`):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `GROQ_API_KEY` (or `OPENROUTER_API_KEY`, `GITHUB_TOKEN`, `OPENAI_API_KEY`) | - | LLM provider key |
+| `GEN_MODEL`, `INTER_CALL_DELAY`, `REASONING_EFFORT` | see `.env.example` | generation model, pause between LLM calls, GPT-OSS reasoning effort |
+| `LOGEN_REDIS_PASSWORD` | - (required) | Redis password, letters and digits only |
+| `LOGEN_API_KEYS` | empty | comma-separated keys accepted in `X-API-Key`; empty = no key needed (local only) |
+| `LOGEN_MAX_FILES` / `LOGEN_MAX_UPLOAD_MB` | `10` / `50` | files per job / MB per file |
+| `LOGEN_MAX_ACTIVE_JOBS` | `10` | queued + running jobs; more get `429 too_many_jobs` |
+| `LOGEN_JOB_TIMEOUT_S` | `21600` | a longer job fails with `internal_error` (`reason: timeout`) |
+| `LOGEN_DOCS_ENABLED` | `true` | `/docs` and `/openapi.json` |
+| `LOGEN_ECEH_NETWORK` | `eceh` | ECEH's Docker network (`docker-compose.eceh.yml`) |
+
+`LOGEN_BACKEND`, `LOGEN_REDIS_URL` and `LOGEN_DATA_DIR` are set by `docker-compose.yml`. Without compose, `LOGEN_BACKEND=mock` (the default) runs a mock with the same endpoints and example answers.
+
+**Example with curl** (with `docker-compose.local.yml`; from ECEH's network use `http://lo-generator:8000`):
 
 ```bash
-docker compose up --build --force-recreate
+# 1. create a job: files + options (all options are optional)
+curl -s -H "X-API-Key: $KEY" \
+  -F "files=@modul1.pdf" \
+  -F 'options={"external_ref": "gen-1", "questions": {"hints": 2}}' \
+  http://localhost:8000/v1/jobs
+# -> 202 {"job_id": "3f6b…", "status": "queued", ...}
+
+# 2. state, stage and progress (0-1); repeat until "completed" or "failed"
+curl -s -H "X-API-Key: $KEY" http://localhost:8000/v1/jobs/3f6b…
+
+# 3. result in the units format, and the report (LOs, sources, quality, warnings)
+curl -s -H "X-API-Key: $KEY" http://localhost:8000/v1/jobs/3f6b…/result
+curl -s -H "X-API-Key: $KEY" http://localhost:8000/v1/jobs/3f6b…/report
 ```
 
-> **Note:** The first build takes several minutes - it installs PyTorch (CPU) and downloads the `all-MiniLM-L6-v2` sentence embedding model and spaCy's `en_core_web_sm`. Subsequent builds use the Docker layer cache and are much faster.
+Other endpoints: `GET /v1/jobs?external_ref=gen-1` (find a job), `DELETE /v1/jobs/{id}` (cancel a running job, delete a finished one), `POST /v1/jobs/{id}/retry` (run a failed job again within 24 h, it continues where it stopped), `GET /v1/schema/{lesson|report|options}`, `GET /v1/info`, `GET /health` (no key). Every error has the form `{"error": {"code", "message", "details"}}`.
+
+**Logs and stopping:**
+
+```bash
+docker compose logs -f worker      # progress of the jobs
+docker compose down                # stop (jobs and Redis data are kept in volumes)
+docker compose down -v             # stop and delete all jobs
+```
+
+---
+
+## Development UI with Docker
+
+The older step-by-step web UI (`main.py`, `pipeline_ui.html`) is not part of the service contract but still works. It runs from the same image:
+
+```bash
+cd fastapi
+docker compose build
+docker compose -f docker-compose.yml -f docker-compose.local.yml --profile dev-ui up -d
+```
+
+Open `http://localhost:8001`. Input files and outputs are kept on your host in `fastapi/input/` and `fastapi/output/`.
 
 ---
 
@@ -130,7 +182,7 @@ python -c "import nltk; nltk.download('stopwords')"
 Copy your environment file:
 
 ```bash
-cp ../env_template .env
+cp .env.example .env
 # edit .env with your keys
 ```
 
@@ -146,7 +198,7 @@ Then open `http://localhost:8000` in your browser.
 
 ## Using the Web UI
 
-Open `http://localhost:8000` after starting the container. The UI walks through the pipeline in order:
+Open `http://localhost:8001` after starting the `dev-ui` profile (or `http://localhost:8000` without Docker). The UI walks through the pipeline in order:
 
 1. **Upload Sources** - drag and drop or browse for PDF, HTML, or PPTX files. You can also load an existing `learning_objects.json` here to skip straight to View & Edit.
 2. **Extract Units** - the LLM extracts atomic knowledge units from each section of every uploaded file, then deduplicates them semantically
@@ -161,7 +213,7 @@ Open `http://localhost:8000` after starting the container. The UI walks through 
 
 ## API Reference
 
-The API is documented interactively at `http://localhost:8000/docs` (Swagger UI) once the server is running.
+These are the endpoints of the development UI (`main.py`), not the `/v1` service API described above. They are documented interactively at `/docs` of the development UI.
 
 ### Endpoints
 
@@ -231,7 +283,7 @@ Tests replay recorded LLM answers, so they need no API key and make no LLM calls
 cd fastapi
 docker compose build
 docker run --rm -v "$(pwd):/app" -e PYTHONHASHSEED=0 -w /app lo-generator-fastapi \
-  sh -c "pip install -q pytest && python -m pytest -q tests"
+  python -m pytest -q tests
 ```
 
 `PYTHONHASHSEED=0` keeps the prompt order stable. After a deliberate change to prompts or pipeline logic, re-record the answers with the real LLM (`-e LLM_MODE=record`, needs keys in `fastapi/.env`). This also refreshes the snapshot in `tests/fixtures/snapshots/`; review its diff before committing.
@@ -242,10 +294,12 @@ docker run --rm -v "$(pwd):/app" -e PYTHONHASHSEED=0 -w /app lo-generator-fastap
 
 ```
 .
-├── docker-compose.yml                  <- defines the fastapi service, port mapping, volume mounts, and env file
-├── env_template                        <- copy to fastapi/.env and fill in your API keys
 └── fastapi/
-    ├── .env                            <- your API keys (not committed to the repo)
+    ├── .env                            <- your API keys and service settings (not committed to the repo)
+    ├── .env.example                    <- copy to .env and fill in
+    ├── docker-compose.yml              <- the service: api + worker + redis (internal network only)
+    ├── docker-compose.local.yml        <- adds http://localhost:8000 and the dev UI profile
+    ├── docker-compose.eceh.yml         <- joins ECEH's Docker network (deployment)
     ├── Dockerfile                      <- builds the Python 3.11 image, installs dependencies, downloads models
     ├── requirements.txt                <- all Python dependencies
     ├── pipeline_ui.html                <- single-page web UI served at http://localhost:8000
@@ -266,6 +320,8 @@ docker run --rm -v "$(pwd):/app" -e PYTHONHASHSEED=0 -w /app lo-generator-fastap
     │   ├── runner.py                   <- run_pipeline(): every step in one call, progress reporting, CLI
     │   ├── checkpoint.py               <- saved progress so an interrupted run can resume
     │   └── files.py                    <- JSON load/save helpers for standalone scripts
+    ├── service/                        <- the /v1 API, job store (Redis + /data), worker, mock backend
+    ├── schemas/                        <- JSON Schemas of the contract (units, report, options), generated
     ├── analysis/                       <- thesis analysis scripts (post_statistics, lexical overlap, unit merger)
     ├── tests/                          <- pytest suite; LLM answers are replayed from tests/fixtures/llm_cassette.json
     ├── input/                          <- uploaded source files (persisted on host via Docker volume mount)

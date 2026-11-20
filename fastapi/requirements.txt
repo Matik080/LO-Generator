@@ -7,6 +7,7 @@ python-multipart
 redis
 rq
 fakeredis  # tests only: Redis in memory (small, pure Python)
+pytest     # tests only: the image runs as a non-root user, so pytest is installed here
 
 # Data validation
 pydantic
