@@ -81,6 +81,48 @@ Na rovnakom dokumente a s rovnakými modelmi (generovanie aj hodnotenie), koneč
 
 Ciele sú nižšia hodnota z dvoch behov, teda „aspoň taký ako dnes“. Dva behy sú stále malá vzorka. Výsledok tesne pod cieľom (napr. faithfulness 4,29) ešte neznamená zhoršenie, kým ho nepotvrdí ďalší beh.
 
+## Overenie: služba `/v1` so súbežnými volaniami LLM (20. 11. 2026)
+
+Kontrola po úlohách 3–6 (konfigurácia, worker, docker compose, súbežné volania LLM): rovnaký dokument a rovnaké modely ako baseline, ale spracovanie prešlo celou službou tak, ako ju bude volať Laravel (`POST /v1/jobs` → fronta → worker → `/result`, `/report`).
+
+| | |
+| --- | --- |
+| Kód | commit `9aca00a` |
+| Spustenie | `docker compose` (api, worker, redis), úloha cez `POST /v1/jobs` s predvolenými `options` |
+| Súbežnosť | `LOGEN_LLM_MAX_CONCURRENCY=4` (nezávislé batche volaní LLM naraz) |
+| Modely, embeddingy, filter | rovnaké ako baseline (pozri Podmienky merania) |
+
+| Metrika | Beh S1 | Beh S2 | Baseline (behy 2 / 3) | Cieľ |
+| --- | --- | --- | --- | --- |
+| **Konečný stav** | | | | |
+| Podiel LO, ktoré prejdú filtrom | 97,9 % (139 / 142) | 96,5 % (138 / 143) | 93,6 % / 95,9 % | ≥ 93,6 % ✅ |
+| Faithfulness – `gpt-oss-120b` | 4,43 | 4,50 | 4,31 / 4,33 | ≥ 4,31 ✅ |
+| Faithfulness – `qwen3.8-27b` | 4,49 | 4,49 | 4,15 / 4,35 | |
+| Faithfulness – priemer oboch modelov | 4,46 | 4,49 | 4,23 / 4,34 | |
+| Question clarity – priemer | 4,62 | 4,63 | 4,35 / 4,55 | |
+| Hint quality – priemer | 4,23 | 4,29 | 4,28 / 4,28 | |
+| Distractor plausibility – priemer | 2,71 | 2,58 | 2,52 / 2,63 | |
+| **Prvé hodnotenie** | | | | |
+| Podiel LO, ktoré prejdú filtrom | 83,1 % | 83,2 % | 74,3 % / 87,2 % | |
+| Faithfulness – `gpt-oss-120b` | 4,36 | 4,48 | 4,21 / 4,27 | |
+| **Rozsah** | | | | |
+| Atomické jednotky = LO | 142 | 143 | 140 / 148 | |
+| LO s otázkou s možnosťami | 135 | 131 | 130 / 139 | |
+| Regenerované LO / stále neprešlo | 22 / 3 | 20 / 5 | 31 / 9, 15 / 6 | |
+| Hrany grafu prerekvizít | 99 | 121 | 128 / 123 | |
+| **Beh** | | | | |
+| Trvanie spracovania | 5 min 6 s | 5 min 33 s | 15–17 min | |
+| Volania LLM | 368 | 397 | – | |
+| Čakanie pri limite požiadaviek (HTTP 429) | 6× | 14× | – | |
+
+Čo z porovnania vyplýva:
+
+- **Oba ciele sú splnené v oboch behoch** s rezervou: podiel LO, ktoré prejdú, 96,5 – 97,9 % a faithfulness `gpt-oss-120b` 4,43 – 4,50. Súbežné volania ani služba kvalitu nezhoršili.
+- **Spracovanie je približne 3× rýchlejšie** (5 – 5,5 min namiesto 15 – 17 min). Prompty sa nezmenili, zrýchlenie je iba zo súbežných volaní. Groq občas odpovedal limitom požiadaviek; klient po 2 – 3 s zopakoval požiadavku a žiadne volanie nezlyhalo.
+- **Výstup prešiel v oboch behoch JSON schémami** `units` a reportu.
+- **Hrany grafu:** v behu S1 iba 99. Overenie prešlo bez chyby (LLM potvrdil 99 z 1592 kandidátov, žiadna dávka sa nestratila), beh S2 dal 121, teda v rozsahu baseline. Ide o kolísanie odpovedí LLM. Rovnako hint quality 4,23 v behu S1 a 4,29 v behu S2.
+- **Ciele pre ďalšie zmeny ostávajú** (4,31 a 93,6 %). Vyššie hodnoty z týchto dvoch behov sú zatiaľ iba dva behy a časť rozdielu môže byť kolísanie modelov.
+
 ## Neplatný a prerušený beh
 
 - **Beh 1 sa nezapočítava.** Odhalil chybu: keď sa v regenerácii nepodarilo spracovať jednu dávku LO, výsledky sa priradili k nesprávnym jednotkám, 5 LO sa stratilo a 5 bolo dvakrát. Chyba je opravená a pokrytá testami (commit `4b3b425`).
@@ -94,6 +136,11 @@ cd fastapi
 docker run --rm -v "$(pwd):/app" -w /app lo-generator-fastapi \
   python -m lo_pipeline.runner input/Testing_text.pdf --out output/baseline.json
 # čísla sú vo výsledku v časti "quality"
+
+# cez službu (overenie 20. 11.): úloha cez POST /v1/jobs, celý výsledok pipeline
+# je v priečinku úlohy /data/jobs/{id}/pipeline_result.json (časť "quality")
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+curl -s -F "files=@input/Testing_text.pdf" http://localhost:8000/v1/jobs
 
 # čísla z bakalárskej práce (voliteľne iba vybrané modely)
 docker run --rm -v "$(pwd)/..:/repo" -w /repo/fastapi lo-generator-fastapi \
