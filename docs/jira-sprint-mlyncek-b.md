@@ -47,7 +47,7 @@ Rozhranie pre generovanie a embeddingy (Príloha B): adaptér pre OpenAI-kompati
 Akceptačné kritériá:
 
 - zmena poskytovateľa alebo modelu je iba zmena `.env` (`LOGEN_LLM_BASE_URL`, `LOGEN_LLM_MODEL`, …), mimo `lo_pipeline/llm` sa neimportuje knižnica výrobcu,
-- chýbajúci alebo neplatný kľúč a zlyhanie LLM po opakovaniach ukončí úlohu ako `failed` s kódom `llm_auth` / `llm_error`, nikdy nie prázdny výsledok,
+- chýbajúci alebo neplatný kľúč a zlyhanie LLM po opakovaniach ukončí úlohu ako `failed` s kódom `llm_error` (aj odmietnutý kľúč; kódy chýb rovnaké ako Mlynček A), nikdy nie prázdny výsledok,
 - modely pre hodnotenie, prahy filtra a veľkosti batchov sú v konfigurácii, nie napevno v kóde; staré premenné (`GROQ_API_KEY`, `GEN_MODEL`, …) fungujú ako náhradné,
 - `env_template` je premenovaný na `.env.example` a obsahuje všetky premenné,
 - kvalita na referenčnom dokumente je aspoň na úrovni baseline (úloha 1).
@@ -60,9 +60,9 @@ Akceptačné kritériá:
 
 - úlohu zaradenú do fronty spracuje worker a výsledok aj report uloží do `/data/jobs/{id}/`,
 - stav (`queued` / `running` / `completed` / `failed` / `cancelled`), krok a priebeh sa počas behu zapisujú do Redisu,
-- po reštarte workera úloha pokračuje z checkpointu, najviac 2 pokusy, potom `failed` s kódom `interrupted`,
-- chyba počas spracovania ukončí úlohu ako `failed` s kódom chyby (`no_text_extracted`, `llm_error`, `internal_error`, …), nikdy nie prázdny výsledok,
-- zrušenie úlohy zastaví spracovanie a úloha dostane stav `cancelled`,
+- po reštarte workera úloha pokračuje z checkpointu, najviac 2 pokusy, potom `failed` s kódom `worker_lost` (prototyp beží s jedným workerom; nedokončené úlohy kontroluje worker pri štarte),
+- chyba počas spracovania ukončí úlohu ako `failed` s kódom chyby (`extraction_failed`, `llm_error`, `internal_error`; kódy rovnaké ako Mlynček A), nikdy nie prázdny výsledok (0 LO = `llm_error`),
+- zrušenie úlohy zastaví spracovanie po dokončení aktuálneho batchu volaní LLM a úloha dostane stav `cancelled`,
 - Redis ukladá dáta na disk (appendonly), takže fronta aj stav prežijú reštart,
 - testy s falošným LLM pokrývajú dokončenie úlohy, chybu a reštart workera počas behu.
 
