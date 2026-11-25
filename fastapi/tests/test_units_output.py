@@ -161,7 +161,7 @@ def test_bad_llm_values():
     units, report = build(los)
     questions = units["units"][0]["questions"]
     assert len(questions) == 2
-    assert (questions[0]["time_to_handle"], questions[0]["time_to_explain"]) == (120, 45)
+    assert (questions[0]["time_to_handle"], questions[0]["time_to_explain"]) == (120, 30)  # -5: choice default
     assert questions[1]["type"] == "open" and questions[1]["name"] == "What is a pointer?"
     assert [m["section_id"] for m in report["question_meta"]] == ["S-2", "S-4"]
     assert [m["question"] for m in report["question_meta"]] == [0, 1]
@@ -206,3 +206,17 @@ def test_invalid_output_raises(monkeypatch):
     monkeypatch.setattr(units_output, "_unit_title_and_description", lambda los: ("", ""))
     with pytest.raises(InvalidOutputError):
         build([make_lo()])
+
+
+def test_times_fit_the_range_of_the_question_type():
+    from lo_pipeline.questions.units_output import question_times
+    assert question_times("choice", 10, 500) == (30, 90)          # below / above the range
+    assert question_times("choice", None, "x") == (120, 30)       # missing / not a number: default
+    assert question_times("open", 45, 30) == (120, 30)            # short open answer still gets 2 min
+    assert question_times("open", 2000, None) == (900, 0)
+    assert question_times("no_answer", 1200, 900) == (1200, 600)
+    assert question_times("no_answer", None, None) == (300, 0)
+
+    units, _ = build([make_lo(time_to_handle=5), make_lo(id="b", mc_options=None, time_to_handle=5)])
+    times = [(q["type"], q["time_to_handle"]) for q in units["units"][0]["questions"]]
+    assert times == [("choice", 30), ("open", 120)]

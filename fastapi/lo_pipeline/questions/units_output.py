@@ -6,6 +6,8 @@ Sprint task 5. No LLM calls here: everything comes from the finished learning ob
 - split: only "single" (one lesson) is implemented; other modes give one lesson + a warning.
 - Hints: 1st = the source, made by code ("Zdroj": file, page); 2nd = the LLM-written hint text
   without the "[Source: ...]" suffix. options.questions.hints says how many (0, 1 or 2).
+- Times (seconds) are fitted into the range of the question type (TIME_RANGES, design kap. 7, the
+  same ranges as Mlynček A); a missing or invalid estimate gets the type's default.
 - Texts longer than the ECEH columns are shortened (warning `field_too_long`); a question that
   still breaks the rules is left out (warning `question_skipped`).
 - The finished output is checked against the models and the JSON Schema files; if it does not
@@ -33,8 +35,12 @@ logger = logging.getLogger(__name__)
 
 SOURCE_HINT_NAME = "Zdroj"
 TEXT_HINT_NAME = "Nápoveda"
-DEFAULT_TIME_TO_HANDLE = 90
-DEFAULT_TIME_TO_EXPLAIN = 45
+# question type -> (time_to_handle min, max, default), (time_to_explain min, max, default) in seconds
+TIME_RANGES = {
+    "choice": ((30, 180, 120), (0, 90, 30)),
+    "open": ((120, 900, 300), (0, 180, 0)),
+    "no_answer": ((0, 1800, 300), (0, 600, 0)),
+}
 
 # Tags allowed in hints[].url (ECEH shows it as HTML). Everything else is removed by nh3.
 ALLOWED_HINT_TAGS = {"p", "br", "strong", "em", "code"}
@@ -104,6 +110,14 @@ def _seconds(value, default: int) -> int:
     if isinstance(value, (int, float)) and value >= 0:
         return int(round(value))
     return default
+
+
+def question_times(q_type: str, time_to_handle, time_to_explain) -> tuple[int, int]:
+    """LLM time estimates -> seconds within the range of the question type (default when missing)."""
+    times = []
+    for value, (low, high, default) in zip((time_to_handle, time_to_explain), TIME_RANGES[q_type]):
+        times.append(min(max(_seconds(value, default), low), high))
+    return times[0], times[1]
 
 
 def hint_html(text: str, limit: int, warnings: _Warnings) -> str:
@@ -190,12 +204,13 @@ def lo_to_question(lo: dict, options: JobOptions, warnings: _Warnings) -> Option
         hints.append({"name": TEXT_HINT_NAME, "url": hint_html(llm_hint_text(lo), HINT_URL_MAX, warnings)})
 
     name = _plain(lo.get("generated_name")) or description  # no name from the LLM: use the question
+    time_to_handle, time_to_explain = question_times(q_type, lo.get("time_to_handle"), lo.get("time_to_explain"))
     return {
         "name": _shorten(name, QUESTION_NAME_MAX, "name", warnings),
         "description": _shorten(description, QUESTION_DESCRIPTION_MAX, "description", warnings),
         "type": q_type,
-        "time_to_handle": _seconds(lo.get("time_to_handle"), DEFAULT_TIME_TO_HANDLE),
-        "time_to_explain": _seconds(lo.get("time_to_explain"), DEFAULT_TIME_TO_EXPLAIN),
+        "time_to_handle": time_to_handle,
+        "time_to_explain": time_to_explain,
         "hints": hints,
         "choices": choices,
     }
