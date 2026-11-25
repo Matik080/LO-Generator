@@ -40,6 +40,9 @@ class PipelineOptions:
     verify_batch_size: int = 10
     enrich_batch_size: int = 10
     multi_correct_batch_size: int = 5
+    no_answer_tasks: bool = True     # False when the job does not ask for no_answer questions (no LLM calls)
+    no_answer_batch_size: int = 5
+    no_answer_group_size: int = 6
     dedup_threshold: float = 0.82
 
     @classmethod
@@ -52,6 +55,7 @@ class PipelineOptions:
             faithfulness_threshold=s.faithfulness_threshold, hint_quality_threshold=s.hint_quality_threshold,
             max_attempts=s.max_attempts, verify_batch_size=s.verify_batch_size,
             enrich_batch_size=s.enrich_batch_size, multi_correct_batch_size=s.multi_correct_batch_size,
+            no_answer_batch_size=s.no_answer_batch_size, no_answer_group_size=s.no_answer_group_size,
             dedup_threshold=s.dedup_threshold,
         )
 
@@ -102,6 +106,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     from lo_pipeline.graph.prerequisites import build_prerequisite_graph, graph_to_json
     from lo_pipeline.questions.echub import enrich_learning_objects, convert_by_source
     from lo_pipeline.questions.multi_correct import add_correct_options, has_mc_options
+    from lo_pipeline.questions.no_answer import anchor_groups, generate_no_answer_tasks
     from lo_pipeline.checkpoint import fingerprint
     from lo_pipeline.llm.service import use_response_cache
 
@@ -193,16 +198,24 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                 "concept_graph": graph_to_json(g["concept_graph"]),
                 "warnings": warnings}
 
-    # 6. Question names and time estimates, then a second correct option where the source supports it
+    # 6. Question names and time estimates, a second correct option where the source supports it,
+    #    and no_answer tasks from LOs that share a concept
     def questions():
         los = state["learning_objects"]
         enrich_calls = _ceil_div(len(los), opts.enrich_batch_size)
         multi_calls = _ceil_div(sum(1 for lo in los if has_mc_options(lo)), opts.multi_correct_batch_size)
+        groups = anchor_groups(los, opts.no_answer_group_size) if opts.no_answer_tasks else []
+        task_calls = _ceil_div(len(groups), opts.no_answer_batch_size)
         los = enrich_learning_objects(los, batch_size=opts.enrich_batch_size,
-                                      progress=progress.step("questions", 0, multi_calls))
+                                      progress=progress.step("questions", 0, multi_calls + task_calls))
         los = add_correct_options(los, batch_size=opts.multi_correct_batch_size,
-                                  progress=progress.step("questions", enrich_calls))
-        return {"learning_objects": los}
+                                  progress=progress.step("questions", enrich_calls, task_calls))
+        tasks = []
+        if opts.no_answer_tasks:
+            tasks = generate_no_answer_tasks(los, batch_size=opts.no_answer_batch_size,
+                                             group_size=opts.no_answer_group_size,
+                                             progress=progress.step("questions", enrich_calls + multi_calls))
+        return {"learning_objects": los, "no_answer_tasks": tasks}
 
     # 7. Output: today's ECHub format (one unit per source). M4 replaces this with the `units` format.
     def output():
@@ -233,6 +246,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     result = {
         "atomic_units": state["atomic_units"],
         "learning_objects": state["learning_objects"],
+        "no_answer_tasks": state.get("no_answer_tasks", []),  # missing in a checkpoint from before task 1c
         "knowledge_graph": state["knowledge_graph"],
         "concept_graph": state["concept_graph"],
         "echub": state["echub"],

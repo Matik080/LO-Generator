@@ -83,6 +83,8 @@ class PipelineSettings(BaseSettings):
     verify_batch_size: int = Field(10, ge=1)
     enrich_batch_size: int = Field(10, ge=1)
     multi_correct_batch_size: int = Field(5, ge=1)  # choice LOs per call when looking for a 2nd correct option
+    no_answer_batch_size: int = Field(5, ge=1)      # concept groups per call when writing no_answer tasks
+    no_answer_group_size: int = Field(6, ge=2)      # most LOs in one no_answer task (bigger groups are split)
 
     @field_validator("eval_models", mode="before")
     @classmethod

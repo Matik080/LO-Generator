@@ -24,6 +24,7 @@ def _snapshot_view(result):
     view = {
         "atomic_units": result["atomic_units"],
         "learning_objects": result["learning_objects"],
+        "no_answer_tasks": result["no_answer_tasks"],
         "knowledge_graph_edges": sorted([e["source"], e["target"]] for e in kg["edges"]),
         "concept_graph": {"nodes": len(result["concept_graph"]["nodes"]),
                           "edges": len(result["concept_graph"]["edges"])},

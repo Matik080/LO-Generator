@@ -56,6 +56,15 @@ def _default_pipeline(*args, **kwargs):
     return run_pipeline(*args, **kwargs)
 
 
+def pipeline_options(job_options):
+    """PipelineOptions for one job: the settings, plus what the job asks for (no_answer tasks only
+    when its question types include no_answer, so other jobs make no calls for them)."""
+    from lo_pipeline.runner import PipelineOptions
+    opts = PipelineOptions.from_settings()
+    opts.no_answer_tasks = "no_answer" in job_options.questions.types
+    return opts
+
+
 def _job_error(exc: Exception, stage: Optional[str], attempt: int) -> JobError:
     """Exception -> job error (codes shared with Mlynček A, contract/jobs.py)."""
     details = {"stage": stage, "attempt": attempt}
@@ -160,7 +169,9 @@ def _run_claimed(store: JobStore, job_id: str, pipeline: Callable) -> None:
     sources = [{"path": str(path), "title": name} for path, name in zip(store.input_paths(job), job.files)]
     checkpoint = FileCheckpoint(str(store.checkpoint_dir(job_id)))
     try:
-        result = pipeline(sources, progress_callback=on_progress, checkpoint=checkpoint)
+        # the real pipeline gets the job's options; test fakes are called without them
+        extra = {"options": pipeline_options(job.options)} if pipeline is _default_pipeline else {}
+        result = pipeline(sources, progress_callback=on_progress, checkpoint=checkpoint, **extra)
         if not result.get("learning_objects"):
             raise NoLearningObjects("The LLM gave no usable learning objects for these documents.")
         units, report = build_units_and_report(result, job.options)

@@ -744,6 +744,48 @@
    "time_to_explain": 45
   }
  ],
+ "no_answer_tasks": [
+  {
+   "anchor": "pointer",
+   "lo_indices": [
+    0,
+    1,
+    9,
+    10
+   ],
+   "description": "Explain the relationship between the address-of operator (&) and the dereference operator (*) by describing how they interact with a pointer variable. In your explanation, clarify why a pointer that does not point to a valid object must be set to NULL, and what happens if you attempt to dereference such a pointer.",
+   "name": "Pointer Operators and NULL Safety",
+   "hint": "Start by defining what a pointer stores, then show how & and * are inverse operations in a valid context.",
+   "time_to_handle": 180,
+   "time_to_explain": 120
+  },
+  {
+   "anchor": "malloc",
+   "lo_indices": [
+    2,
+    3,
+    4,
+    11
+   ],
+   "description": "Describe the complete lifecycle of a memory block allocated with malloc. Your explanation must cover: what malloc returns on success and failure, the state of the memory immediately after allocation, the necessity of checking the return value, and the required action to release the memory when it is no longer needed.",
+   "name": "Malloc Lifecycle and Safety",
+   "hint": "Walk through the steps from calling malloc to freeing the memory, noting the state of the data at each stage.",
+   "time_to_handle": 240,
+   "time_to_explain": 150
+  },
+  {
+   "anchor": "free",
+   "lo_indices": [
+    7,
+    8
+   ],
+   "description": "Explain the concept of a dangling pointer by describing what happens to a pointer variable after the free function is called on its target memory. Based on this, explain why using the pointer after free or calling free again on the same block leads to undefined behaviour.",
+   "name": "Dangling Pointers and Double Free",
+   "hint": "Focus on the state of the pointer variable itself after the memory is released, rather than the memory content.",
+   "time_to_handle": 150,
+   "time_to_explain": 100
+  }
+ ],
  "knowledge_graph_edges": [
   [
    "0014f89b",
