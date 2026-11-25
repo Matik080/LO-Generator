@@ -1,0 +1,29 @@
+# Testing the service in containers without a real LLM (no cost): the worker calls a fake
+# OpenAI-compatible server that answers from the test cassette (tools/fake_llm_server.py).
+# A job with tests/fixtures/c_memory.html and default options then completes.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml -f docker-compose.fake-llm.yml up -d
+#
+# FAKE_LLM_DELAY_S (default 0.5) = seconds per answer; higher values make a job take longer.
+# Other documents get no answers (the job fails with llm_error).
+
+services:
+  fake-llm:
+    image: lo-generator-fastapi:latest
+    command: ["python", "-m", "tools.fake_llm_server"]
+    environment:
+      FAKE_LLM_DELAY_S: ${FAKE_LLM_DELAY_S:-0.5}
+    expose: ["8080"]
+    networks: [logen]
+    restart: unless-stopped
+
+  worker:
+    environment:
+      PYTHONHASHSEED: "0"                         # prompts in the same order as in the cassette
+      LOGEN_LLM_BASE_URL: http://fake-llm:8080/v1
+      LOGEN_LLM_API_KEY: fake
+      # no real provider can be reached, whatever fastapi/.env contains
+      GROQ_API_KEY: ""
+      OPENROUTER_API_KEY: ""
+      GITHUB_TOKEN: ""
+      OPENAI_API_KEY: ""
