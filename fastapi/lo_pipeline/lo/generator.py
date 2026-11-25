@@ -421,11 +421,40 @@ Return JSON only:
 MC_ELIGIBLE_TYPES = {"definition", "rule", "property", "fact", "constraint", "theorem"}
 
 
-def generate_mc_variants_batch(learning_objects, batch_size=5, progress=None):
+def wants_two_correct(lo, share):
+    """True for about `share` of the LOs (0.0-1.0): those get 2 correct options instead of 1.
+    Chosen by the LO's content, so the same LO gets the same choice in every run."""
+    if share <= 0:
+        return False
+    digest = hashlib.sha256((lo["question"] + "\0" + lo["answer"]).encode("utf-8")).hexdigest()
+    return int(digest[:8], 16) / 0xFFFFFFFF < share
+
+
+def two_correct_options(lo, correct, distractors):
+    """2 correct options + 2 distractors in a fixed order; None when the LLM's answer is not usable."""
+    import random
+    if not isinstance(correct, list) or not isinstance(distractors, list):
+        return None
+    correct = [c.strip() for c in correct if isinstance(c, str) and c.strip()]
+    distractors = [d.strip() for d in distractors if isinstance(d, str) and d.strip()]
+    if len(correct) != 2 or len(distractors) < 2 or correct[0].lower() == correct[1].lower():
+        return None
+    options = correct + distractors[:2]
+    if len({o.lower() for o in options}) < len(options):
+        return None
+    seed = hashlib.sha256((lo["question"] + "\0" + lo["answer"]).encode("utf-8")).hexdigest()
+    random.Random(seed).shuffle(options)
+    return options, sorted(options.index(c) for c in correct), options.index(correct[0])
+
+
+def generate_mc_variants_batch(learning_objects, batch_size=5, progress=None, two_correct_share=0.0):
     """
     Generates MC variants for a list of LOs.
     Skips algorithm_step and example types since code answers
     don't work well as multiple choice.
+    `two_correct_share` (0.0-1.0): about this share of the LOs (wants_two_correct) gets the correct answer
+    split into 2 correct options + 2 distractors in the same call (mc_correct_indices); the others, and any
+    LO whose split answer is not usable, get 1 correct + 3 distractors as before.
     `progress(done, total)` is called after each LLM batch (optional).
     Batches run in parallel (llm/parallel.py); each batch changes only its own LOs.
     """
@@ -442,13 +471,22 @@ def generate_mc_variants_batch(learning_objects, batch_size=5, progress=None):
         batch_start, batch = numbered
         updated = 0
         los_text = ""
+        two = [wants_two_correct(lo, two_correct_share) for _, lo in batch]
         for idx, (_, lo) in enumerate(batch):
             los_text += f"""
 LO {idx + 1}:
 Question: {lo['question']}
 Correct Answer: {lo['answer']}
 Source: {lo['source_statement']}
-"""
+""" + ("[TWO CORRECT]\n" if two[idx] else "")
+        # only batches with a [TWO CORRECT] LO get the extra instructions (the others keep the old prompt)
+        two_text = """
+LOs marked [TWO CORRECT] are different: instead of 3 distractors, split the correct answer into exactly
+2 correct options and write 2 distractors. Each correct option must be a complete sentence that names
+its subject, true on its own; together they say what the correct answer says, with no new information.
+The 2 distractors must match the correct options in length and style. Return such an LO as
+  {"lo": <n>, "correct": ["correct 1", "correct 2"], "distractors": ["wrong 1", "wrong 2"]}
+""" if any(two) else ""
 
         prompt = f"""
 You are creating multiple choice distractors for learning objects.
@@ -460,7 +498,7 @@ Distractors must be plausible enough to fool a student who doesn't understand,
 but clearly wrong to one who does. Match the length and style of the correct answer.
 
 {los_text}
-
+{two_text}
 Return a JSON array with exactly {len(batch)} results in the same order:
 [
   {{
@@ -494,7 +532,10 @@ Return JSON array only. No markdown. No explanation.
                     continue
                 original_idx, lo = batch[lo_idx]
                 distractors = result.get("distractors", [])
-                if len(distractors) >= 3:
+                split = two_correct_options(lo, result.get("correct"), distractors) if two[lo_idx] else None
+                if split is not None:
+                    lo["mc_options"], lo["mc_correct_indices"], lo["mc_correct_index"] = split
+                elif len(distractors) >= 3:
                     options = shuffle_options(lo, distractors)
                     lo["mc_options"] = options
                     lo["mc_correct_index"] = options.index(lo["answer"])

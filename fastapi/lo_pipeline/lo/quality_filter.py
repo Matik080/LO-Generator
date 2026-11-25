@@ -130,7 +130,7 @@ def score_averages(eval_lists):
 
 def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, faithfulness_threshold=3.0,
                           hint_quality_threshold=2.0, max_attempts=2, mc_batch_size=5, progress=None,
-                          quality=None):
+                          quality=None, two_correct_share=0.0):
     """
     Evaluates all LOs with one or more models, flags those that fail the quality threshold by consensus, and regenerates them from source units.
     `atomic_units` are the units the LOs were generated from (matched by statement for regeneration).
@@ -284,7 +284,8 @@ def filter_and_regenerate(learning_objects, atomic_units, eval_models=None, fait
     _set_total(calls["done"] + -(-len(missing_mc) // mc_batch_size))
     if missing_mc:
         logger.info(f"[Filter] Generating MC variants for {len(missing_mc)} regenerated LO(s)...")
-        generate_mc_variants_batch(missing_mc, batch_size=mc_batch_size, progress=lambda d, t: _tick())
+        generate_mc_variants_batch(missing_mc, batch_size=mc_batch_size, progress=lambda d, t: _tick(),
+                                   two_correct_share=two_correct_share)
 
     _set_total(calls["done"])  # the upper bound wasn't needed in full
 

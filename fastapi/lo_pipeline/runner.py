@@ -39,7 +39,7 @@ class PipelineOptions:
     max_attempts: int = 2
     verify_batch_size: int = 10
     enrich_batch_size: int = 10
-    multi_correct_batch_size: int = 5
+    two_correct_share: float = 0.3   # share of choice questions with 2 correct options (made in the MC step)
     no_answer_tasks: bool = True     # False when the job does not ask for no_answer questions (no LLM calls)
     no_answer_batch_size: int = 5
     no_answer_group_size: int = 6
@@ -54,7 +54,7 @@ class PipelineOptions:
             mc_batch_size=s.mc_batch_size, eval_models=list(s.eval_models),
             faithfulness_threshold=s.faithfulness_threshold, hint_quality_threshold=s.hint_quality_threshold,
             max_attempts=s.max_attempts, verify_batch_size=s.verify_batch_size,
-            enrich_batch_size=s.enrich_batch_size, multi_correct_batch_size=s.multi_correct_batch_size,
+            enrich_batch_size=s.enrich_batch_size, two_correct_share=s.two_correct_share,
             no_answer_batch_size=s.no_answer_batch_size, no_answer_group_size=s.no_answer_group_size,
             dedup_threshold=s.dedup_threshold,
         )
@@ -105,7 +105,6 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     from lo_pipeline.lo.quality_filter import filter_and_regenerate
     from lo_pipeline.graph.prerequisites import build_prerequisite_graph, graph_to_json
     from lo_pipeline.questions.echub import enrich_learning_objects, convert_by_source
-    from lo_pipeline.questions.multi_correct import add_correct_options, has_mc_options
     from lo_pipeline.questions.no_answer import anchor_groups, generate_no_answer_tasks
     from lo_pipeline.checkpoint import fingerprint
     from lo_pipeline.llm.service import use_response_cache
@@ -168,7 +167,8 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                                         progress=progress.step("learning_objects", 0, mc_estimate))
         # MC batch count is exact now that LO types are known
         los = generate_mc_variants_batch(los, batch_size=opts.mc_batch_size,
-                                         progress=progress.step("learning_objects", gen_calls))
+                                         progress=progress.step("learning_objects", gen_calls),
+                                         two_correct_share=opts.two_correct_share)
         return {"learning_objects": los}
 
     # 4. Quality evaluation and regeneration
@@ -180,6 +180,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
             hint_quality_threshold=opts.hint_quality_threshold,
             max_attempts=opts.max_attempts,
             mc_batch_size=opts.mc_batch_size,
+            two_correct_share=opts.two_correct_share,
             progress=progress.step("lo_evaluation"),
             quality=quality,
         )
@@ -198,23 +199,19 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                 "concept_graph": graph_to_json(g["concept_graph"]),
                 "warnings": warnings}
 
-    # 6. Question names and time estimates, a second correct option where the source supports it,
-    #    and no_answer tasks from LOs that share a concept
+    # 6. Question names and time estimates, and no_answer tasks from LOs that share a concept
     def questions():
         los = state["learning_objects"]
         enrich_calls = _ceil_div(len(los), opts.enrich_batch_size)
-        multi_calls = _ceil_div(sum(1 for lo in los if has_mc_options(lo)), opts.multi_correct_batch_size)
         groups = anchor_groups(los, opts.no_answer_group_size) if opts.no_answer_tasks else []
         task_calls = _ceil_div(len(groups), opts.no_answer_batch_size)
         los = enrich_learning_objects(los, batch_size=opts.enrich_batch_size,
-                                      progress=progress.step("questions", 0, multi_calls + task_calls))
-        los = add_correct_options(los, batch_size=opts.multi_correct_batch_size,
-                                  progress=progress.step("questions", enrich_calls, task_calls))
+                                      progress=progress.step("questions", 0, task_calls))
         tasks = []
         if opts.no_answer_tasks:
             tasks = generate_no_answer_tasks(los, batch_size=opts.no_answer_batch_size,
                                              group_size=opts.no_answer_group_size,
-                                             progress=progress.step("questions", enrich_calls + multi_calls))
+                                             progress=progress.step("questions", enrich_calls))
         return {"learning_objects": los, "no_answer_tasks": tasks}
 
     # 7. Output: today's ECHub format (one unit per source). M4 replaces this with the `units` format.

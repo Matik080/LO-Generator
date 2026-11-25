@@ -50,7 +50,7 @@ def fake(monkeypatch):
             out.append(lo)
         return out
 
-    def mc(los, batch_size=5, progress=None):
+    def mc(los, batch_size=5, progress=None, **kwargs):
         state["mc_calls"].append([lo["id"] for lo in los])
         for lo in los:
             lo["mc_options"] = ["x", "y", "z", lo["answer"]]

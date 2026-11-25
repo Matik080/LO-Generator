@@ -231,7 +231,7 @@ def llm_hint_text(lo: dict) -> str:
 
 
 def _correct_indices(lo: dict, n_options: int) -> list[int]:
-    """Indices of the correct options: `mc_correct_indices` (questions/multi_correct.py) when valid,
+    """Indices of the correct options: `mc_correct_indices` (lo/generator.py, two correct options) when valid,
     otherwise the one `mc_correct_index`."""
     correct = lo.get("mc_correct_index")
     many = lo.get("mc_correct_indices")
