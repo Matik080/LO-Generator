@@ -4,6 +4,7 @@
 #   docker compose up -d --build                                    # internal network only
 #   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d   # + http://localhost:8000
 #   docker compose -f docker-compose.yml -f docker-compose.eceh.yml up -d    # + ECEH's network
+#   docker compose up -d --scale worker=2                           # 2 jobs at once (or LOGEN_WORKERS=2)
 #
 # Everything is configured in fastapi/.env (see .env.example); LOGEN_REDIS_PASSWORD is required.
 
@@ -40,6 +41,8 @@ services:
   worker:
     <<: *app
     command: ["python", "-m", "service.worker"]   # recovers unfinished jobs, then processes the queue
+    deploy:
+      replicas: ${LOGEN_WORKERS:-1}   # jobs processed at once; also: docker compose up -d --scale worker=N
 
   scheduler:
     <<: *app

@@ -129,6 +129,7 @@ The first build takes several minutes (PyTorch, MiniLM, spaCy and NLTK are downl
 | `LOGEN_MAX_FILES` / `LOGEN_MAX_UPLOAD_MB` | `10` / `50` | files per job / MB per file |
 | `LOGEN_MAX_ACTIVE_JOBS` | `10` | queued + running jobs; more get `429 too_many_jobs` |
 | `LOGEN_JOB_TIMEOUT_S` | `21600` | a longer job fails with `internal_error` (`reason: timeout`) |
+| `LOGEN_WORKERS` | `1` | worker containers, i.e. jobs processed at the same time (each job still makes up to `LOGEN_LLM_MAX_CONCURRENCY` LLM calls at once); `docker compose up -d --scale worker=N` does the same |
 | `LOGEN_HEARTBEAT_TTL_S` | `60` | a worker renews its job's heartbeat every third of this; a job silent this long has lost its worker and is taken over |
 | `LOGEN_RECOVERY_INTERVAL_S` | `60` | how often the scheduler looks for jobs whose worker died and queues them again |
 | `LOGEN_DOCS_ENABLED` | `true` | `/docs` and `/openapi.json` |
