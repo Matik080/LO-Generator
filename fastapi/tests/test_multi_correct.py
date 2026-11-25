@@ -96,3 +96,19 @@ def test_quote_must_have_a_few_words():
     assert not apply_extra_correct(lo, "", "can be dereferenced with the unary operator")
     assert not apply_extra_correct(lo, None, None)
     assert "mc_correct_indices" not in lo
+
+
+def test_rewording_of_the_correct_option_is_not_a_second_answer():
+    """Real case from the quality run of 2026-11-25 (Mann-Whitney U Test)."""
+    correct = ("The constraint is violated because the Mann-Whitney U Test requires that samples are not normally "
+               "distributed. It is designed for ordinal or continuous data that does not follow a normal distribution.")
+    source = "The Mann-Whitney U Test requires that samples are not normally distributed."
+    lo = make_lo(source_statement=source, mc_correct_index=0,
+                 mc_options=[correct, "It is robust to normality.", "It requires normal samples.", "It needs ranks only."])
+    reworded = ("The constraint is violated because the Mann-Whitney U Test requires that samples are not normally "
+                "distributed, as specified in its distributional constraints.")
+    assert not apply_extra_correct(lo, reworded, "requires that samples are not normally distributed")
+    assert "mc_correct_indices" not in lo
+
+    lo = make_lo()  # a really different correct answer still counts
+    assert apply_extra_correct(lo, "It can be dereferenced with *.", "can be dereferenced with the unary operator *")

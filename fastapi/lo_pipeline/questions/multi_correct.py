@@ -8,7 +8,9 @@ question as written can have another correct answer according to the LO's source
 it writes that option and quotes the part of the source statement that supports it. The code keeps
 the option only when
   - the quote really comes from the source statement (lexical overlap >= QUOTE_OVERLAP_MIN), and
-  - it differs from every option the LO already has.
+  - it differs from every option the LO already has, and
+  - it is not a rewording of the correct option (word overlap with it below SIMILAR_TO_CORRECT_MAX
+    in both directions; in the quality runs of 2026-11-25 both "second" answers were rewordings).
 It then replaces the last distractor, so the LO keeps its number of options, and gets
 `mc_correct_indices` (e.g. [0, 2]). `mc_correct_index` (the original answer) stays as it was.
 Most LOs ask for one thing (a definition, a value) and get no second correct option.
@@ -26,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 QUOTE_OVERLAP_MIN = 0.9  # share of the quote's words that must appear in the source statement
 QUOTE_MIN_WORDS = 3
+SIMILAR_TO_CORRECT_MAX = 0.6  # higher overlap with the correct option = the same answer in other words
 
 
 def _normalized(text: str) -> str:
@@ -51,6 +54,12 @@ def apply_extra_correct(lo: Dict[str, Any], option, quote) -> bool:
     if any(_normalized(option) == _normalized(str(o)) for o in options):
         return False
     correct = lo["mc_correct_index"]
+    answer = str(options[correct])
+    similarity = max(lexical_overlap(answer, option), lexical_overlap(option, answer))
+    if similarity >= SIMILAR_TO_CORRECT_MAX:
+        logger.info(f"[MultiCorrect] LO {lo.get('id')}: option rewords the correct answer "
+                    f"(overlap {similarity:.2f}); dropped.")
+        return False
     distractors = [i for i in range(len(options)) if i != correct]
     if not distractors:
         return False

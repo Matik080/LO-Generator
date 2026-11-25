@@ -123,6 +123,56 @@ Kontrola po úlohách 3–6 (konfigurácia, worker, docker compose, súbežné v
 - **Hrany grafu:** v behu S1 iba 99. Overenie prešlo bez chyby (LLM potvrdil 99 z 1592 kandidátov, žiadna dávka sa nestratila), beh S2 dal 121, teda v rozsahu baseline. Ide o kolísanie odpovedí LLM. Rovnako hint quality 4,23 v behu S1 a 4,29 v behu S2.
 - **Ciele pre ďalšie zmeny ostávajú** (4,31 a 93,6 %). Vyššie hodnoty z týchto dvoch behov sú zatiaľ iba dva behy a časť rozdielu môže byť kolísanie modelov.
 
+## Overenie: nové typy otázok (25. 11. 2026)
+
+Kontrola po úlohe 1 šprintu 2 ([jira-sprint-2-mlyncek-b.md](jira-sprint-2-mlyncek-b.md)). Jadro (atomické jednotky, LO, ich MC možnosti, hodnotenie a regenerácia, graf) sa nezmenilo. Na konci kroku `questions` pribudli dva kroky:
+
+- **druhá správna možnosť** pri otázkach `choice`, ak ju zdrojové tvrdenie podporuje (citát sa overí voči zdroju),
+- **úlohy `no_answer`** zo skupín LO s rovnakým pojmom `anchor` (graf pojmov), jedna úloha na skupinu.
+
+| | |
+| --- | --- |
+| Kód | commit `bf8d0dd` |
+| Spustenie | `docker compose` (api, worker, redis, scheduler), úloha cez `POST /v1/jobs` s predvolenými `options` (všetky tri typy otázok) |
+| Súbežnosť | `LOGEN_LLM_MAX_CONCURRENCY=4` |
+| Modely, embeddingy, filter | rovnaké ako baseline (pozri Podmienky merania) |
+
+| Metrika | Beh Q1 | Beh Q2 | Overenie 20. 11. (S1 / S2) | Cieľ |
+| --- | --- | --- | --- | --- |
+| **Konečný stav** | | | | |
+| Podiel LO, ktoré prejdú filtrom | 96,5 % (138 / 143) | 96,3 % (129 / 134) | 97,9 % / 96,5 % | ≥ 93,6 % ✅ |
+| Faithfulness – `gpt-oss-120b` | 4,35 | 4,35 | 4,43 / 4,50 | ≥ 4,31 ✅ |
+| Faithfulness – `qwen3.8-27b` | 4,34 | 4,32 | 4,49 / 4,49 | |
+| Faithfulness – priemer oboch modelov | 4,34 | 4,34 | 4,46 / 4,49 | |
+| Question clarity – priemer | 4,57 | 4,67 | 4,62 / 4,63 | |
+| Hint quality – priemer | 4,28 | 4,27 | 4,23 / 4,29 | |
+| Distractor plausibility – priemer | 2,65 | 2,68 | 2,71 / 2,58 | |
+| **Prvé hodnotenie** | | | | |
+| Podiel LO, ktoré prejdú filtrom | 83,2 % | 82,8 % | 83,1 % / 83,2 % | |
+| Faithfulness – `gpt-oss-120b` | 4,31 | 4,22 | 4,36 / 4,48 | |
+| **Rozsah** | | | | |
+| Atomické jednotky / LO | 143 / 143 | 139 / 134 | 142 / 142, 143 / 143 | |
+| LO s otázkou s možnosťami | 133 | 124 | 135 / 131 | |
+| Regenerované LO / stále neprešlo | 20 / 5 | 21 / 5 | 22 / 3, 20 / 5 | |
+| Hrany grafu prerekvizít | 97 | 109 | 99 / 121 | |
+| **Otázky vo výstupe (`units`)** | | | | |
+| Spolu | 170 | 163 | – | |
+| `choice` / `open` / `no_answer` | 132 / 10 / 28 | 124 / 10 / 29 | – | |
+| `choice` s dvoma správnymi možnosťami | 2 | 0 | – | |
+| **Beh** | | | | |
+| Trvanie spracovania | 5 min 40 s | 5 min 38 s | 5 min 6 s / 5 min 33 s | |
+| Volania LLM (oba behy spolu) | približne 855 | | 368 / 397 | |
+| Čakanie pri limite požiadaviek (HTTP 429) | 4× (oba behy spolu) | | 6× / 14× | |
+
+Čo z porovnania vyplýva:
+
+- **Oba ciele sú splnené v oboch behoch:** podiel LO, ktoré prejdú, 96,3 – 96,5 % a faithfulness `gpt-oss-120b` 4,35.
+- **Faithfulness je nižšia ako 20. 11.** (4,35 oproti 4,43 – 4,50), ale nad cieľom. Prompty jadra sa odvtedy nezmenili a nové kroky bežia až po hodnotení, takže skóre ovplyvniť nemôžu. Pravdepodobne ide o kolísanie odpovedí LLM, nie je to však overené ďalšími behmi.
+- **Úlohy `no_answer`:** 28 a 29 úloh zo skupín LO s rovnakým pojmom (veľká skupina sa delí na časti po najviac 6 LO). Úlohy kombinujú viac tvrdení skupiny a nápoveda so zdrojom uvádza všetky strany skupiny (napr. „Testing_text.pdf, strany 8, 9“).
+- **Druhá správna možnosť vznikla iba 2-krát a obe boli preformulovaním pôvodnej správnej odpovede**, nie novou správnou odpoveďou. Kontrola preto teraz vyradí možnosť, ktorá sa so správnou odpoveďou zhoduje v 60 % slov alebo viac (oba prípady mali 73 a 85 %). Na tomto dokumente sa tak druhá správna možnosť pravdepodobne nevytvorí vôbec: atomické tvrdenie má spravidla jednu správnu odpoveď.
+- **V behu Q2 je 139 jednotiek, ale iba 134 LO.** Generovanie LO (jadro, pred novými krokmi) pre 5 jednotiek nevrátilo LO. V predchádzajúcich behoch bol počet rovnaký, preto to treba sledovať.
+- **Ciele pre ďalšie zmeny ostávajú** (4,31 a 93,6 %).
+
 ## Neplatný a prerušený beh
 
 - **Beh 1 sa nezapočítava.** Odhalil chybu: keď sa v regenerácii nepodarilo spracovať jednu dávku LO, výsledky sa priradili k nesprávnym jednotkám, 5 LO sa stratilo a 5 bolo dvakrát. Chyba je opravená a pokrytá testami (commit `4b3b425`).
