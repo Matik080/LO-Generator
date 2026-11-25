@@ -3,6 +3,8 @@
 Sprint task 5. No LLM calls here: everything comes from the finished learning objects (LOs).
 
 - One LO becomes one question: an LO with multiple-choice options -> `choice`, otherwise `open`.
+- A no_answer task (questions/no_answer.py, from LOs that share a concept) becomes a `no_answer`
+  question right after the last LO of its group, so the material comes before the task.
 - split: only "single" (one lesson) is implemented; other modes give one lesson + a warning.
 - Hints: 1st = the source, made by code ("Zdroj": file, page); 2nd = the LLM-written hint text
   without the "[Source: ...]" suffix. options.questions.hints says how many (0, 1 or 2).
@@ -152,6 +154,77 @@ def source_hint_text(lo: dict) -> str:
     return file
 
 
+def _page(lo: dict):
+    page = lo.get("source_page")
+    return page if isinstance(page, int) and not isinstance(page, bool) and page >= 1 else None
+
+
+def group_sources(los: list[dict]) -> list[dict]:
+    """[{"file", "pages"}] of several LOs: files in order of appearance, pages sorted, no repeats."""
+    pages_by_file: dict[str, list[int]] = {}
+    for lo in los:
+        file = _plain(lo.get("source_title"))
+        if not file:
+            continue
+        pages = pages_by_file.setdefault(file, [])
+        if _page(lo) is not None and _page(lo) not in pages:
+            pages.append(_page(lo))
+    return [{"file": file, "pages": sorted(pages)} for file, pages in pages_by_file.items()]
+
+
+def group_source_hint_text(sources: list[dict]) -> str:
+    """'c.pdf, strana 3', 'c.pdf, strany 3, 5' or several files separated by '; '."""
+    parts = []
+    for source in sources:
+        pages = source["pages"]
+        if not pages:
+            parts.append(source["file"])
+        elif len(pages) == 1:
+            parts.append(f"{source['file']}, strana {pages[0]}")
+        else:
+            parts.append(f"{source['file']}, strany {', '.join(str(p) for p in pages)}")
+    return "; ".join(parts)
+
+
+def task_to_question(task: dict, group: list[dict], options: JobOptions, warnings: _Warnings) -> Optional[dict]:
+    """A no_answer task + the LOs of its group -> one question of type no_answer, or None."""
+    description, name = _plain(task.get("description")), _plain(task.get("name"))
+    if not description or not name:
+        return None
+    hints = []
+    source = group_source_hint_text(group_sources(group))
+    if options.questions.hints >= 1 and source:
+        hints.append({"name": SOURCE_HINT_NAME, "url": hint_html(source, HINT_URL_MAX, warnings)})
+    if options.questions.hints >= 2 and _plain(task.get("hint")):
+        hints.append({"name": TEXT_HINT_NAME, "url": hint_html(_plain(task["hint"]), HINT_URL_MAX, warnings)})
+    time_to_handle, time_to_explain = question_times("no_answer", task.get("time_to_handle"),
+                                                     task.get("time_to_explain"))
+    return {
+        "name": _shorten(name, QUESTION_NAME_MAX, "name", warnings),
+        "description": _shorten(description, QUESTION_DESCRIPTION_MAX, "description", warnings),
+        "type": "no_answer",
+        "time_to_handle": time_to_handle,
+        "time_to_explain": time_to_explain,
+        "hints": hints,
+        "choices": [],
+    }
+
+
+def _tasks_after_lo(result: dict, n_los: int, options: JobOptions) -> dict[int, list[dict]]:
+    """No_answer tasks by the index of the last LO of their group (only when no_answer is requested;
+    a task whose LO indices do not fit the LO list is ignored)."""
+    if "no_answer" not in options.questions.types:
+        return {}
+    after: dict[int, list[dict]] = {}
+    for task in result.get("no_answer_tasks") or []:
+        indices = task.get("lo_indices") if isinstance(task, dict) else None
+        if (not isinstance(indices, list) or not indices
+                or not all(isinstance(i, int) and not isinstance(i, bool) and 0 <= i < n_los for i in indices)):
+            continue
+        after.setdefault(max(indices), []).append(task)
+    return after
+
+
 def llm_hint_text(lo: dict) -> str:
     """The LO hint without the '[Source: …]' suffix (the source is in its own hint and in the report)."""
     return _SOURCE_SUFFIX.sub("", _plain(lo.get("hint"))).strip()
@@ -261,9 +334,6 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
     if options.split.mode != "single":
         warnings.add("split_mode_unsupported",
                      f"Split mode '{options.split.mode}' is not supported yet; all questions are in one lesson.")
-    if "no_answer" in options.questions.types:
-        warnings.add("question_type_unsupported",
-                     "Question type 'no_answer' is not generated yet; only 'choice' and 'open' questions.")
     if options.questions.per_section > 1:
         warnings.add("per_section_unsupported",
                      f"B generates one question per learning object (requested {options.questions.per_section}).")
@@ -285,31 +355,42 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
         })
 
     questions, question_meta = [], []
+
+    def valid(question: Optional[dict], what: str) -> bool:
+        if question is None:
+            return False
+        try:
+            Question.model_validate(question)
+            return True
+        except ValidationError as e:
+            logger.info(f"[Units] {what} left out: {e.errors()[0]['msg']}")
+            return False
+
+    def add(question: dict, i: int, keywords: list, source: list) -> None:
+        question_meta.append({"unit": 0, "question": len(questions), "section_id": section_id(i),
+                              "bloom_level": None, "keywords": keywords, "source": source, "topic": None})
+        questions.append(question)
+
+    tasks_after = _tasks_after_lo(result, len(los), options)
     for i, lo in enumerate(los):
         question = lo_to_question(lo, options, warnings)
-        if question is not None:
-            try:
-                Question.model_validate(question)
-            except ValidationError as e:
-                logger.info(f"[Units] LO {section_id(i)} left out: {e.errors()[0]['msg']}")
-                question = None
-        if question is None:
+        if valid(question, f"LO {section_id(i)}"):
+            file = _plain(lo.get("source_title"))
+            pages = [_page(lo)] if _page(lo) is not None else []
+            add(question, i, [k for k in lo.get("keywords") or [] if isinstance(k, str)],
+                [{"file": file, "pages": pages}] if file else [])
+        else:
             warnings.count("question_skipped",
                            lambda n: f"{n} learning object(s) gave no valid question of the requested types.")
-            continue
-        file = _plain(lo.get("source_title"))
-        page = lo.get("source_page")
-        pages = [page] if isinstance(page, int) and not isinstance(page, bool) and page >= 1 else []
-        question_meta.append({
-            "unit": 0,
-            "question": len(questions),
-            "section_id": section_id(i),
-            "bloom_level": None,
-            "keywords": [k for k in lo.get("keywords") or [] if isinstance(k, str)],
-            "source": [{"file": file, "pages": pages}] if file else [],
-            "topic": None,
-        })
-        questions.append(question)
+        for task in tasks_after.get(i, []):  # after the last LO of the task's group
+            group = [los[j] for j in task["lo_indices"]]
+            question = task_to_question(task, group, options, warnings)
+            if valid(question, f"no_answer task after {section_id(i)}"):
+                anchor = _plain(task.get("anchor"))
+                add(question, i, [anchor] if anchor else [], group_sources(group))
+            else:
+                warnings.count("no_answer_skipped",
+                               lambda n: f"{n} no_answer task(s) were not valid and were left out.")
 
     title, description = _unit_title_and_description(los)
     units = {"units": [{

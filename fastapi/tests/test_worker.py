@@ -63,6 +63,8 @@ def test_job_completes_with_result_and_report(store, fake_llm, monkeypatch):
     jsonschema.validate(units, load_schema("lesson"))
     jsonschema.validate(report, load_schema("report"))
     assert units["units"][0]["questions"] and units["units"][0]["title"] == "c_memory.html"
+    types = [q["type"] for q in units["units"][0]["questions"]]
+    assert types.count("no_answer") == 3 and types[-1] == "no_answer"  # 3 concept groups (task 1c)
     assert set(report["timings"]) == {"extract", "units", "learning_objects", "lo_evaluation",
                                       "graph", "questions", "output"}
 

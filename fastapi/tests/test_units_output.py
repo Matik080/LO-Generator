@@ -113,11 +113,12 @@ def test_choice_options_option():
 
 
 def test_unsupported_options_give_warnings():
-    opts = options(split={"mode": "lessons", "lesson_count": 3})  # default types include no_answer
+    opts = options(split={"mode": "lessons", "lesson_count": 3})
     units, report = build([make_lo()], opts)
     codes = [w["code"] for w in report["warnings"]]
     assert len(units["units"]) == 1
-    assert {"split_mode_unsupported", "question_type_unsupported", "per_section_unsupported"} <= set(codes)
+    assert {"split_mode_unsupported", "per_section_unsupported"} <= set(codes)
+    assert "question_type_unsupported" not in codes  # no_answer is generated now (task 1c)
 
 
 def test_long_texts_are_shortened():
@@ -238,3 +239,47 @@ def test_choice_with_two_correct_options():
     # invalid list (index out of range): only mc_correct_index counts
     units, _ = build([make_lo(mc_correct_indices=[0, 9])])
     assert [c["is_correct"] for c in units["units"][0]["questions"][0]["choices"]] == [True, False, False, False]
+
+
+def make_task(lo_indices, **fields):
+    task = {"anchor": "pointer", "lo_indices": lo_indices, "description": "Explain how & and * work together.",
+            "name": "Pointer Operators", "hint": "Start with what a pointer stores.",
+            "time_to_handle": 2400, "time_to_explain": None}
+    task.update(fields)
+    return task
+
+
+def test_no_answer_task_comes_after_the_last_lo_of_its_group():
+    los = [make_lo(id="a", source_page=3), make_lo(id="b", source_page=7, question="Q b"),
+           make_lo(id="c", source_page=5, question="Q c", source_title="d.pdf")]
+    units, report = build(los, no_answer_tasks=[make_task([0, 1]), make_task([0, 2], anchor="free", name="Free")])
+    questions = units["units"][0]["questions"]
+
+    assert [q["type"] for q in questions] == ["choice", "choice", "no_answer", "choice", "no_answer"]
+    task = questions[2]
+    assert task["choices"] == [] and task["name"] == "Pointer Operators"
+    assert (task["time_to_handle"], task["time_to_explain"]) == (1800, 0)  # fitted to the no_answer range
+    assert task["hints"] == [{"name": "Zdroj", "url": "<p>c.pdf, strany 3, 7</p>"},
+                             {"name": "Nápoveda", "url": "<p>Start with what a pointer stores.</p>"}]
+    assert questions[4]["hints"][0]["url"] == "<p>c.pdf, strana 3; d.pdf, strana 5</p>"
+
+    meta = report["question_meta"]
+    assert [(m["question"], m["section_id"]) for m in meta] == [(0, "S-1"), (1, "S-2"), (2, "S-2"), (3, "S-3"), (4, "S-3")]
+    assert meta[2]["keywords"] == ["pointer"]
+    assert meta[2]["source"] == [{"file": "c.pdf", "pages": [3, 7]}]
+    assert meta[4]["source"] == [{"file": "c.pdf", "pages": [3]}, {"file": "d.pdf", "pages": [5]}]
+
+
+def test_no_answer_tasks_only_when_requested_and_valid():
+    los = [make_lo(id="a"), make_lo(id="b")]
+    tasks = [make_task([0, 1]), make_task([0, 9]), make_task([]), make_task([0, 1], description=" "), "x"]
+
+    units, report = build(los, options(questions={"types": ["choice", "open"]}), no_answer_tasks=tasks)
+    assert [q["type"] for q in units["units"][0]["questions"]] == ["choice", "choice"]
+
+    units, report = build(los, no_answer_tasks=tasks)
+    assert [q["type"] for q in units["units"][0]["questions"]] == ["choice", "choice", "no_answer"]
+    assert "1 no_answer task(s)" in next(w["message"] for w in report["warnings"] if w["code"] == "no_answer_skipped")
+
+    units, _ = build(los, options(questions={"hints": 1}), no_answer_tasks=tasks[:1])
+    assert [h["name"] for h in units["units"][0]["questions"][2]["hints"]] == ["Zdroj"]
