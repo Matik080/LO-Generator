@@ -13,6 +13,9 @@ Redis (state that changes while the job runs; RQ only carries the job id):
                            external_ref, created_at, updated_at, retryable_until
     logen:jobs             sorted set of all job ids (score = creation time)
     logen:ref:{ref}        job id of the job with this external_ref (SET NX: one job per ref)
+    logen:heartbeat:{id}   id of the worker running the job; expires after heartbeat_ttl_s unless
+                           that worker renews it (claim_job / renew_claim / release_claim), so a
+                           job whose key expired lost its worker, and two workers never run one job
 
 The API writes the folder first and the Redis state last, so a job that the API reports as
 created always has its files on disk.
@@ -35,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "logen"
 RETRYABLE_FOR = timedelta(hours=24)  # default; inputs of a failed job are deleted after this (no retry then)
+HEARTBEAT_TTL_S = 60                 # default; a worker that stops renewing its heartbeat this long is lost
 ACTIVE = ("queued", "running")
 
 
@@ -87,17 +91,19 @@ FINAL_EVENTS = {"completed": "job.completed", "failed": "job.failed", "cancelled
 class JobStore:
     def __init__(self, redis, data_dir: str, clock: Callable[[], datetime] = utc_now,
                  on_event: Optional[Callable[["JobStore", str, str], None]] = None,
-                 retryable_for: timedelta = RETRYABLE_FOR):
+                 retryable_for: timedelta = RETRYABLE_FOR, heartbeat_ttl_s: int = HEARTBEAT_TTL_S):
         """`redis`: a redis.Redis client created with decode_responses=True (or fakeredis in tests).
         `on_event(store, job_id, event)`: called after a real change of the job (webhooks, service/webhooks.py):
         job.stage_changed (a running job reached a new stage), job.completed, job.failed, job.cancelled.
         `retryable_for`: how long a failed job keeps its inputs and can be retried (LOGEN_FAILED_INPUT_TTL_HOURS).
+        `heartbeat_ttl_s`: how long a worker's claim on a job lives without renewal (LOGEN_HEARTBEAT_TTL_S).
         """
         self.redis = redis
         self.jobs_dir = Path(data_dir) / "jobs"
         self.clock = clock
         self.on_event = on_event
         self.retryable_for = retryable_for
+        self.heartbeat_ttl_s = heartbeat_ttl_s
 
     # --- paths ------------------------------------------------------------------------------
 
@@ -117,6 +123,10 @@ class JobStore:
     @staticmethod
     def _ref_key(external_ref: str) -> str:
         return f"{PREFIX}:ref:{external_ref}"
+
+    @staticmethod
+    def _heartbeat_key(job_id: str) -> str:
+        return f"{PREFIX}:heartbeat:{job_id}"
 
     # --- create -----------------------------------------------------------------------------
 
@@ -248,6 +258,29 @@ class JobStore:
     def cancel_requested(self, job_id: str) -> bool:
         """True after DELETE: the job was cancelled, or deleted altogether."""
         return self.redis.hget(self._key(job_id), "cancel_requested") in ("1", None)
+
+    # --- heartbeat (which worker runs the job) ------------------------------------------------
+
+    def claim_job(self, job_id: str, worker_id: str) -> bool:
+        """Takes the job for this worker. False when another worker holds a live claim on it."""
+        return bool(self.redis.set(self._heartbeat_key(job_id), worker_id, nx=True, ex=self.heartbeat_ttl_s))
+
+    def renew_claim(self, job_id: str, worker_id: str) -> bool:
+        """Extends this worker's claim. False when the claim expired meanwhile or belongs to another worker."""
+        key = self._heartbeat_key(job_id)
+        if self.redis.get(key) != worker_id:
+            return False
+        return bool(self.redis.expire(key, self.heartbeat_ttl_s))
+
+    def release_claim(self, job_id: str, worker_id: str) -> None:
+        """Ends this worker's claim (the job finished or was skipped); another worker's claim stays."""
+        key = self._heartbeat_key(job_id)
+        if self.redis.get(key) == worker_id:
+            self.redis.delete(key)
+
+    def has_live_worker(self, job_id: str) -> bool:
+        """True while some worker holds a claim on the job (its heartbeat has not expired)."""
+        return bool(self.redis.exists(self._heartbeat_key(job_id)))
 
     # --- result -----------------------------------------------------------------------------
 

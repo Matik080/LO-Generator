@@ -224,7 +224,7 @@ def test_recover_jobs(store):
     queued = []
     counts = worker.recover_jobs(store, queued.append)
 
-    assert counts == {"requeued": 2, "worker_lost": 1, "cancelled": 1}
+    assert counts == {"requeued": 2, "worker_lost": 1, "cancelled": 1, "running_elsewhere": 0}
     assert sorted(queued) == sorted([ids["queued"], ids["lost_once"]])
     assert store.status(ids["lost_once"]).status == "queued"
     lost = store.status(ids["lost_twice"])
@@ -233,6 +233,51 @@ def test_recover_jobs(store):
     assert store.status(ids["lost_cancelled"]).status == "cancelled"
     assert store.status(ids["completed"]).status == "completed"
     assert store.status(ids["failed"]).status == "failed"
+
+
+def test_recovery_leaves_jobs_of_live_workers_alone(store):
+    """With several workers, a running job whose worker still sends heartbeats is not taken over."""
+    job_id = new_job(store)
+    store.update(job_id, status="running", stage="units")
+    store.increment_attempts(job_id)
+    store.claim_job(job_id, "worker-a")  # worker A is alive and runs the job
+
+    queued = []
+    counts = worker.recover_jobs(store, queued.append)  # worker B starts
+    assert counts["running_elsewhere"] == 1 and queued == []
+    assert store.status(job_id).status == "running" and store.fields(job_id)["attempts"] == "1"
+
+    store.redis.delete(store._heartbeat_key(job_id))  # worker A died: its heartbeat expired
+    counts = worker.recover_jobs(store, queued.append)
+    assert counts["requeued"] == 1 and queued == [job_id]
+    assert store.status(job_id).status == "queued"
+
+
+def test_job_claimed_by_another_worker_is_skipped(store):
+    job_id = new_job(store)
+    store.claim_job(job_id, "worker-a")
+    called = []
+    run_job(store, job_id, pipeline=lambda *a, **k: called.append(1), worker_id="worker-b")
+    assert called == [] and store.status(job_id).status == "queued"
+    assert store.redis.get(store._heartbeat_key(job_id)) == "worker-a"  # A's claim untouched
+
+
+def test_heartbeat_is_renewed_during_the_job_and_released_after(tmp_path):
+    """The job runs longer than the claim lives; the background thread keeps it alive."""
+    import time
+    store = JobStore(fakeredis.FakeRedis(decode_responses=True), str(tmp_path), heartbeat_ttl_s=1)
+    job_id = new_job(store)
+    seen = []
+
+    def slow_pipeline(sources, progress_callback, checkpoint):
+        time.sleep(1.5)  # longer than heartbeat_ttl_s, no progress report meanwhile
+        seen.append(store.redis.get(store._heartbeat_key(job_id)))
+        raise LLMError("stop here")
+    run_job(store, job_id, pipeline=slow_pipeline, worker_id="worker-a")
+
+    assert seen == ["worker-a"]                      # still claimed after 1.5 s
+    assert not store.has_live_worker(job_id)         # released when the job ended
+    assert store.status(job_id).status == "failed"
 
 
 def test_restarted_worker_continues_from_checkpoint(store, fake_llm, monkeypatch):

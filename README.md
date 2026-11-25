@@ -129,6 +129,7 @@ The first build takes several minutes (PyTorch, MiniLM, spaCy and NLTK are downl
 | `LOGEN_MAX_FILES` / `LOGEN_MAX_UPLOAD_MB` | `10` / `50` | files per job / MB per file |
 | `LOGEN_MAX_ACTIVE_JOBS` | `10` | queued + running jobs; more get `429 too_many_jobs` |
 | `LOGEN_JOB_TIMEOUT_S` | `21600` | a longer job fails with `internal_error` (`reason: timeout`) |
+| `LOGEN_HEARTBEAT_TTL_S` | `60` | a worker renews its job's heartbeat every third of this; a job silent this long has lost its worker and is taken over |
 | `LOGEN_DOCS_ENABLED` | `true` | `/docs` and `/openapi.json` |
 | `LOGEN_ECEH_NETWORK` | `eceh` | ECEH's Docker network (`docker-compose.eceh.yml`) |
 | `LOGEN_WEBHOOK_ALLOWED_HOSTS` / `LOGEN_WEBHOOK_SECRET` | empty / - | hosts allowed in `callback_url` (empty = webhooks off) and the HMAC key; the secret is required when hosts are set |

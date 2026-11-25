@@ -10,11 +10,19 @@ and Redis (service/store.py). run_job is the same with the store and pipeline pa
 The checkpoint in the job folder is kept when a run stops, so a retry or a restarted worker
 continues where it stopped and no LLM call is paid twice.
 
+Several workers may run at once: a worker first claims the job in Redis (store.claim_job) and
+renews that claim every heartbeat_ttl_s / 3 seconds from a background thread while the job runs.
+A job whose claim expired lost its worker; recover_jobs only takes over such jobs.
+
 Start the worker with `python -m service.worker` (LOGEN_REDIS_URL, LOGEN_DATA_DIR); it first
 recovers jobs a previous worker left unfinished (recover_jobs), then processes the queue.
 """
 
 import logging
+import os
+import socket
+import threading
+import uuid
 from typing import Callable, Optional
 
 from rq.timeouts import JobTimeoutException
@@ -64,8 +72,63 @@ def _job_error(exc: Exception, stage: Optional[str], attempt: int) -> JobError:
                     details={**details, "reason": type(exc).__name__})
 
 
-def run_job(store: JobStore, job_id: str, pipeline: Callable = _default_pipeline) -> None:
-    """Runs the job if it is queued; afterwards it is completed, failed or cancelled."""
+def new_worker_id() -> str:
+    """Identifies one run of one worker in its heartbeat (container name, process, random part)."""
+    return f"{socket.gethostname()}:{os.getpid()}:{uuid.uuid4().hex[:8]}"
+
+
+class _Heartbeat:
+    """Renews the worker's claim on a job in a background thread until stop().
+
+    A thread, not the progress callback: one LLM call can take longer than the claim lives.
+    """
+
+    def __init__(self, store: JobStore, job_id: str, worker_id: str):
+        self.store, self.job_id, self.worker_id = store, job_id, worker_id
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._run, name=f"heartbeat-{job_id}", daemon=True)
+
+    def start(self) -> "_Heartbeat":
+        self._thread.start()
+        return self
+
+    def _run(self) -> None:
+        interval = max(self.store.heartbeat_ttl_s / 3, 0.01)
+        while not self._stop.wait(interval):
+            try:
+                if not self.store.renew_claim(self.job_id, self.worker_id):
+                    logger.warning(f"[Worker] Job {self.job_id}: heartbeat could not be renewed "
+                                   f"(claim expired or taken over).")
+            except Exception:  # Redis briefly away: try again at the next beat
+                logger.warning(f"[Worker] Job {self.job_id}: heartbeat renewal failed.", exc_info=True)
+
+    def stop(self) -> None:
+        self._stop.set()
+        self._thread.join()
+
+
+def run_job(store: JobStore, job_id: str, pipeline: Callable = _default_pipeline,
+            worker_id: Optional[str] = None) -> None:
+    """Runs the job if it is queued and no other worker runs it; afterwards it is completed,
+    failed or cancelled."""
+    if store.fields(job_id) is None:
+        logger.info(f"[Worker] Job {job_id} no longer exists; skipped.")
+        return
+    worker_id = worker_id or new_worker_id()
+    if not store.claim_job(job_id, worker_id):
+        logger.info(f"[Worker] Job {job_id} is being run by another worker; skipped.")
+        return
+    heartbeat = _Heartbeat(store, job_id, worker_id).start()
+    try:
+        _run_claimed(store, job_id, pipeline)
+    finally:
+        heartbeat.stop()
+        store.release_claim(job_id, worker_id)
+
+
+def _run_claimed(store: JobStore, job_id: str, pipeline: Callable) -> None:
+    """run_job after this worker claimed the job. The status is read only now: a worker that
+    claimed the job just before has finished it or changed it."""
     fields = store.fields(job_id)
     if fields is None:
         logger.info(f"[Worker] Job {job_id} no longer exists; skipped.")
@@ -133,18 +196,22 @@ def run_job(store: JobStore, job_id: str, pipeline: Callable = _default_pipeline
 def recover_jobs(store: JobStore, enqueue: Callable[[str], None]) -> dict[str, int]:
     """Called when the worker starts, before it takes jobs from the queue.
 
-    The prototype runs one worker, so a job still marked `running` lost its worker (crash,
-    restart, out of memory). It goes back to the queue and continues from its checkpoint,
-    unless it already had MAX_ATTEMPTS attempts (-> failed, worker_lost) or was cancelled.
+    A job still marked `running` whose heartbeat expired lost its worker (crash, restart, out of
+    memory). It goes back to the queue and continues from its checkpoint, unless it already had
+    MAX_ATTEMPTS attempts (-> failed, worker_lost) or was cancelled. A `running` job with a live
+    heartbeat is left alone: another worker is running it.
     `queued` jobs are queued again too (e.g. the API stopped between saving a job and queueing
     it); a job that ends up twice in the queue runs once, run_job skips it the second time.
     """
-    counts = {"requeued": 0, "worker_lost": 0, "cancelled": 0}
+    counts = {"requeued": 0, "worker_lost": 0, "cancelled": 0, "running_elsewhere": 0}
     for job_id in store.all_ids():
         fields = store.fields(job_id)
         if fields is None or fields["status"] not in ("queued", "running"):
             continue
         if fields["status"] == "running":
+            if store.has_live_worker(job_id):
+                counts["running_elsewhere"] += 1
+                continue
             attempts = int(fields["attempts"])
             if store.cancel_requested(job_id):
                 store.update(job_id, status="cancelled")
@@ -172,7 +239,8 @@ def store_from_settings(settings) -> JobStore:
     from service.webhooks import notifier_from_settings
     return JobStore(Redis.from_url(settings.redis_url, decode_responses=True), settings.data_dir,
                     on_event=notifier_from_settings(settings),
-                    retryable_for=timedelta(hours=settings.failed_input_ttl_hours))
+                    retryable_for=timedelta(hours=settings.failed_input_ttl_hours),
+                    heartbeat_ttl_s=settings.heartbeat_ttl_s)
 
 
 def process_job(job_id: str) -> None:

@@ -127,3 +127,22 @@ def test_job_json_keeps_complete_options(store):
     assert saved["options"]["questions"]["hints"] == 1
     assert saved["options"]["questions"]["choice_options"] == 4
     assert store.load(job_id).options == options
+
+
+def test_heartbeat_claim_is_exclusive_and_owned(store):
+    job_id, _ = store.create(JobOptions(), [PDF])
+    assert not store.has_live_worker(job_id)
+    assert store.claim_job(job_id, "worker-a")
+    assert not store.claim_job(job_id, "worker-b")  # a live claim: the second worker must not run the job
+    assert store.has_live_worker(job_id)
+    assert 0 < store.redis.ttl(store._heartbeat_key(job_id)) <= store.heartbeat_ttl_s
+
+    assert store.renew_claim(job_id, "worker-a")
+    assert not store.renew_claim(job_id, "worker-b")  # cannot renew another worker's claim
+    store.release_claim(job_id, "worker-b")           # nor release it
+    assert store.has_live_worker(job_id)
+
+    store.release_claim(job_id, "worker-a")
+    assert not store.has_live_worker(job_id)
+    assert not store.renew_claim(job_id, "worker-a")  # gone (like an expired claim)
+    assert store.claim_job(job_id, "worker-b")
