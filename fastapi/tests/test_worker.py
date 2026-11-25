@@ -224,7 +224,8 @@ def test_recover_jobs(store):
     queued = []
     counts = worker.recover_jobs(store, queued.append)
 
-    assert counts == {"requeued": 2, "worker_lost": 1, "cancelled": 1, "running_elsewhere": 0}
+    assert counts == {"requeued": 2, "worker_lost": 1, "cancelled": 1, "running_elsewhere": 0,
+                      "already_queued": 0}
     assert sorted(queued) == sorted([ids["queued"], ids["lost_once"]])
     assert store.status(ids["lost_once"]).status == "queued"
     lost = store.status(ids["lost_twice"])
@@ -251,6 +252,57 @@ def test_recovery_leaves_jobs_of_live_workers_alone(store):
     counts = worker.recover_jobs(store, queued.append)
     assert counts["requeued"] == 1 and queued == [job_id]
     assert store.status(job_id).status == "queued"
+
+
+def test_recovery_does_not_queue_a_waiting_job_twice(store):
+    """Recovery runs every minute in the scheduler: jobs that already wait must not pile up."""
+    waiting, taken, lost = new_job(store), new_job(store), new_job(store)
+    store.claim_job(taken, "worker-a")  # a worker just took it from the queue (still "queued")
+
+    queued = []
+    counts = worker.recover_jobs(store, queued.append, waiting=lambda: {waiting})
+    assert queued == [lost]  # e.g. the API stopped before it queued this one
+    assert counts["requeued"] == 1 and counts["already_queued"] == 2
+
+
+def test_waiting_job_ids_reads_the_rq_queue():
+    from rq import Queue
+    from service.jobqueue import QUEUE_NAME, enqueue_job, waiting_job_ids
+    queue = Queue(QUEUE_NAME, connection=fakeredis.FakeRedis())
+    assert waiting_job_ids(queue) == set()
+    enqueue_job(queue, "job-1")
+    enqueue_job(queue, "job-2")
+    assert waiting_job_ids(queue) == {"job-1", "job-2"}
+
+
+def test_recovery_loop_logs_changes_survives_errors_and_stops(caplog):
+    import logging
+    import threading
+    import time
+    from service.scheduler import recovery_loop
+
+    answers = [RuntimeError("Redis away"), {"requeued": 1, "already_queued": 3},
+               {"requeued": 0, "already_queued": 3}]
+    calls = []
+
+    def recover():
+        calls.append(1)
+        answer = answers[min(len(calls), len(answers)) - 1]
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    stop = threading.Event()
+    with caplog.at_level(logging.INFO, logger="service.scheduler"):
+        thread = threading.Thread(target=recovery_loop, args=(recover, 0.01, stop))
+        thread.start()
+        while len(calls) < 4:
+            time.sleep(0.01)
+        stop.set()
+        thread.join(timeout=2)
+    assert not thread.is_alive()  # kept going after the error, stopped when asked
+    logged = [r.getMessage() for r in caplog.records if r.getMessage().startswith("[Recovery] {")]
+    assert logged == ["[Recovery] {'requeued': 1}"]  # only real changes, not jobs left alone
 
 
 def test_job_claimed_by_another_worker_is_skipped(store):
@@ -321,3 +373,10 @@ def test_job_runs_through_rq(store, fake_llm, monkeypatch):
     SimpleWorker([queue], connection=queue.connection).work(burst=True)
     assert store.status(job_id).status == "completed"
     assert store.read_output(job_id, "result")["units"][0]["questions"]
+
+
+def test_heartbeat_and_recovery_settings():
+    from service.settings import ServiceSettings
+    assert (ServiceSettings.from_env({}).heartbeat_ttl_s, ServiceSettings.from_env({}).recovery_interval_s) == (60, 60)
+    s = ServiceSettings.from_env({"LOGEN_HEARTBEAT_TTL_S": "30", "LOGEN_RECOVERY_INTERVAL_S": "15"})
+    assert (s.heartbeat_ttl_s, s.recovery_interval_s) == (30, 15)

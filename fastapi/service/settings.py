@@ -33,6 +33,7 @@ class ServiceSettings(BaseSettings):
     failed_input_ttl_hours: float = Field(24, gt=0)  # inputs of a failed job stay this long (retry)
     cleanup_interval_s: int = Field(600, ge=10)   # how often the scheduler deletes old inputs and jobs
     heartbeat_ttl_s: int = Field(60, ge=3)        # a worker silent this long lost its job (renewed every ttl/3)
+    recovery_interval_s: int = Field(60, ge=5)    # how often the scheduler looks for jobs whose worker died
     mock_duration_s: float = Field(30.0, ge=0)    # how long a mock job runs
 
     @field_validator("api_keys", "webhook_allowed_hosts", mode="before")

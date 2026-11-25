@@ -193,17 +193,21 @@ def _run_claimed(store: JobStore, job_id: str, pipeline: Callable) -> None:
                 f"{sum(len(u['questions']) for u in units['units'])} question(s).")
 
 
-def recover_jobs(store: JobStore, enqueue: Callable[[str], None]) -> dict[str, int]:
-    """Called when the worker starts, before it takes jobs from the queue.
+def recover_jobs(store: JobStore, enqueue: Callable[[str], None],
+                 waiting: Callable[[], set[str]] = set) -> dict[str, int]:
+    """Called when a worker starts, before it takes jobs from the queue, and regularly by the
+    scheduler (LOGEN_RECOVERY_INTERVAL_S), so a lost job is found even when no worker restarts.
 
     A job still marked `running` whose heartbeat expired lost its worker (crash, restart, out of
     memory). It goes back to the queue and continues from its checkpoint, unless it already had
     MAX_ATTEMPTS attempts (-> failed, worker_lost) or was cancelled. A `running` job with a live
     heartbeat is left alone: another worker is running it.
     `queued` jobs are queued again too (e.g. the API stopped between saving a job and queueing
-    it); a job that ends up twice in the queue runs once, run_job skips it the second time.
+    it), unless they already wait in the queue (`waiting()`: job ids in the RQ queue). A job that
+    still ends up twice in the queue runs once; run_job skips it the second time.
     """
-    counts = {"requeued": 0, "worker_lost": 0, "cancelled": 0, "running_elsewhere": 0}
+    counts = {"requeued": 0, "worker_lost": 0, "cancelled": 0, "running_elsewhere": 0, "already_queued": 0}
+    in_queue = waiting()
     for job_id in store.all_ids():
         fields = store.fields(job_id)
         if fields is None or fields["status"] not in ("queued", "running"):
@@ -227,6 +231,9 @@ def recover_jobs(store: JobStore, enqueue: Callable[[str], None]) -> dict[str, i
                 continue
             store.update(job_id, status="queued")
             logger.info(f"[Worker] Job {job_id}: worker was lost during attempt {attempts}; queued again.")
+        elif job_id in in_queue or store.has_live_worker(job_id):
+            counts["already_queued"] += 1  # waits in the queue, or a worker is just taking it
+            continue
         enqueue(job_id)
         counts["requeued"] += 1
     return counts
@@ -243,6 +250,14 @@ def store_from_settings(settings) -> JobStore:
                     heartbeat_ttl_s=settings.heartbeat_ttl_s)
 
 
+def recover_from_settings(settings) -> dict[str, int]:
+    """recover_jobs with the real store and queue (worker start, scheduler)."""
+    from service.jobqueue import enqueue_job, make_queue, waiting_job_ids
+    store, queue = store_from_settings(settings), make_queue(settings.redis_url)
+    return recover_jobs(store, lambda job_id: enqueue_job(queue, job_id, settings.job_timeout_s),
+                        lambda: waiting_job_ids(queue))
+
+
 def process_job(job_id: str) -> None:
     """Entry point for RQ (the queue stores only the job id)."""
     from service.settings import ServiceSettings
@@ -253,13 +268,13 @@ def main() -> None:
     """python -m service.worker: recover unfinished jobs, then process the queue until stopped."""
     from rq import Worker
 
-    from service.jobqueue import enqueue_job, make_queue
+    from service.jobqueue import make_queue
     from service.settings import ServiceSettings
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     settings = ServiceSettings.from_env()
-    store, queue = store_from_settings(settings), make_queue(settings.redis_url)
-    counts = recover_jobs(store, lambda job_id: enqueue_job(queue, job_id, settings.job_timeout_s))
+    queue = make_queue(settings.redis_url)
+    counts = recover_from_settings(settings)
     logger.info(f"[Worker] Started. Recovered jobs: {counts}")
     Worker([queue], connection=queue.connection).work()
 
