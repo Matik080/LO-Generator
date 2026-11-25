@@ -157,25 +157,40 @@ def llm_hint_text(lo: dict) -> str:
     return _SOURCE_SUFFIX.sub("", _plain(lo.get("hint"))).strip()
 
 
+def _correct_indices(lo: dict, n_options: int) -> list[int]:
+    """Indices of the correct options: `mc_correct_indices` (questions/multi_correct.py) when valid,
+    otherwise the one `mc_correct_index`."""
+    correct = lo.get("mc_correct_index")
+    many = lo.get("mc_correct_indices")
+    if (isinstance(many, list) and correct in many
+            and all(isinstance(i, int) and not isinstance(i, bool) and 0 <= i < n_options for i in many)):
+        return sorted(set(many))
+    return [correct]
+
+
 def _choices(lo: dict, choice_options: int, warnings: _Warnings) -> Optional[list[dict]]:
-    """MC options as choices: the correct one plus the first (choice_options - 1) distractors.
+    """MC options as choices: all correct ones plus distractors up to choice_options in total
+    (at least one distractor when the LO has one).
 
     None when the LO has no usable MC options.
     """
     options = lo.get("mc_options")
     correct = lo.get("mc_correct_index")
-    if not isinstance(options, list) or not isinstance(correct, int) or not 0 <= correct < len(options):
+    if (not isinstance(options, list) or not isinstance(correct, int) or isinstance(correct, bool)
+            or not 0 <= correct < len(options)):
         return None
     texts = [_plain(o) for o in options]
-    if not texts[correct]:
+    corrects = [i for i in _correct_indices(lo, len(options)) if texts[i]]
+    if correct not in corrects:
         return None
-    distractors = [i for i, t in enumerate(texts) if i != correct and t]
-    if len(distractors) + 1 < choice_options:
+    distractors = [i for i, t in enumerate(texts) if i not in corrects and t]
+    if len(corrects) + len(distractors) < choice_options:
         warnings.count("choice_options_unavailable",
                        lambda n: f"{n} choice question(s) have fewer options than requested "
                                  f"(B generates up to 4).")
-    keep = sorted([correct] + distractors[:choice_options - 1])  # keep the generated order
-    return [{"text": _shorten(texts[i], CHOICE_TEXT_MAX, "choice", warnings), "is_correct": i == correct}
+    n_distractors = max(choice_options - len(corrects), 1 if distractors else 0)
+    keep = sorted(corrects + distractors[:n_distractors])  # keep the generated order
+    return [{"text": _shorten(texts[i], CHOICE_TEXT_MAX, "choice", warnings), "is_correct": i in corrects}
             for i in keep]
 
 

@@ -39,6 +39,7 @@ class PipelineOptions:
     max_attempts: int = 2
     verify_batch_size: int = 10
     enrich_batch_size: int = 10
+    multi_correct_batch_size: int = 5
     dedup_threshold: float = 0.82
 
     @classmethod
@@ -50,7 +51,8 @@ class PipelineOptions:
             mc_batch_size=s.mc_batch_size, eval_models=list(s.eval_models),
             faithfulness_threshold=s.faithfulness_threshold, hint_quality_threshold=s.hint_quality_threshold,
             max_attempts=s.max_attempts, verify_batch_size=s.verify_batch_size,
-            enrich_batch_size=s.enrich_batch_size, dedup_threshold=s.dedup_threshold,
+            enrich_batch_size=s.enrich_batch_size, multi_correct_batch_size=s.multi_correct_batch_size,
+            dedup_threshold=s.dedup_threshold,
         )
 
 
@@ -99,6 +101,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     from lo_pipeline.lo.quality_filter import filter_and_regenerate
     from lo_pipeline.graph.prerequisites import build_prerequisite_graph, graph_to_json
     from lo_pipeline.questions.echub import enrich_learning_objects, convert_by_source
+    from lo_pipeline.questions.multi_correct import add_correct_options, has_mc_options
     from lo_pipeline.checkpoint import fingerprint
     from lo_pipeline.llm.service import use_response_cache
 
@@ -190,10 +193,15 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                 "concept_graph": graph_to_json(g["concept_graph"]),
                 "warnings": warnings}
 
-    # 6. Question names and time estimates
+    # 6. Question names and time estimates, then a second correct option where the source supports it
     def questions():
-        los = enrich_learning_objects(state["learning_objects"], batch_size=opts.enrich_batch_size,
-                                      progress=progress.step("questions"))
+        los = state["learning_objects"]
+        enrich_calls = _ceil_div(len(los), opts.enrich_batch_size)
+        multi_calls = _ceil_div(sum(1 for lo in los if has_mc_options(lo)), opts.multi_correct_batch_size)
+        los = enrich_learning_objects(los, batch_size=opts.enrich_batch_size,
+                                      progress=progress.step("questions", 0, multi_calls))
+        los = add_correct_options(los, batch_size=opts.multi_correct_batch_size,
+                                  progress=progress.step("questions", enrich_calls))
         return {"learning_objects": los}
 
     # 7. Output: today's ECHub format (one unit per source). M4 replaces this with the `units` format.

@@ -220,3 +220,21 @@ def test_times_fit_the_range_of_the_question_type():
     units, _ = build([make_lo(time_to_handle=5), make_lo(id="b", mc_options=None, time_to_handle=5)])
     times = [(q["type"], q["time_to_handle"]) for q in units["units"][0]["questions"]]
     assert times == [("choice", 30), ("open", 120)]
+
+
+def test_choice_with_two_correct_options():
+    lo = make_lo(mc_options=["Stores an address", "Stores a copy", "Can be dereferenced", "Stores a name"],
+                 mc_correct_index=0, mc_correct_indices=[0, 2])
+    units, _ = build([lo])
+    choices = units["units"][0]["questions"][0]["choices"]
+    assert [(c["text"], c["is_correct"]) for c in choices] == [
+        ("Stores an address", True), ("Stores a copy", False), ("Can be dereferenced", True), ("Stores a name", False)]
+
+    # fewer options requested: both correct ones stay, plus at least one distractor
+    units, _ = build([lo], options(questions={"choice_options": 2}))
+    choices = units["units"][0]["questions"][0]["choices"]
+    assert [c["is_correct"] for c in choices] == [True, False, True]
+
+    # invalid list (index out of range): only mc_correct_index counts
+    units, _ = build([make_lo(mc_correct_indices=[0, 9])])
+    assert [c["is_correct"] for c in units["units"][0]["questions"][0]["choices"]] == [True, False, False, False]

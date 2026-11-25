@@ -82,6 +82,7 @@ class PipelineSettings(BaseSettings):
     eval_batch_size: Optional[int] = Field(None, ge=1)  # None = per model (lo/evaluator.py)
     verify_batch_size: int = Field(10, ge=1)
     enrich_batch_size: int = Field(10, ge=1)
+    multi_correct_batch_size: int = Field(5, ge=1)  # choice LOs per call when looking for a 2nd correct option
 
     @field_validator("eval_models", mode="before")
     @classmethod
