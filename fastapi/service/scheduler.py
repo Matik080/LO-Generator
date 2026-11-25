@@ -6,6 +6,8 @@
   logen), so a webhook is sent within a moment even while a long job runs. with_scheduler=True
   runs RQ's scheduler too: it puts the delayed retries (10 s, 60 s, 300 s) back into the queue.
   The deliveries are small HTTP posts, so the worker does not fork a process per delivery.
+  RQ's scheduler process dies when Redis restarts; the worker starts it again in its maintenance,
+  so the scheduler is back within about a minute (with RQ's defaults it took up to 10 minutes).
 - Cleanup: a background thread runs service.cleanup.sweep at start and then every
   LOGEN_CLEANUP_INTERVAL_S seconds (old inputs and finished jobs, see cleanup.py).
 - Recovery: another thread runs service.worker.recover_jobs every LOGEN_RECOVERY_INTERVAL_S
@@ -18,6 +20,11 @@ import threading
 from datetime import timedelta
 
 logger = logging.getLogger(__name__)
+
+# How soon RQ's scheduler (webhook retries) is back after a Redis restart. RQ checks for maintenance
+# only after waiting on the empty queue, which lasts worker_ttl - 15 s (default 420 - 15), so both are short.
+WEBHOOK_MAINTENANCE_INTERVAL_S = 30
+WEBHOOK_WORKER_TTL_S = 45
 
 
 def repeat(name: str, task, interval_s: float, stop: threading.Event) -> None:
@@ -50,9 +57,9 @@ def recovery_loop(recover, interval_s: float, stop: threading.Event) -> None:
 
 
 def main() -> None:
-    from redis import Redis
     from rq import Queue, SimpleWorker
 
+    from service.redis_client import connect
     from service.settings import ServiceSettings
     from service.webhooks import WEBHOOK_QUEUE
     from service.worker import recover_from_settings, store_from_settings
@@ -69,8 +76,10 @@ def main() -> None:
                      args=(lambda: recover_from_settings(settings), settings.recovery_interval_s,
                            threading.Event())).start()
 
-    connection = Redis.from_url(settings.redis_url)
-    SimpleWorker([Queue(WEBHOOK_QUEUE, connection=connection)], connection=connection).work(with_scheduler=True)
+    connection = connect(settings.redis_url)
+    SimpleWorker([Queue(WEBHOOK_QUEUE, connection=connection)], connection=connection,
+                 maintenance_interval=WEBHOOK_MAINTENANCE_INTERVAL_S,
+                 worker_ttl=WEBHOOK_WORKER_TTL_S).work(with_scheduler=True)
 
 
 if __name__ == "__main__":

@@ -25,6 +25,8 @@ import threading
 import uuid
 from typing import Callable, Optional
 
+from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import TimeoutError as RedisTimeoutError
 from rq.timeouts import JobTimeoutException
 
 from lo_pipeline.checkpoint import FileCheckpoint
@@ -173,6 +175,13 @@ def _run_claimed(store: JobStore, job_id: str, pipeline: Callable) -> None:
         store.update(job_id, status="cancelled")
         store.delete_inputs(job_id)  # a cancelled job keeps no document
         return
+    except (RedisConnectionError, RedisTimeoutError):
+        # Redis stayed away longer than the client retries (service/redis_client.py). The job is
+        # not failed: it stays running, its heartbeat expires and recovery continues it from the
+        # checkpoint, as after a lost worker.
+        logger.warning(f"[Worker] Job {job_id}: Redis not reachable in '{current['stage']}'; "
+                       f"left for recovery.")
+        raise
     except Exception as exc:
         if store.cancel_requested(job_id):  # e.g. the folder was deleted under the running job
             logger.info(f"[Worker] Job {job_id} was cancelled; error after that ignored: {type(exc).__name__}")
@@ -242,9 +251,9 @@ def recover_jobs(store: JobStore, enqueue: Callable[[str], None],
 def store_from_settings(settings) -> JobStore:
     """The job store of the API and the worker; with webhooks on, every state change is reported."""
     from datetime import timedelta
-    from redis import Redis
+    from service.redis_client import connect
     from service.webhooks import notifier_from_settings
-    return JobStore(Redis.from_url(settings.redis_url, decode_responses=True), settings.data_dir,
+    return JobStore(connect(settings.redis_url, decode_responses=True), settings.data_dir,
                     on_event=notifier_from_settings(settings),
                     retryable_for=timedelta(hours=settings.failed_input_ttl_hours),
                     heartbeat_ttl_s=settings.heartbeat_ttl_s)

@@ -112,6 +112,6 @@ def notifier_from_settings(settings) -> Optional[WebhookNotifier]:
     """A notifier for JobStore(on_event=...), or None when webhooks are off (no allowed hosts)."""
     if not settings.webhooks_enabled:
         return None
-    from redis import Redis
+    from service.redis_client import connect
     from rq import Queue
-    return WebhookNotifier(rq_enqueue(Queue(WEBHOOK_QUEUE, connection=Redis.from_url(settings.redis_url))))
+    return WebhookNotifier(rq_enqueue(Queue(WEBHOOK_QUEUE, connection=connect(settings.redis_url))))

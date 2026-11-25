@@ -4,8 +4,9 @@ The queue carries only the job id; the job itself is in the job folder and Redis
 RQ needs its own Redis connection without decode_responses (it stores bytes).
 """
 
-from redis import Redis
 from rq import Queue
+
+from service.redis_client import connect
 
 QUEUE_NAME = "logen"
 DEFAULT_JOB_TIMEOUT_S = 6 * 60 * 60  # RQ's default (180 s) would stop every real job
@@ -13,7 +14,7 @@ FAILURE_TTL_S = 24 * 60 * 60         # RQ's own record of a crashed job; our sta
 
 
 def make_queue(redis_url: str) -> Queue:
-    return Queue(QUEUE_NAME, connection=Redis.from_url(redis_url))
+    return Queue(QUEUE_NAME, connection=connect(redis_url))
 
 
 def waiting_job_ids(queue: Queue) -> set[str]:

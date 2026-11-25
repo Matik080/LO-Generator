@@ -16,9 +16,15 @@ Settings (environment):
 
 An unknown prompt gets HTTP 500 (B retries, then the job fails with llm_error) and is logged.
 GET /health answers 200, GET /stats the number of answered and unknown requests.
+
+It is also a fake Laravel for webhooks (tools/resilience_check.py): POST /webhook checks the
+signature with FAKE_WEBHOOK_SECRET and answers 500 to the first attempt of every delivery, 200
+to the next one, so the service has to retry. GET /webhooks lists what arrived.
 Used by docker-compose.fake-llm.yml.
 """
 
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -58,6 +64,29 @@ class FakeLLM:
         return None
 
 
+class FakeWebhookReceiver:
+    """Records webhook deliveries; refuses the first attempt of each one (to test the retry)."""
+
+    def __init__(self, secret: str):
+        self.secret = secret
+        self.attempts: list[dict] = []
+        self._lock = threading.Lock()
+
+    def receive(self, headers, body: bytes) -> int:
+        """HTTP status for one delivery attempt."""
+        timestamp, delivery = headers.get("X-QGen-Timestamp", ""), headers.get("X-QGen-Delivery", "")
+        expected = "sha256=" + hmac.new(self.secret.encode("utf-8"), timestamp.encode("ascii") + b"." + body,
+                                        hashlib.sha256).hexdigest()
+        valid = bool(self.secret) and hmac.compare_digest(expected, headers.get("X-QGen-Signature", ""))
+        with self._lock:
+            first = not any(a["delivery"] == delivery for a in self.attempts)
+            status = 401 if not valid else (500 if first else 200)
+            self.attempts.append({"delivery": delivery, "event": headers.get("X-QGen-Event", ""),
+                                  "job_id": json.loads(body or b"{}").get("job_id"),
+                                  "signature_ok": valid, "answered": status})
+        return status
+
+
 def completion(content: str, model: str) -> dict:
     """The body of an OpenAI chat completion with one answer."""
     return {
@@ -70,7 +99,7 @@ def completion(content: str, model: str) -> dict:
     }
 
 
-def make_handler(fake: FakeLLM):
+def make_handler(fake: FakeLLM, webhooks: FakeWebhookReceiver = None):
     class Handler(BaseHTTPRequestHandler):
         def _send(self, status: int, body: dict) -> None:
             data = json.dumps(body, ensure_ascii=False).encode("utf-8")
@@ -85,10 +114,16 @@ def make_handler(fake: FakeLLM):
                 self._send(200, {"status": "ok"})
             elif self.path == "/stats":
                 self._send(200, dict(fake.stats))
+            elif self.path == "/webhooks" and webhooks is not None:
+                self._send(200, {"attempts": list(webhooks.attempts)})
             else:
                 self._send(404, {"error": {"message": "not found"}})
 
         def do_POST(self):
+            if self.path == "/webhook" and webhooks is not None:
+                body = self.rfile.read(int(self.headers.get("Content-Length") or 0))
+                self._send(webhooks.receive(self.headers, body), {})
+                return
             if not self.path.rstrip("/").endswith("/chat/completions"):
                 self._send(404, {"error": {"message": "not found"}})
                 return
@@ -116,7 +151,8 @@ def main() -> None:
     path = Path(os.getenv("FAKE_LLM_CASSETTE", str(DEFAULT_CASSETTE)))
     fake = FakeLLM(json.loads(path.read_text(encoding="utf-8")), delay)
     logger.info(f"Fake LLM on port {port}: {len(fake.cassette)} recorded answers, {delay} s delay.")
-    ThreadingHTTPServer(("0.0.0.0", port), make_handler(fake)).serve_forever()
+    webhooks = FakeWebhookReceiver(os.getenv("FAKE_WEBHOOK_SECRET", ""))
+    ThreadingHTTPServer(("0.0.0.0", port), make_handler(fake, webhooks)).serve_forever()
 
 
 if __name__ == "__main__":

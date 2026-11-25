@@ -380,3 +380,24 @@ def test_heartbeat_and_recovery_settings():
     assert (ServiceSettings.from_env({}).heartbeat_ttl_s, ServiceSettings.from_env({}).recovery_interval_s) == (60, 60)
     s = ServiceSettings.from_env({"LOGEN_HEARTBEAT_TTL_S": "30", "LOGEN_RECOVERY_INTERVAL_S": "15"})
     assert (s.heartbeat_ttl_s, s.recovery_interval_s) == (30, 15)
+
+
+def test_redis_outage_leaves_the_job_for_recovery(store):
+    """Redis away longer than the client retries: not a failed job, but a lost worker."""
+    from redis.exceptions import ConnectionError as RedisConnectionError
+    job_id = new_job(store)
+    with pytest.raises(RedisConnectionError):
+        run_job(store, job_id, pipeline=failing_pipeline(RedisConnectionError("Connection refused")))
+    assert store.status(job_id).status == "running" and store.status(job_id).error is None
+    assert not store.has_live_worker(job_id)  # released: recovery may take it over at once
+
+    queued = []
+    worker.recover_jobs(store, queued.append)
+    assert queued == [job_id] and store.status(job_id).status == "queued"
+
+
+def test_redis_clients_retry_a_restart():
+    from service.redis_client import RETRIES, connect
+    client = connect("redis://:pw@redis:6379/0", decode_responses=True)
+    retry = client.connection_pool.connection_kwargs["retry"]
+    assert retry.get_retries() == RETRIES >= 8

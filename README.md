@@ -318,6 +318,16 @@ docker run --rm -v "$(pwd):/app" -e PYTHONHASHSEED=0 -w /app lo-generator-fastap
 
 `PYTHONHASHSEED=0` keeps the prompt order stable. After a deliberate change to prompts or pipeline logic, re-record the answers with the real LLM (`-e LLM_MODE=record`, needs keys in `fastapi/.env`). This also refreshes the snapshot in `tests/fixtures/snapshots/`; review its diff before committing.
 
+### Failure scenarios in containers (no LLM cost)
+
+`tools/resilience_check.py` starts its own stack (project `logen-resilience`, API on `127.0.0.1:18000`, 2 workers) with a fake LLM that answers from the recorded test answers (`docker-compose.fake-llm.yml`, `tools/fake_llm_server.py`). It then checks 9 scenarios: API restart right after 202, Redis restart during a job, a worker killed once and twice (`worker_lost`), retry, cancelling a running and a waiting job, a webhook retry with a valid signature, and one job queued three times. Finally it deletes the stack. Your own stack is not touched. It runs on the host with the Python standard library only and takes about 5 minutes:
+
+```bash
+cd fastapi
+docker build -t lo-generator-fastapi:latest .   # the image must contain the current code
+python tools/resilience_check.py                # --only 3 4 for some scenarios, --keep to leave the stack running
+```
+
 ---
 
 ## Project Structure

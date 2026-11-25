@@ -13,7 +13,7 @@ from lo_pipeline.contract.options import resolve_options
 from service.store import JobStore
 from service.uploads import Upload
 from service.worker import run_job
-from tools.fake_llm_server import FakeLLM, make_handler
+from tools.fake_llm_server import FakeLLM, FakeWebhookReceiver, make_handler
 
 
 @pytest.fixture
@@ -50,3 +50,18 @@ def test_unknown_prompt_gets_an_error(server):
     with pytest.raises(InternalServerError):
         client.chat.completions.create(model="m", messages=[{"role": "user", "content": "hello"}])
     assert fake.stats == {"answered": 0, "unknown": 1}
+
+
+def test_webhook_receiver_refuses_first_attempt_and_checks_signature():
+    from service.webhooks import signature
+    receiver = FakeWebhookReceiver("secret")
+    body = b'{"job_id": "j1", "event": "job.completed"}'
+
+    def headers(secret, ts=1700000000, delivery="d1"):
+        return {"X-QGen-Timestamp": str(ts), "X-QGen-Delivery": delivery, "X-QGen-Event": "job.completed",
+                "X-QGen-Signature": signature(secret, ts, body)}
+    assert receiver.receive(headers("secret"), body) == 500           # first attempt: refused
+    assert receiver.receive(headers("secret", ts=1700000010), body) == 200  # retry, fresh timestamp
+    assert receiver.receive(headers("wrong", delivery="d2"), body) == 401
+    assert [a["answered"] for a in receiver.attempts] == [500, 200, 401]
+    assert receiver.attempts[0]["job_id"] == "j1"
