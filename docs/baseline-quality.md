@@ -173,6 +173,60 @@ Kontrola po úlohe 1 šprintu 2 ([jira-sprint-2-mlyncek-b.md](jira-sprint-2-mlyn
 - **V behu Q2 je 139 jednotiek, ale iba 134 LO.** Generovanie LO (jadro, pred novými krokmi) pre 5 jednotiek nevrátilo LO. V predchádzajúcich behoch bol počet rovnaký, preto to treba sledovať.
 - **Ciele pre ďalšie zmeny ostávajú** (4,31 a 93,6 %).
 
+## Overenie: dve správne možnosti pri generovaní (26. 11. 2026)
+
+Druhá správna možnosť z predchádzajúceho overenia sa takmer nevytvárala a keď áno, bola preformulovaním správnej odpovede. Preto sa zmenil prístup: dve správne možnosti vznikajú **priamo pri generovaní možností** (krok MC v jadre, `lo/generator.py`). Približne 30 % otázok `choice` (`LOGEN_TWO_CORRECT_SHARE`, výber podľa obsahu LO, v každom behu rovnaký) dostane v rovnakom volaní LLM správnu odpoveď rozdelenú na 2 správne možnosti (celé vety, bez novej informácie) a 2 nesprávne možnosti rovnakej dĺžky a štýlu. Ostatné otázky majú ako doteraz 1 správnu a 3 nesprávne. Krok po hodnotení, ktorý hľadal ďalšiu správnu odpoveď, je odstránený. Hodnotenie sa nezmenilo, takže tieto možnosti hodnotí ako ostatné.
+
+| | |
+| --- | --- |
+| Kód | commit `8533fbc` |
+| Spustenie | `docker compose` (api, worker, redis, scheduler), úloha cez `POST /v1/jobs` s predvolenými `options` |
+| Súbežnosť | `LOGEN_LLM_MAX_CONCURRENCY=4` |
+| Modely, embeddingy, filter | rovnaké ako baseline (pozri Podmienky merania) |
+
+| Metrika | Beh R1 | Beh R2 | Overenie 25. 11. (Q1 / Q2) | Cieľ |
+| --- | --- | --- | --- | --- |
+| **Konečný stav** | | | | |
+| Podiel LO, ktoré prejdú filtrom | 97,8 % (136 / 139) | 100 % (145 / 145) | 96,5 % / 96,3 % | ≥ 93,6 % ✅ |
+| Faithfulness – `gpt-oss-120b` | **4,21** ❌ | 4,37 ✅ | 4,35 / 4,35 | ≥ 4,31 |
+| Faithfulness – `qwen3.8-27b` | 4,30 | 4,41 | 4,34 / 4,32 | |
+| Faithfulness – priemer oboch modelov | 4,26 | 4,39 | 4,34 / 4,34 | |
+| Question clarity – priemer | 4,57 | 4,60 | 4,57 / 4,67 | |
+| Hint quality – priemer | 4,26 | 4,20 | 4,28 / 4,27 | |
+| Distractor plausibility – priemer | 2,57 | 2,67 | 2,65 / 2,68 | |
+| **Prvé hodnotenie** | | | | |
+| Podiel LO, ktoré prejdú filtrom | 89,9 % | 77,9 % | 83,2 % / 82,8 % | |
+| Faithfulness – `gpt-oss-120b` | 4,14 | 4,23 | 4,31 / 4,22 | |
+| **Rozsah** | | | | |
+| Atomické jednotky / LO | 139 / 139 | 145 / 145 | 143 / 143, 139 / 134 | |
+| LO s otázkou s možnosťami | 128 | 134 | 133 / 124 | |
+| Regenerované LO / stále neprešlo | 12 / 3 | 32 / 0 | 20 / 5, 21 / 5 | |
+| Hrany grafu prerekvizít | 94 | 108 | 97 / 109 | |
+| **Otázky vo výstupe (`units`)** | | | | |
+| Spolu | 164 | 171 | 170 / 163 | |
+| `choice` / `open` / `no_answer` | 126 / 11 / 27 | 133 / 11 / 27 | 132 / 10 / 28, 124 / 10 / 29 | |
+| `choice` s dvoma správnymi možnosťami | 34 (27 %) | 41 (31 %) | 2 / 0 | |
+| **Beh** | | | | |
+| Trvanie spracovania | 5 min 39 s | 5 min 54 s | 5 min 40 s / 5 min 38 s | |
+| Požiadavky na LLM (oba behy spolu) | 815 | | približne 855 | |
+| Čakanie pri limite požiadaviek (HTTP 429) | 4× (oba behy spolu) | | 4× | |
+
+**Beh R1 je pod cieľom faithfulness** (4,21). Preto sa overilo, či to spôsobujú otázky s dvoma správnymi možnosťami (test B): 34 LO z behu R1 s dvoma správnymi možnosťami sa znova ohodnotilo hodnotiacim modulom B (bez zmeny) trikrát, oboma modelmi (66 volaní LLM):
+
+| Verzia LO | Faithfulness `gpt-oss-120b` | Faithfulness `qwen3.8-27b` | Distractor plausibility `gpt-oss-120b` |
+| --- | --- | --- | --- |
+| A: dve správne možnosti (ako vo výsledku) | 4,24 | 4,27 | 2,41 |
+| A2: to isté znova (kolísanie hodnotenia) | 4,27 | 4,27 | 2,50 |
+| S: jedna správna možnosť (odpoveď LO + 2 nesprávne) | 4,15 | 4,21 | 2,59 |
+
+Čo z toho vyplýva:
+
+- **Dve správne možnosti faithfulness neznižujú.** S nimi je faithfulness o niečo vyššia ako s jednou správnou odpoveďou (4,24 oproti 4,15) a rozdiel je približne taký ako kolísanie hodnotenia tých istých LO (A oproti A2). Faithfulness porovnáva iba odpoveď so zdrojovým tvrdením a odpoveď sa nemení.
+- **Nižšia faithfulness v behu R1 je kolísanie behu:** R1 regeneroval iba 12 LO (R2 32, behy z 25. 11. 20 a 21), takže sa zlepšilo menej slabých LO. Z doterajších štyroch behov s novými typmi otázok (Q1, Q2, R1, R2) splnili oba ciele tri.
+- **Distractor plausibility pri dvoch správnych možnostiach mierne klesá** (2,41 oproti 2,59), pravdepodobne preto, lebo hodnotiaci model považuje druhú správnu možnosť za nesprávnu. Toto kritérium nerozhoduje o prijatí LO.
+- **Dve správne možnosti vznikajú pri približne 30 % otázok `choice`** (34 a 41), ako je nastavené. Možnosti sú celé vety podobnej dĺžky, takže dĺžka neprezrádza správnu odpoveď.
+- **Ciele pre ďalšie zmeny ostávajú** (4,31 a 93,6 %).
+
 ## Neplatný a prerušený beh
 
 - **Beh 1 sa nezapočítava.** Odhalil chybu: keď sa v regenerácii nepodarilo spracovať jednu dávku LO, výsledky sa priradili k nesprávnym jednotkám, 5 LO sa stratilo a 5 bolo dvakrát. Chyba je opravená a pokrytá testami (commit `4b3b425`).
