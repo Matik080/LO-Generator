@@ -83,3 +83,10 @@ def test_lessons_are_batched_and_language_is_passed(llm):
     assert len(llm.prompts) == 2
     assert [t for t, _ in texts] == ["T1", "T2", "T3", "T4", "T5", "T1", "T2"] and failed == 0
     assert "Write in this language: sk." in llm.prompts[0]
+
+
+def test_any_error_in_the_llm_call_gives_fallback(llm):
+    # not only LLMError: e.g. a bug in a provider client must not fail the job
+    llm.reply = lambda prompt: RuntimeError("unexpected")
+    texts, failed = lesson_titles(LOS, [LessonSpec([0], hint="pointer")])
+    assert texts == [("pointer", "Pointer Basics")] and failed == 1

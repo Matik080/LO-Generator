@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 ProgressCallback = Callable[[str, int, int], None]
 
 # Stage names, in order (names match the API design, Appendix A).
-STAGES = ["extract", "units", "learning_objects", "lo_evaluation", "graph", "questions", "output"]
+STAGES = ["extract", "units", "learning_objects", "lo_evaluation", "graph", "questions", "split", "output"]
 
 
 @dataclass
@@ -44,6 +44,10 @@ class PipelineOptions:
     no_answer_batch_size: int = 5
     no_answer_group_size: int = 6
     dedup_threshold: float = 0.82
+    # the job's split options (contract SplitOptions as a dict: mode, lesson_count, syllabus, …)
+    split: dict = field(default_factory=lambda: {"mode": "single"})
+    language: Optional[str] = None  # language of lesson titles (None = the language of the LOs)
+    title_batch_size: int = 5
 
     @classmethod
     def from_settings(cls, settings=None) -> "PipelineOptions":
@@ -89,7 +93,8 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                  progress_callback: Optional[ProgressCallback] = None, checkpoint=None) -> dict:
     """
     Runs every step on the given documents and returns all results in memory:
-    atomic_units, learning_objects, knowledge_graph / concept_graph (node-link JSON), echub,
+    atomic_units, learning_objects, no_answer_tasks, knowledge_graph / concept_graph (node-link JSON),
+    split (lessons, topic per LO, split warnings; see split/plan.py), echub,
     quality (evaluation summary, see filter_and_regenerate), timings, warnings.
 
     `sources`: list of Source, {"path", "title"} dicts or plain paths (PDF, PPTX, HTML).
@@ -106,6 +111,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     from lo_pipeline.graph.prerequisites import build_prerequisite_graph, graph_to_json
     from lo_pipeline.questions.echub import enrich_learning_objects, convert_by_source
     from lo_pipeline.questions.no_answer import anchor_groups, generate_no_answer_tasks
+    from lo_pipeline.split.plan import split_lessons
     from lo_pipeline.checkpoint import fingerprint
     from lo_pipeline.llm.service import use_response_cache
 
@@ -214,12 +220,20 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                                              progress=progress.step("questions", enrich_calls))
         return {"learning_objects": los, "no_answer_tasks": tasks}
 
-    # 7. Output: today's ECHub format (one unit per source). M4 replaces this with the `units` format.
+    # 7. Lessons: order, split mode, titles (lo_pipeline/split). Never fails; problems are warnings in it.
+    def split():
+        result = split_lessons(state["learning_objects"], state["concept_graph"], opts.split,
+                               [src.title for src in sources], language=opts.language,
+                               progress=progress.step("split"), title_batch_size=opts.title_batch_size)
+        return {"split": result}
+
+    # 8. Output: today's ECHub format (one unit per source); the worker builds the `units` format from the result.
     def output():
         return {"echub": convert_by_source(state["learning_objects"])}
 
     stage_functions = {"extract": extract, "units": units, "learning_objects": learning_objects,
-                       "lo_evaluation": lo_evaluation, "graph": graph, "questions": questions, "output": output}
+                       "lo_evaluation": lo_evaluation, "graph": graph, "questions": questions, "split": split,
+                       "output": output}
     assert list(stage_functions) == STAGES
 
     if checkpoint is not None:
@@ -244,6 +258,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
         "atomic_units": state["atomic_units"],
         "learning_objects": state["learning_objects"],
         "no_answer_tasks": state.get("no_answer_tasks", []),  # missing in a checkpoint from before task 1c
+        "split": state.get("split"),
         "knowledge_graph": state["knowledge_graph"],
         "concept_graph": state["concept_graph"],
         "echub": state["echub"],

@@ -57,11 +57,12 @@ def _default_pipeline(*args, **kwargs):
 
 
 def pipeline_options(job_options):
-    """PipelineOptions for one job: the settings, plus what the job asks for (no_answer tasks only
-    when its question types include no_answer, so other jobs make no calls for them)."""
+    """PipelineOptions for one job: the settings, plus what the job asks for: its split options, and
+    no_answer tasks only when its question types include no_answer (other jobs make no calls for them)."""
     from lo_pipeline.runner import PipelineOptions
     opts = PipelineOptions.from_settings()
     opts.no_answer_tasks = "no_answer" in job_options.questions.types
+    opts.split = job_options.split.model_dump()
     return opts
 
 

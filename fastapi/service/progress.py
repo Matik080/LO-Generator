@@ -10,7 +10,8 @@ STAGE_WEIGHTS: dict[str, float] = {
     "learning_objects": 0.25,
     "lo_evaluation": 0.35,
     "graph": 0.10,
-    "questions": 0.06,
+    "questions": 0.05,
+    "split": 0.01,
     "output": 0.02,
 }
 STAGES: tuple[str, ...] = tuple(STAGE_WEIGHTS)
