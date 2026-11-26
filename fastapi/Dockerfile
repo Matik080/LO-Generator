@@ -29,6 +29,14 @@ ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 # the packages of requirements.txt (unpinned) in newer versions. Also renders pages for OCR (task 3).
 RUN pip install --no-cache-dir "pypdfium2>=4"
 
+# Optional OCR (job option extraction.ocr): Tesseract with Slovak and English. Build without it:
+#   docker build --build-arg INSTALL_OCR=0 .   -> /v1/info ocr_available=false, ocr=true gives 400
+ARG INSTALL_OCR=1
+RUN if [ "$INSTALL_OCR" = "1" ]; then \
+      apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-slk tesseract-ocr-eng \
+      && rm -rf /var/lib/apt/lists/*; \
+    fi
+
 # Non-root user; /data is the job folder volume (docker-compose.yml)
 RUN useradd --create-home --uid 1000 app \
  && mkdir -p /data && chown -R app /data /models

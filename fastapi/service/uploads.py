@@ -15,6 +15,7 @@ from pydantic import ValidationError
 
 from lo_pipeline.contract import JobOptions
 from lo_pipeline.contract.options import page_ranges
+from lo_pipeline.extraction import ocr
 from service.errors import ApiError, error_list
 from service.settings import ServiceSettings
 
@@ -43,7 +44,8 @@ def parse_options(text: Optional[str], settings: ServiceSettings) -> JobOptions:
         if host not in settings.webhook_allowed_hosts:
             raise ApiError(400, "invalid_options", f"callback_url host '{host}' is not allowed.",
                            {"allowed_hosts": list(settings.webhook_allowed_hosts)})
-    if options.extraction is not None and options.extraction.ocr:
+    if options.extraction is not None and options.extraction.ocr and not ocr.ocr_available():
+        # the image was built without OCR (Docker build argument INSTALL_OCR=0)
         raise ApiError(400, "invalid_options", "OCR is not available in this service.", {"ocr_available": False})
     return options
 

@@ -4,6 +4,8 @@ from typing import List, Dict, Any
 
 import PyPDF2
 
+from lo_pipeline.extraction import ocr as ocr_module
+
 logger = logging.getLogger(__name__)
 
 
@@ -66,17 +68,41 @@ def pdf_page_texts(pdf_path: str) -> List[str]:
         return [page.extract_text() or "" for page in PyPDF2.PdfReader(f).pages]
 
 
-def extract_text_from_pdf(pdf_path: str, document_title: str = None) -> str:
+OCR_MIN_CHARS = 20  # with OCR, a page with less text than this (a scan) is read by OCR
+
+
+def extract_text_from_pdf(pdf_path: str, document_title: str = None, ocr: bool = False) -> str:
+    """Text per page. With `ocr`, pages without a text layer are read by OCR (extraction/ocr.py);
+    their page numbers stay the same. A page that OCR cannot read is skipped (logged)."""
     try:
         text = ""
         title = document_title or os.path.basename(pdf_path)
         for page_num, page_text in enumerate(pdf_page_texts(pdf_path), 1):
+            if ocr and len("".join(page_text.split())) < OCR_MIN_CHARS:
+                page_text = _ocr_or_empty(lambda: ocr_module.ocr_pdf_page(pdf_path, page_num - 1),
+                                          f"page {page_num} of {title}") or page_text
             if page_text.strip():
                 text += f"\n\n--- Page {page_num} | Source: {title} ---\n\n"
                 text += page_text
         return text
     except Exception as e:
         raise ExtractionError(f"Failed to extract text from {pdf_path}: {e}") from e
+
+def _picture_blob(shape):
+    """Image bytes of a picture shape (also a picture placeholder); None for other shapes."""
+    try:
+        return shape.image.blob
+    except Exception:  # no picture in this shape
+        return None
+
+
+def _ocr_or_empty(read, what: str) -> str:
+    try:
+        return read()
+    except ocr_module.OcrError as e:
+        logger.warning(f"[Extract] OCR failed for {what}: {e}")
+        return ""
+
 
 def extract_text_from_html(html_path: str, document_title: str = None) -> str:
     try:
@@ -123,7 +149,9 @@ def extract_text_from_html(html_path: str, document_title: str = None) -> str:
         raise ExtractionError(f"Failed to extract text from {html_path}: {e}") from e
 
 
-def extract_text_from_pptx(pptx_path: str, document_title: str = None) -> str:
+def extract_text_from_pptx(pptx_path: str, document_title: str = None, ocr: bool = False) -> str:
+    """Text per slide (text frames, tables, speaker notes). With `ocr`, the text in pictures too
+    (e.g. a screenshot or a scanned diagram), read by OCR (extraction/ocr.py)."""
     try:
         from pptx import Presentation
 
@@ -135,6 +163,12 @@ def extract_text_from_pptx(pptx_path: str, document_title: str = None) -> str:
             slide_text = []
 
             for shape in slide.shapes:
+                blob = _picture_blob(shape) if ocr else None
+                if blob:
+                    image_text = _ocr_or_empty(lambda: ocr_module.ocr_image(blob),
+                                               f"a picture on slide {slide_num} of {title}")
+                    if image_text.strip():
+                        slide_text.append(image_text.strip())
                 if shape.has_text_frame:
                     for para in shape.text_frame.paragraphs:
                         para_text = para.text.strip()
@@ -168,15 +202,16 @@ def extract_text_from_pptx(pptx_path: str, document_title: str = None) -> str:
         raise ExtractionError(f"Failed to extract text from {pptx_path}: {e}") from e
 
 
-def extract_text_from_source(path: str, document_title: str = None) -> str:
-    """Unified text extraction, dispatches based on file extension."""
+def extract_text_from_source(path: str, document_title: str = None, ocr: bool = False) -> str:
+    """Unified text extraction, dispatches based on file extension. `ocr`: also read scanned PDF
+    pages and pictures in PPTX (HTML has no images to read)."""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".pdf":
-        return extract_text_from_pdf(path, document_title)
+        return extract_text_from_pdf(path, document_title, ocr=ocr)
     elif ext in (".html", ".htm"):
         return extract_text_from_html(path, document_title)
     elif ext in (".pptx", ".ppt"):
-        return extract_text_from_pptx(path, document_title)
+        return extract_text_from_pptx(path, document_title, ocr=ocr)
     else:
         raise ValueError(f"Unsupported file type: {ext}. Supported: .pdf, .html, .htm, .pptx")
 

@@ -51,6 +51,7 @@ class PipelineOptions:
     split: dict = field(default_factory=lambda: {"mode": "single"})
     language: Optional[str] = None  # requested output language: "sk" | "en"; None or "auto" = the documents' language
     title_batch_size: int = 5
+    ocr: bool = False  # job option extraction.ocr: read scanned PDF pages and PPTX pictures (extraction/ocr.py)
 
     @classmethod
     def from_settings(cls, settings=None) -> "PipelineOptions":
@@ -132,12 +133,12 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     def extract():
         sections_per_source = []
         for i, src in enumerate(sources, 1):
-            text = extract_text_from_source(src.path, document_title=src.title)
+            text = extract_text_from_source(src.path, document_title=src.title, ocr=opts.ocr)
             sections_per_source.append(split_into_sections(text))
             logger.info(f'[Extract] "{src.title}" -> {len(sections_per_source[-1])} sections.')
             progress.report("extract", i, len(sources))
         if not any(sections_per_source):
-            # e.g. a scanned PDF without a text layer (no OCR yet): nothing to send to the LLM
+            # e.g. a scanned PDF without a text layer and without OCR: nothing to send to the LLM
             raise ExtractionError("No text could be extracted from the documents.")
         return {"sections_per_source": sections_per_source}
 

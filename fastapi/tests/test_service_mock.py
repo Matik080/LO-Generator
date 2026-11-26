@@ -163,12 +163,23 @@ def test_api_key(clock):
 
 @pytest.mark.parametrize("options", [
     "not json", "[1, 2]", {"split": {"mode": "lessons"}}, {"unknown": True},
-    {"callback_url": "http://evil.example/hook"}, {"extraction": {"ocr": True}},
+    {"callback_url": "http://evil.example/hook"},
 ])
 def test_invalid_options(client, options):
     data = {"options": options if isinstance(options, str) else json.dumps(options)}
     response = client.post("/v1/jobs", files=[("files", ("a.pdf", PDF, "application/pdf"))], data=data)
     assert_error(response, 400, "invalid_options")
+
+
+def test_ocr_option_depends_on_the_image(client, monkeypatch):
+    from lo_pipeline.extraction import ocr
+    monkeypatch.setattr(ocr, "ocr_available", lambda: False)  # image built with INSTALL_OCR=0
+    error = assert_error(post_job(client, {"extraction": {"ocr": True}}), 400, "invalid_options")
+    assert error.details == {"ocr_available": False}
+    assert client.get("/v1/info").json()["ocr_available"] is False
+    monkeypatch.setattr(ocr, "ocr_available", lambda: True)  # image with Tesseract
+    assert post_job(client, {"extraction": {"ocr": True}}).status_code == 202
+    assert client.get("/v1/info").json()["ocr_available"] is True
 
 
 def test_callback_url_on_allowed_host(clock):

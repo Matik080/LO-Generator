@@ -64,6 +64,7 @@ def pipeline_options(job_options):
     opts.no_answer_tasks = "no_answer" in job_options.questions.types
     opts.split = job_options.split.model_dump()
     opts.language = job_options.language  # auto | sk | en
+    opts.ocr = bool(job_options.extraction.ocr)
     return opts
 
 

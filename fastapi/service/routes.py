@@ -16,6 +16,7 @@ from lo_pipeline.contract import (
     UnitsResult,
 )
 from lo_pipeline.contract.schemas import SCHEMA_NAMES, build_schema
+from lo_pipeline.extraction import ocr
 from service.backend import JobBackend
 from service.errors import ApiError
 from service.settings import ServiceSettings
@@ -73,7 +74,7 @@ def info(backend: Backend, settings: Settings) -> dict[str, Any]:
             "max_active_jobs": settings.max_active_jobs,
             "file_types": list(FILE_TYPES),
         },
-        "ocr_available": False,
+        "ocr_available": ocr.ocr_available(),  # Tesseract installed (Docker build argument INSTALL_OCR)
     }
 
 

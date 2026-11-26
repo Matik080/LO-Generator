@@ -40,7 +40,8 @@ class _Strict(BaseModel):
 
 
 class ExtractionOptions(_Strict):
-    ocr: Optional[bool] = Field(default=None, description="OCR of images. B has no OCR yet.")
+    ocr: Optional[bool] = Field(default=None, description="OCR of scanned PDF pages and of pictures in PPTX; "
+                                                          "only when /v1/info reports ocr_available.")
 
 
 class QuestionOptions(_Strict):
