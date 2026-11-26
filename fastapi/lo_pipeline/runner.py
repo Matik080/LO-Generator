@@ -111,6 +111,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     from lo_pipeline.graph.prerequisites import build_prerequisite_graph, graph_to_json
     from lo_pipeline.questions.echub import enrich_learning_objects, convert_by_source
     from lo_pipeline.questions.no_answer import anchor_groups, generate_no_answer_tasks
+    from lo_pipeline.questions.shorten import shorten_long_texts
     from lo_pipeline.split.plan import split_lessons
     from lo_pipeline.checkpoint import fingerprint
     from lo_pipeline.llm.service import use_response_cache
@@ -218,6 +219,8 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
             tasks = generate_no_answer_tasks(los, batch_size=opts.no_answer_batch_size,
                                              group_size=opts.no_answer_group_size,
                                              progress=progress.step("questions", enrich_calls))
+        # texts over the ECEH limits: one LLM shortening (usually none, then no call)
+        shorten_long_texts(los, tasks)
         return {"learning_objects": los, "no_answer_tasks": tasks}
 
     # 7. Lessons: order, split mode, titles (lo_pipeline/split). Never fails; problems are warnings in it.

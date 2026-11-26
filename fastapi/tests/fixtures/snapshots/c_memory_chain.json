@@ -861,6 +861,28 @@
    "pointer",
    "pointer"
   ],
+  "lo_topic_ids": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "document_topics": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
   "warnings": []
  },
  "knowledge_graph_edges": [

@@ -4,6 +4,8 @@ The split step: LOs -> lessons for the job's `split` options (modes single / les
 `split_lessons` runs the chosen mode, names the lessons (titles.py) and returns plain JSON data:
   {"lessons": [{"lo_indices": [...], "title": str, "description": str}, ...],   # in lesson order
    "lo_topics": [topic name or None per LO],                                      # `topic` in the report
+   "lo_topic_ids": [topic number or None per LO],                                 # for topic_coverage
+   "document_topics": [topic numbers with >= 2 concepts],                         # for topic_coverage
    "warnings": [{"code", "message"}, ...]}                                        # Mlynček A's codes
 
 It does not fail the job: a syllabus that cannot be used falls back to `topics` (syllabus_plan_invalid /
@@ -64,7 +66,7 @@ def split_lessons(los: list[dict], concept_graph: dict, split: dict, files: Sequ
     """
     warnings = _Warnings()
     if not los:
-        return {"lessons": [], "lo_topics": [], "warnings": []}
+        return {"lessons": [], "lo_topics": [], "lo_topic_ids": [], "document_topics": [], "warnings": []}
 
     # topics are needed in every mode (report `topic`, cut preference, topics mode, plan prompt)
     communities = concept_communities(concept_graph or {})
@@ -165,5 +167,8 @@ def split_lessons(los: list[dict], concept_graph: dict, split: dict, files: Sequ
         "lessons": [{"lo_indices": list(spec.lo_indices), "title": title, "description": description}
                     for spec, (title, description) in zip(specs, texts)],
         "lo_topics": lo_topic_names,
+        # for the report's topic_coverage: topic number per LO and the document's topics (>= 2 concepts)
+        "lo_topic_ids": list(topics),
+        "document_topics": sorted(k for k, n in Counter(communities.values()).items() if n >= 2),
         "warnings": list(warnings),
     }

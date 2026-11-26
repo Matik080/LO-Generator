@@ -121,35 +121,109 @@ def test_per_section_warning_and_no_split_mode_warning():
     assert "question_type_unsupported" not in codes  # no_answer is generated now (task 1c)
 
 
-def test_long_texts_are_shortened():
-    lo = make_lo(generated_name="N" * 400, hint="H" * 3000 + " [Source: c.pdf, p. 3]",
-                 mc_options=["A" * 5000, "b", "c", "d"])
-    units, report = build([lo])
-    q = units["units"][0]["questions"][0]
-    assert len(q["name"]) == QUESTION_NAME_MAX and q["name"].endswith("…")
-    assert len(q["choices"][0]["text"]) == CHOICE_TEXT_MAX
-    assert len(q["hints"][1]["url"]) <= HINT_URL_MAX
-    assert [w["code"] for w in report["warnings"]].count("field_too_long") == 1  # counted once
+def codes_of(report):
+    return [w["code"] for w in report["warnings"]]
 
 
-def test_long_hint_with_html_characters_fits():
-    """Escaping makes '<' five times longer; the shortened hint must still fit."""
-    lo = make_lo(hint="<" * 3000)
-    url = build([lo])[0]["units"][0]["questions"][0]["hints"][1]["url"]
-    assert len(url) <= HINT_URL_MAX and url.startswith("<p>&lt;") and url.endswith("…</p>")
+def test_long_name_is_cut_at_a_word():
+    units, report = build([make_lo(generated_name="Slovo " * 60)])  # 360 characters
+    name = units["units"][0]["questions"][0]["name"]
+    assert len(name) <= QUESTION_NAME_MAX and name.endswith("Slovo…")
+    assert "field_too_long" not in codes_of(report)
 
 
-@pytest.mark.parametrize("evil", [
-    "<script>alert(1)</script>",
-    '<img src=x onerror="alert(1)">',
-    '<a href="javascript:alert(1)">klik</a>',
-    "</p><iframe src='https://evil'></iframe><p>",
+@pytest.mark.parametrize("fields", [
+    {"question": "Q" * 4001},
+    {"mc_options": ["A" * 4001, "b", "c", "d"]},
+    {"mc_options": None, "answer": "A" * 4001},  # open question: the answer is its choice
 ])
-def test_dangerous_html_in_hint_is_shown_as_text(evil):
-    url = build([make_lo(hint=evil)])[0]["units"][0]["questions"][0]["hints"][1]["url"]
-    assert url.startswith("<p>") and url.endswith("</p>")
-    inner = url[len("<p>"):-len("</p>")]
-    assert "<" not in inner and ">" not in inner  # no tag at all, only escaped text
+def test_question_with_a_too_long_text_or_choice_is_left_out(fields):
+    units, report = build([make_lo(**fields), make_lo(id="b", generated_name="Kept")])
+    assert [q["name"] for q in units["units"][0]["questions"]] == ["Kept"]
+    assert codes_of(report).count("field_too_long") == 1
+    assert "question_skipped" not in codes_of(report)  # counted once, as too long
+
+
+def test_too_long_no_answer_task_is_left_out():
+    units, report = build([make_lo(), make_lo(id="b")], no_answer_tasks=[make_task([0, 1], description="T" * 4001)])
+    assert [q["type"] for q in units["units"][0]["questions"]] == ["choice", "choice"]
+    assert "field_too_long" in codes_of(report)
+
+
+@pytest.mark.parametrize("hint", ["H" * 3000, "<" * 500])  # '<' becomes '&lt;' (4 characters) in the HTML
+def test_too_long_hint_is_left_out_but_the_question_stays(hint):
+    units, report = build([make_lo(hint=hint + " [Source: c.pdf, p. 3]")])
+    hints = units["units"][0]["questions"][0]["hints"]
+    assert [h["name"] for h in hints] == ["Zdroj"]
+    assert "hint_too_long" in codes_of(report) and "field_too_long" not in codes_of(report)
+
+
+def test_long_lesson_title_is_cut_at_a_word():
+    split = split_result([("Názov " * 60, [0])])
+    units, _ = build([make_lo()], split=split)
+    assert len(units["units"][0]["title"]) <= 255 and units["units"][0]["title"].endswith("Názov…")
+
+
+EVIL = ['<script>alert(1)</script>', '<img src=x onerror="alert(1)">', '<a href="javascript:alert(1)">klik</a>',
+        "</p><iframe src='https://evil'></iframe><p>", '<x onmouseover="alert(1)">x</x>', "&lt;script&gt;alert(1)"]
+
+
+@pytest.mark.parametrize("evil", EVIL)
+def test_unsafe_html_from_the_llm_never_reaches_the_output(evil):
+    lo = make_lo(question=f"What is a pointer? {evil}", generated_name=f"Name {evil}", hint=f"Hint {evil}",
+                 mc_options=[f"Stores an address {evil}", "b", "c", "d"], keywords=[f"pointer {evil}"])
+    task = make_task([0, 1], description=f"Explain {evil}", name=f"Task {evil}", hint=f"Start {evil}")
+    split = split_result([(f"Lesson {evil}", [0, 1])])
+    split["lessons"][0]["description"] = f"About {evil}"
+    units, report = build([lo, make_lo(id="b")], split=split, no_answer_tasks=[task])
+    questions = units["units"][0]["questions"]
+    # fields ECEH shows as HTML: escaped, so no tag at all ("<" only as "&lt;")
+    for q in questions:
+        for text in [q["description"]] + [c["text"] for c in q["choices"]]:
+            assert "<" not in text and ">" not in text, text
+        for hint in q["hints"]:  # only the <p> wrapper, everything else escaped
+            inner = hint["url"][len("<p>"):-len("</p>")]
+            assert hint["url"].startswith("<p>") and "<" not in inner and ">" not in inner
+    # plain-text fields (shown as text): unsafe tags removed
+    plain = [q["name"] for q in questions] + [units["units"][0]["title"], units["units"][0]["description"]]
+    plain += [s["title"] for s in report["sections"]] + [k for m in report["question_meta"] for k in m["keywords"]]
+    for text in plain:
+        for bad in ("<script", "<img", "<iframe", "<a ", "<x ", "onerror", "onmouseover", "javascript:"):
+            assert bad not in text.lower(), (bad, text)
+
+
+def test_code_and_html_examples_are_shown_exactly():
+    # ECEH renders the question text and choices as HTML: escaped, the student sees exactly this text
+    lo = make_lo(question="Why does #include <stdio.h> come first, and what does <p> do?",
+                 mc_options=["a < b && c > d", "b", "c", "d"], hint="Use <b>bold</b>.")
+    q = build([lo])[0]["units"][0]["questions"][0]
+    assert q["description"] == "Why does #include &lt;stdio.h&gt; come first, and what does &lt;p&gt; do?"
+    assert q["choices"][0]["text"] == "a &lt; b &amp;&amp; c &gt; d"
+    assert q["hints"][1]["url"] == "<p>Use &lt;b&gt;bold&lt;/b&gt;.</p>"
+
+
+def test_entities_from_the_llm_are_not_escaped_twice():
+    q = build([make_lo(question="Is a &lt; b?", mc_options=["Tom &amp; Jerry", "b", "c", "d"])])[0]
+    q = q["units"][0]["questions"][0]
+    assert q["description"] == "Is a &lt; b?" and q["choices"][0]["text"] == "Tom &amp; Jerry"
+
+
+def test_question_text_length_counts_the_escaped_text():
+    # 1500 '<' are 1500 characters as text, but 6000 escaped ('&lt;'): too long for the 4000 column
+    units, report = build([make_lo(question="<" * 1500), make_lo(id="b", generated_name="Kept")])
+    assert [q["name"] for q in units["units"][0]["questions"]] == ["Kept"]
+    assert "field_too_long" in codes_of(report)
+
+
+def test_quality_scores_and_topic_coverage():
+    quality = {"final": {"scores": {"all_models": {"faithfulness": 4.5, "question_clarity": 4.0}}}}
+    split = split_result([("Prvá", [0, 1])])
+    split.update({"lo_topic_ids": [0, 1, 2], "document_topics": [0, 1, 2, 3]})
+    _, report = build(three_los(), quality=quality, split=split)  # LO 2 is in no lesson
+    assert report["quality"] == {"section_faithfulness_avg": None, "question_faithfulness_avg": 0.875,
+                                 "answerability_avg": 0.75, "topic_coverage": 0.5}
+    _, report = build(three_los())  # no split, no scores
+    assert report["quality"]["topic_coverage"] is None and report["quality"]["answerability_avg"] is None
 
 
 def test_bad_llm_values():

@@ -12,8 +12,16 @@ Sprint task 5. No LLM calls here: everything comes from the finished learning ob
   without the "[Source: ...]" suffix. options.questions.hints says how many (0, 1 or 2).
 - Times (seconds) are fitted into the range of the question type (TIME_RANGES, design kap. 7, the
   same ranges as Mlynček A); a missing or invalid estimate gets the type's default.
-- Texts longer than the ECEH columns are shortened (warning `field_too_long`); a question that
-  still breaks the rules is left out (warning `question_skipped`).
+- Texts over the ECEH columns were already shortened once by the LLM (questions/shorten.py). What is
+  still too long: a name or lesson text is cut at the end of a word, a hint is left out (warning
+  `hint_too_long`), a question whose text or choice is too long is left out (warning `field_too_long`).
+  A question that breaks other rules is left out (warning `question_skipped`).
+- ECEH shows the question text, choices and hints as HTML (frontend: DOMPurify) and the name, lesson
+  title and description as plain text. So: question text and choices are escaped (html_text; the
+  student sees exactly "#include <stdio.h>", and no tag can run), hints are escaped into '<p>…</p>'
+  and cleaned by nh3, plain-text fields have unsafe HTML removed (text_safety.clean_text).
+- Report quality (0–1): question_faithfulness_avg = B's faithfulness, answerability_avg = B's
+  question_clarity, topic_coverage = share of the document's topics with a question.
 - The finished output is checked against the models and the JSON Schema files; if it does not
   pass, InvalidOutputError is raised (the job then fails, it never returns invalid data).
 """
@@ -34,6 +42,7 @@ from lo_pipeline.contract.units import (
     CHOICE_TEXT_MAX, HINT_URL_MAX, QUESTION_DESCRIPTION_MAX, QUESTION_NAME_MAX,
     UNIT_DESCRIPTION_MAX, UNIT_TITLE_MAX, Question, UnitsResult,
 )
+from lo_pipeline.questions.text_safety import clean_text, cut_at_word
 
 logger = logging.getLogger(__name__)
 
@@ -84,22 +93,40 @@ class _Warnings:
         return out
 
 
-def _warn_too_long(warnings: _Warnings):
-    warnings.count("field_too_long",
-                   lambda n: f"{n} text(s) were longer than the ECEH limit and were shortened.")
+class _TooLong(Exception):
+    """A question text is still longer than its ECEH column after the LLM shortening (questions/shorten.py)."""
 
 
-def _shorten(text: str, limit: int, field: str, warnings: _Warnings) -> str:
-    if len(text) <= limit:
-        return text
-    _warn_too_long(warnings)
-    logger.info(f"[Units] Shortened {field} from {len(text)} to {limit} characters.")
-    return text[:limit - 1].rstrip() + "…"
+def _fit(text: str, limit: int, field: str) -> str:
+    """Question text and choices are never cut: too long -> the question is left out (field_too_long)."""
+    if len(text) > limit:
+        raise _TooLong(f"{field}: {len(text)} > {limit} characters")
+    return text
+
+
+def _cut(text: str, limit: int, field: str) -> str:
+    """Names and lesson texts are cut at the end of a word when still too long."""
+    if len(text) > limit:
+        logger.info(f"[Units] Cut {field} from {len(text)} to {limit} characters.")
+    return cut_at_word(text, limit)
 
 
 def _plain(value) -> str:
-    """LLM text as one clean string (None and non-strings become '')."""
-    return value.strip() if isinstance(value, str) else ""
+    """Text for a plain-text field (name, lesson title and description, report): no unsafe HTML
+    (text_safety.clean_text). None and non-strings become ''."""
+    return clean_text(value.strip()) if isinstance(value, str) else ""
+
+
+def _raw(value) -> str:
+    """LLM text as written (entities decoded), for the fields ECEH shows as HTML; see html_text."""
+    return html.unescape(value.strip()) if isinstance(value, str) else ""
+
+
+def html_text(value) -> str:
+    """Text for a field ECEH shows as HTML (question text, choices): escaped, so the browser shows
+    exactly the text ("#include <stdio.h>", a question about "<p>") and no tag can run. ECEH renders
+    these fields through DOMPurify (frontend renderTextWithMath), which would drop "<stdio.h>" as a tag."""
+    return html.escape(_raw(value), quote=False)
 
 
 def _seconds(value, default: int) -> int:
@@ -124,27 +151,30 @@ def question_times(q_type: str, time_to_handle, time_to_explain) -> tuple[int, i
     return times[0], times[1]
 
 
-def hint_html(text: str, limit: int, warnings: _Warnings) -> str:
-    """Plain hint text -> '<p>…</p>' that fits into `limit` characters and has only allowed tags.
+def hint_html(text: str, limit: int, warnings: _Warnings) -> Optional[str]:
+    """Plain hint text -> '<p>…</p>' with only allowed tags, or None when it does not fit into `limit`.
 
-    The LLM text is plain text, so it is escaped first ('<script>' is shown as text, never run);
-    nh3 then guarantees that no tag outside ALLOWED_HINT_TAGS can get through.
+    The text is escaped first ('<script>' is shown as text, never run); nh3 then guarantees that no
+    tag outside ALLOWED_HINT_TAGS can get through. A hint still too long after the LLM shortening
+    (questions/shorten.py) is left out; the question keeps its other hints (warning hint_too_long).
     """
+    cleaned = _hint_markup(text)
+    if len(cleaned) > limit:
+        warnings.count("hint_too_long",
+                       lambda n: f"{n} hint(s) were longer than the ECEH limit and were left out.")
+        return None
+    return cleaned
+
+
+def hint_fits(text: str, limit: int = HINT_URL_MAX) -> bool:
+    """Whether hint_html would keep this hint (questions/shorten.py uses it to find hints to shorten)."""
+    return len(_hint_markup(text)) <= limit
+
+
+def _hint_markup(text: str) -> str:
     text = text.replace(" ", " ")  # would become "&nbsp;" (6 characters) after cleaning
-    budget = limit - len("<p></p>")
-    escaped = html.escape(text, quote=False)
-    if len(escaped) > budget:
-        # escaping makes text longer ('<' -> '&lt;'): add escaped characters while they fit
-        _warn_too_long(warnings)
-        parts, used = [], len("…")
-        for char in text:
-            part = html.escape(char, quote=False)
-            if used + len(part) > budget:
-                break
-            parts.append(part)
-            used += len(part)
-        escaped = "".join(parts).rstrip() + "…"
-    return nh3.clean(f"<p>{escaped}</p>", tags=ALLOWED_HINT_TAGS, attributes={})
+    return nh3.clean(f"<p>{html.escape(html.unescape(text), quote=False)}</p>", tags=ALLOWED_HINT_TAGS,
+                     attributes={})
 
 
 def source_hint_text(lo: dict) -> str:
@@ -188,22 +218,36 @@ def group_source_hint_text(sources: list[dict]) -> str:
     return "; ".join(parts)
 
 
+def _hints(source: str, text: str, options: JobOptions, warnings: _Warnings) -> list[dict]:
+    """1st hint = the source, 2nd = the LLM hint text (options.questions.hints says how many);
+    a hint that does not fit is left out (hint_html)."""
+    wanted = []
+    if options.questions.hints >= 1 and source:
+        wanted.append((SOURCE_HINT_NAME, source))
+    if options.questions.hints >= 2 and text:
+        wanted.append((TEXT_HINT_NAME, text))
+    hints = []
+    for name, value in wanted:
+        url = hint_html(value, HINT_URL_MAX, warnings)
+        if url is not None:
+            hints.append({"name": name, "url": url})
+    return hints
+
+
 def task_to_question(task: dict, group: list[dict], options: JobOptions, warnings: _Warnings) -> Optional[dict]:
-    """A no_answer task + the LOs of its group -> one question of type no_answer, or None."""
-    description, name = _plain(task.get("description")), _plain(task.get("name"))
+    """A no_answer task + the LOs of its group -> one question of type no_answer, or None.
+
+    Raises _TooLong when the task text does not fit into its ECEH column.
+    """
+    description, name = html_text(task.get("description")), _plain(task.get("name"))
     if not description or not name:
         return None
-    hints = []
-    source = group_source_hint_text(group_sources(group))
-    if options.questions.hints >= 1 and source:
-        hints.append({"name": SOURCE_HINT_NAME, "url": hint_html(source, HINT_URL_MAX, warnings)})
-    if options.questions.hints >= 2 and _plain(task.get("hint")):
-        hints.append({"name": TEXT_HINT_NAME, "url": hint_html(_plain(task["hint"]), HINT_URL_MAX, warnings)})
+    hints = _hints(group_source_hint_text(group_sources(group)), _raw(task.get("hint")), options, warnings)
     time_to_handle, time_to_explain = question_times("no_answer", task.get("time_to_handle"),
                                                      task.get("time_to_explain"))
     return {
-        "name": _shorten(name, QUESTION_NAME_MAX, "name", warnings),
-        "description": _shorten(description, QUESTION_DESCRIPTION_MAX, "description", warnings),
+        "name": _cut(name, QUESTION_NAME_MAX, "name"),
+        "description": _fit(description, QUESTION_DESCRIPTION_MAX, "description"),
         "type": "no_answer",
         "time_to_handle": time_to_handle,
         "time_to_explain": time_to_explain,
@@ -262,7 +306,7 @@ def _tasks_after_lo(result: dict, lessons: list[dict], n_los: int, options: JobO
 
 def llm_hint_text(lo: dict) -> str:
     """The LO hint without the '[Source: …]' suffix (the source is in its own hint and in the report)."""
-    return _SOURCE_SUFFIX.sub("", _plain(lo.get("hint"))).strip()
+    return _SOURCE_SUFFIX.sub("", _raw(lo.get("hint"))).strip()  # raw: hint_html escapes it
 
 
 def _correct_indices(lo: dict, n_options: int) -> list[int]:
@@ -287,7 +331,7 @@ def _choices(lo: dict, choice_options: int, warnings: _Warnings) -> Optional[lis
     if (not isinstance(options, list) or not isinstance(correct, int) or isinstance(correct, bool)
             or not 0 <= correct < len(options)):
         return None
-    texts = [_plain(o) for o in options]
+    texts = [html_text(o) for o in options]  # ECEH shows choices as HTML
     corrects = [i for i in _correct_indices(lo, len(options)) if texts[i]]
     if correct not in corrects:
         return None
@@ -298,39 +342,35 @@ def _choices(lo: dict, choice_options: int, warnings: _Warnings) -> Optional[lis
                                  f"(B generates up to 4).")
     n_distractors = max(choice_options - len(corrects), 1 if distractors else 0)
     keep = sorted(corrects + distractors[:n_distractors])  # keep the generated order
-    return [{"text": _shorten(texts[i], CHOICE_TEXT_MAX, "choice", warnings), "is_correct": i in corrects}
-            for i in keep]
+    return [{"text": _fit(texts[i], CHOICE_TEXT_MAX, "choice"), "is_correct": i in corrects} for i in keep]
 
 
 def lo_to_question(lo: dict, options: JobOptions, warnings: _Warnings) -> Optional[dict]:
-    """One LO -> one question in the `units` format, or None when it cannot be one."""
+    """One LO -> one question in the `units` format, or None when it cannot be one.
+
+    Raises _TooLong when the question text or a choice does not fit into its ECEH column.
+    """
     q_opts = options.questions
     types = q_opts.types
-    description = _plain(lo.get("question"))
+    description = html_text(lo.get("question"))  # ECEH shows the question text as HTML
     if not description:
         return None
 
     choices = _choices(lo, q_opts.choice_options, warnings) if "choice" in types else None
     if choices is not None:
         q_type = "choice"
-    elif "open" in types and _plain(lo.get("answer")):
+    elif "open" in types and _raw(lo.get("answer")):
         q_type = "open"
-        choices = [{"text": _shorten(_plain(lo["answer"]), CHOICE_TEXT_MAX, "answer", warnings),
-                    "is_correct": True}]
+        choices = [{"text": _fit(html_text(lo["answer"]), CHOICE_TEXT_MAX, "answer"), "is_correct": True}]
     else:
         return None  # e.g. only "choice" requested and this LO has no MC options
 
-    hints = []
-    if q_opts.hints >= 1 and source_hint_text(lo):
-        hints.append({"name": SOURCE_HINT_NAME, "url": hint_html(source_hint_text(lo), HINT_URL_MAX, warnings)})
-    if q_opts.hints >= 2 and llm_hint_text(lo):
-        hints.append({"name": TEXT_HINT_NAME, "url": hint_html(llm_hint_text(lo), HINT_URL_MAX, warnings)})
-
-    name = _plain(lo.get("generated_name")) or description  # no name from the LLM: use the question
+    hints = _hints(source_hint_text(lo), llm_hint_text(lo), options, warnings)
+    name = _plain(lo.get("generated_name")) or _plain(lo.get("question"))  # no name from the LLM: the question
     time_to_handle, time_to_explain = question_times(q_type, lo.get("time_to_handle"), lo.get("time_to_explain"))
     return {
-        "name": _shorten(name, QUESTION_NAME_MAX, "name", warnings),
-        "description": _shorten(description, QUESTION_DESCRIPTION_MAX, "description", warnings),
+        "name": _cut(name, QUESTION_NAME_MAX, "name"),
+        "description": _fit(description, QUESTION_DESCRIPTION_MAX, "description"),
         "type": q_type,
         "time_to_handle": time_to_handle,
         "time_to_explain": time_to_explain,
@@ -353,6 +393,17 @@ def _to_01(score) -> Optional[float]:
     if not isinstance(score, (int, float)) or isinstance(score, bool):
         return None
     return round(min(1.0, max(0.0, (score - 1) / 4)), 3)
+
+
+def topic_coverage(split: dict, asked: set[int]) -> Optional[float]:
+    """Share of the document's topics (concept-graph communities with >= 2 concepts, split["document_topics"])
+    that have at least one question in the output; None when the split did not report topics."""
+    lo_topic_ids, document_topics = split.get("lo_topic_ids"), split.get("document_topics")
+    if not isinstance(lo_topic_ids, list) or not isinstance(document_topics, list) or not document_topics:
+        return None
+    topics = set(document_topics)
+    covered = {lo_topic_ids[i] for i in asked if i < len(lo_topic_ids) and lo_topic_ids[i] in topics}
+    return round(len(covered) / len(topics), 3)
 
 
 def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dict]:
@@ -402,30 +453,45 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
             logger.info(f"[Units] {what} left out: {e.errors()[0]['msg']}")
             return False
 
+    def too_long(e: _TooLong, what: str) -> None:
+        logger.info(f"[Units] {what} left out, text too long ({e}).")
+        warnings.count("field_too_long",
+                       lambda n: f"{n} question(s) were left out because a text was longer than the ECEH limit.")
+
     tasks_after = _tasks_after_lo(result, lessons, len(los), options)
-    unit_list, question_meta = [], []
+    unit_list, question_meta, asked = [], [], set()  # asked = LOs with a question in the output
     for lesson in lessons:  # one unit per lesson; LOs in the lesson's order
-        questions, meta = [], []
+        questions, meta, lesson_asked = [], [], set()
 
         def add(question: dict, i: int, keywords: list, source: list) -> None:
             meta.append({"question": len(questions), "section_id": section_id(i), "bloom_level": None,
-                         "keywords": keywords, "source": source, "topic": topic(i)})
+                         "keywords": [k for k in (_plain(k) for k in keywords) if k], "source": source,
+                         "topic": topic(i)})
             questions.append(question)
+            lesson_asked.add(i)
 
         for i in lesson["lo_indices"]:
             lo = los[i]
-            question = lo_to_question(lo, options, warnings)
-            if valid(question, f"LO {section_id(i)}"):
-                file = _plain(lo.get("source_title"))
-                pages = [_page(lo)] if _page(lo) is not None else []
-                add(question, i, [k for k in lo.get("keywords") or [] if isinstance(k, str)],
-                    [{"file": file, "pages": pages}] if file else [])
+            try:
+                question = lo_to_question(lo, options, warnings)
+            except _TooLong as e:
+                too_long(e, f"LO {section_id(i)}")
             else:
-                warnings.count("question_skipped",
-                               lambda n: f"{n} learning object(s) gave no valid question of the requested types.")
+                if valid(question, f"LO {section_id(i)}"):
+                    file = _plain(lo.get("source_title"))
+                    pages = [_page(lo)] if _page(lo) is not None else []
+                    add(question, i, [k for k in lo.get("keywords") or [] if isinstance(k, str)],
+                        [{"file": file, "pages": pages}] if file else [])
+                else:
+                    warnings.count("question_skipped",
+                                   lambda n: f"{n} learning object(s) gave no valid question of the requested types.")
             for task in tasks_after.get(i, []):  # after the last LO of the task's group
                 group = [los[j] for j in task["lo_indices"]]
-                question = task_to_question(task, group, options, warnings)
+                try:
+                    question = task_to_question(task, group, options, warnings)
+                except _TooLong as e:
+                    too_long(e, f"no_answer task after {section_id(i)}")
+                    continue
                 if valid(question, f"no_answer task after {section_id(i)}"):
                     anchor = _plain(task.get("anchor"))
                     add(question, i, [anchor] if anchor else [], group_sources(group))
@@ -436,30 +502,30 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
         if not questions and len(lessons) > 1:  # (one lesson only: kept, the result needs a unit)
             warnings.add("empty_lesson", f"Lesson '{_plain(lesson['title'])}' has no valid question; it is left out.")
             continue
+        asked |= lesson_asked
         for m in meta:
             question_meta.append({"unit": len(unit_list), **m})
         unit_list.append({
-            "title": _shorten(_plain(lesson["title"]) or "Hodina", UNIT_TITLE_MAX, "unit title", warnings),
-            "description": _shorten(_plain(lesson["description"]), UNIT_DESCRIPTION_MAX, "unit description",
-                                    warnings),
+            "title": _cut(_plain(lesson["title"]) or "Hodina", UNIT_TITLE_MAX, "unit title"),
+            "description": _cut(_plain(lesson["description"]), UNIT_DESCRIPTION_MAX, "unit description"),
             "questions": questions,
         })
     if not unit_list:  # every lesson was empty: one empty unit, as with a single lesson
         title, description = _unit_title_and_description(los)
-        unit_list.append({"title": _shorten(title, UNIT_TITLE_MAX, "unit title", warnings),
-                          "description": _shorten(description, UNIT_DESCRIPTION_MAX, "unit description", warnings),
+        unit_list.append({"title": _cut(title, UNIT_TITLE_MAX, "unit title"),
+                          "description": _cut(description, UNIT_DESCRIPTION_MAX, "unit description"),
                           "questions": []})
     units = {"units": unit_list}
 
-    final_scores = ((result.get("quality") or {}).get("final") or {}).get("scores") or {}
+    all_models = (((result.get("quality") or {}).get("final") or {}).get("scores") or {}).get("all_models") or {}
     report = {
         "sections": sections,
         "question_meta": question_meta,
         "quality": {
-            "section_faithfulness_avg": None,
-            "question_faithfulness_avg": _to_01((final_scores.get("all_models") or {}).get("faithfulness")),
-            "answerability_avg": None,
-            "topic_coverage": None,
+            "section_faithfulness_avg": None,  # B's sections are the LOs: their faithfulness is the next one
+            "question_faithfulness_avg": _to_01(all_models.get("faithfulness")),
+            "answerability_avg": _to_01(all_models.get("question_clarity")),  # B's clarity/answerability score
+            "topic_coverage": topic_coverage(result.get("split") or {}, asked),
         },
         "warnings": warnings.as_list(),
         "timings": {k: float(v) for k, v in (result.get("timings") or {}).items()},

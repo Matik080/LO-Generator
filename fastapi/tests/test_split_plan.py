@@ -153,4 +153,11 @@ def test_timeout_or_crash_in_a_mode_is_not_caught(llm, monkeypatch):
 
 
 def test_no_los():
-    assert split_lessons([], GRAPH, {"mode": "topics"}, ["a.pdf"]) == {"lessons": [], "lo_topics": [], "warnings": []}
+    assert split_lessons([], GRAPH, {"mode": "topics"}, ["a.pdf"]) == {
+        "lessons": [], "lo_topics": [], "lo_topic_ids": [], "document_topics": [], "warnings": []}
+
+
+def test_topic_ids_and_document_topics_for_coverage(llm):
+    r = run({"mode": "single"})
+    assert len(r["document_topics"]) == 2  # memory and statistics, 2 concepts each
+    assert set(r["lo_topic_ids"]) == set(r["document_topics"])
