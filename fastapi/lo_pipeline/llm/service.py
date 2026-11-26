@@ -175,7 +175,12 @@ def call_llm(
 
     If a response cache is active (see `use_response_cache`), an identical earlier call is answered from it.
     That is how a resumed pipeline run skips the LLM calls it already made.
+
+    If an output-language rule is active (see `use_output_language`), it is appended to the last message.
     """
+    rule = _output_language_rule.get()
+    if rule:
+        messages = messages[:-1] + [{**messages[-1], "content": f"{messages[-1]['content']}\n\n{rule}"}]
     cache = _response_cache.get()
     slot = None
     if cache is not None:
@@ -237,6 +242,35 @@ def use_response_cache(store):
         yield
     finally:
         _response_cache.reset(token)
+
+
+# Output-language rule of the current stage (job option `language` different from the documents' language).
+_output_language_rule: ContextVar = ContextVar("llm_output_language_rule", default=None)
+
+LANGUAGE_NAMES = {"sk": "Slovak", "en": "English"}
+
+
+def output_language_rule(output: str, document: str) -> Optional[str]:
+    """The rule appended to prompts when questions must be in another language than the documents; None
+    when they are the same (then the prompts stay exactly as they are: 'same language as the source')."""
+    if output == document or output not in LANGUAGE_NAMES:
+        return None
+    name, source = LANGUAGE_NAMES[output], LANGUAGE_NAMES.get(document, document)
+    return (f"IMPORTANT - OUTPUT LANGUAGE: The source material is in {source}, but every text meant for "
+            f"students or teachers (questions, answers, hints, answer options, names, tasks, lesson titles and "
+            f"descriptions) must be written in {name}. This replaces any instruction above to use the language "
+            f"of the source. Keep technical terms, code and formulas exact. If you evaluate learning objects, "
+            f"expect them in {name} and judge their meaning against the {source} source.")
+
+
+@contextmanager
+def use_output_language(rule: Optional[str]):
+    """Within this block (also in parallel batches, llm/parallel.py copies the context), call_llm appends `rule`."""
+    token = _output_language_rule.set(rule)
+    try:
+        yield
+    finally:
+        _output_language_rule.reset(token)
 
 
 # Swappable in tests (see tests/conftest.py)

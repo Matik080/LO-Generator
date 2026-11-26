@@ -48,6 +48,13 @@ logger = logging.getLogger(__name__)
 
 SOURCE_HINT_NAME = "Zdroj"
 TEXT_HINT_NAME = "Nápoveda"
+# Texts written by code, in the output language (result["language"]["output"]; default sk)
+TEXTS = {
+    "sk": {"source": SOURCE_HINT_NAME, "hint": TEXT_HINT_NAME, "page": "strana", "pages": "strany",
+           "lesson": "Hodina", "topics": "Témy", "generated": "Vygenerované otázky"},
+    "en": {"source": "Source", "hint": "Hint", "page": "page", "pages": "pages",
+           "lesson": "Lesson", "topics": "Topics", "generated": "Generated questions"},
+}
 # question type -> (time_to_handle min, max, default), (time_to_explain min, max, default) in seconds
 TIME_RANGES = {
     "choice": ((30, 180, 120), (0, 90, 30)),
@@ -177,12 +184,12 @@ def _hint_markup(text: str) -> str:
                      attributes={})
 
 
-def source_hint_text(lo: dict) -> str:
-    """'modul1.pdf, strana 12' (or just the file name when the page is unknown)."""
+def source_hint_text(lo: dict, lang: str = "sk") -> str:
+    """'modul1.pdf, strana 12' / 'modul1.pdf, page 12' (or just the file name when the page is unknown)."""
     file = _plain(lo.get("source_title"))
     page = lo.get("source_page")
     if file and isinstance(page, int) and not isinstance(page, bool) and page >= 1:
-        return f"{file}, strana {page}"
+        return f"{file}, {TEXTS[lang]['page']} {page}"
     return file
 
 
@@ -204,28 +211,28 @@ def group_sources(los: list[dict]) -> list[dict]:
     return [{"file": file, "pages": sorted(pages)} for file, pages in pages_by_file.items()]
 
 
-def group_source_hint_text(sources: list[dict]) -> str:
-    """'c.pdf, strana 3', 'c.pdf, strany 3, 5' or several files separated by '; '."""
+def group_source_hint_text(sources: list[dict], lang: str = "sk") -> str:
+    """'c.pdf, strana 3', 'c.pdf, strany 3, 5' (en: page / pages) or several files separated by '; '."""
     parts = []
     for source in sources:
         pages = source["pages"]
         if not pages:
             parts.append(source["file"])
         elif len(pages) == 1:
-            parts.append(f"{source['file']}, strana {pages[0]}")
+            parts.append(f"{source['file']}, {TEXTS[lang]['page']} {pages[0]}")
         else:
-            parts.append(f"{source['file']}, strany {', '.join(str(p) for p in pages)}")
+            parts.append(f"{source['file']}, {TEXTS[lang]['pages']} {', '.join(str(p) for p in pages)}")
     return "; ".join(parts)
 
 
-def _hints(source: str, text: str, options: JobOptions, warnings: _Warnings) -> list[dict]:
+def _hints(source: str, text: str, options: JobOptions, warnings: _Warnings, lang: str = "sk") -> list[dict]:
     """1st hint = the source, 2nd = the LLM hint text (options.questions.hints says how many);
     a hint that does not fit is left out (hint_html)."""
     wanted = []
     if options.questions.hints >= 1 and source:
-        wanted.append((SOURCE_HINT_NAME, source))
+        wanted.append((TEXTS[lang]["source"], source))
     if options.questions.hints >= 2 and text:
-        wanted.append((TEXT_HINT_NAME, text))
+        wanted.append((TEXTS[lang]["hint"], text))
     hints = []
     for name, value in wanted:
         url = hint_html(value, HINT_URL_MAX, warnings)
@@ -234,7 +241,8 @@ def _hints(source: str, text: str, options: JobOptions, warnings: _Warnings) -> 
     return hints
 
 
-def task_to_question(task: dict, group: list[dict], options: JobOptions, warnings: _Warnings) -> Optional[dict]:
+def task_to_question(task: dict, group: list[dict], options: JobOptions, warnings: _Warnings,
+                     lang: str = "sk") -> Optional[dict]:
     """A no_answer task + the LOs of its group -> one question of type no_answer, or None.
 
     Raises _TooLong when the task text does not fit into its ECEH column.
@@ -242,7 +250,8 @@ def task_to_question(task: dict, group: list[dict], options: JobOptions, warning
     description, name = html_text(task.get("description")), _plain(task.get("name"))
     if not description or not name:
         return None
-    hints = _hints(group_source_hint_text(group_sources(group)), _raw(task.get("hint")), options, warnings)
+    hints = _hints(group_source_hint_text(group_sources(group), lang), _raw(task.get("hint")), options, warnings,
+                   lang)
     time_to_handle, time_to_explain = question_times("no_answer", task.get("time_to_handle"),
                                                      task.get("time_to_explain"))
     return {
@@ -264,7 +273,7 @@ def _index_list(value, n_los: int) -> Optional[list[int]]:
     return value
 
 
-def _lessons(result: dict, los: list[dict]) -> tuple[list[dict], list]:
+def _lessons(result: dict, los: list[dict], lang: str = "sk") -> tuple[list[dict], list]:
     """(lessons [{"lo_indices", "title", "description"}], topic name per LO) from the split step.
 
     A result without a split (older checkpoint) or with broken lessons gives one lesson with all LOs
@@ -281,7 +290,7 @@ def _lessons(result: dict, los: list[dict]) -> tuple[list[dict], list]:
         used.update(indices)
         lessons.append({"lo_indices": indices, "title": lesson.get("title"), "description": lesson.get("description")})
     if not lessons:
-        title, description = _unit_title_and_description(los)
+        title, description = _unit_title_and_description(los, lang)
         lessons = [{"lo_indices": list(range(len(los))), "title": title, "description": description}]
     lo_topics = split.get("lo_topics") if isinstance(split.get("lo_topics"), list) else []
     return lessons, lo_topics
@@ -345,7 +354,7 @@ def _choices(lo: dict, choice_options: int, warnings: _Warnings) -> Optional[lis
     return [{"text": _fit(texts[i], CHOICE_TEXT_MAX, "choice"), "is_correct": i in corrects} for i in keep]
 
 
-def lo_to_question(lo: dict, options: JobOptions, warnings: _Warnings) -> Optional[dict]:
+def lo_to_question(lo: dict, options: JobOptions, warnings: _Warnings, lang: str = "sk") -> Optional[dict]:
     """One LO -> one question in the `units` format, or None when it cannot be one.
 
     Raises _TooLong when the question text or a choice does not fit into its ECEH column.
@@ -365,7 +374,7 @@ def lo_to_question(lo: dict, options: JobOptions, warnings: _Warnings) -> Option
     else:
         return None  # e.g. only "choice" requested and this LO has no MC options
 
-    hints = _hints(source_hint_text(lo), llm_hint_text(lo), options, warnings)
+    hints = _hints(source_hint_text(lo, lang), llm_hint_text(lo), options, warnings, lang)
     name = _plain(lo.get("generated_name")) or _plain(lo.get("question"))  # no name from the LLM: the question
     time_to_handle, time_to_explain = question_times(q_type, lo.get("time_to_handle"), lo.get("time_to_explain"))
     return {
@@ -379,12 +388,12 @@ def lo_to_question(lo: dict, options: JobOptions, warnings: _Warnings) -> Option
     }
 
 
-def _unit_title_and_description(los: list[dict]) -> tuple[str, str]:
+def _unit_title_and_description(los: list[dict], lang: str = "sk") -> tuple[str, str]:
     """Lesson title and description for split mode 'single', from the source file names (no LLM)."""
     files = list(dict.fromkeys(_plain(lo.get("source_title")) for lo in los if _plain(lo.get("source_title"))))
-    title = ", ".join(files) or "Vygenerované otázky"
+    title = ", ".join(files) or TEXTS[lang]["generated"]
     names = [_plain(lo.get("generated_name")) for lo in los if _plain(lo.get("generated_name"))]
-    description = "Témy: " + "; ".join(names) if names else ""
+    description = f"{TEXTS[lang]['topics']}: " + "; ".join(names) if names else ""
     return title, description
 
 
@@ -393,6 +402,15 @@ def _to_01(score) -> Optional[float]:
     if not isinstance(score, (int, float)) or isinstance(score, bool):
         return None
     return round(min(1.0, max(0.0, (score - 1) / 4)), 3)
+
+
+def output_texts_language(result: dict, options: JobOptions) -> str:
+    """Language of the texts written by code: the pipeline's output language (language stage), else the
+    requested one, else Slovak (results from before the language stage)."""
+    lang = (result.get("language") or {}).get("output")
+    if lang in TEXTS:
+        return lang
+    return options.language if options.language in TEXTS else "sk"
 
 
 def topic_coverage(split: dict, asked: set[int]) -> Optional[float]:
@@ -412,6 +430,7 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
     Raises InvalidOutputError when the output does not pass the schemas.
     """
     los = result.get("learning_objects") or []
+    lang = output_texts_language(result, options)
     warnings = _Warnings()
     # pipeline warnings first ("details" is for logs only; the report has code + message)
     for w in result.get("warnings") or []:
@@ -420,7 +439,7 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
     if options.questions.per_section > 1:
         warnings.add("per_section_unsupported",
                      f"B generates one question per learning object (requested {options.questions.per_section}).")
-    lessons, lo_topics = _lessons(result, los)
+    lessons, lo_topics = _lessons(result, los, lang)
     for w in (result.get("split") or {}).get("warnings") or []:
         warnings.add(w["code"], w["message"])
 
@@ -473,7 +492,7 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
         for i in lesson["lo_indices"]:
             lo = los[i]
             try:
-                question = lo_to_question(lo, options, warnings)
+                question = lo_to_question(lo, options, warnings, lang)
             except _TooLong as e:
                 too_long(e, f"LO {section_id(i)}")
             else:
@@ -488,7 +507,7 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
             for task in tasks_after.get(i, []):  # after the last LO of the task's group
                 group = [los[j] for j in task["lo_indices"]]
                 try:
-                    question = task_to_question(task, group, options, warnings)
+                    question = task_to_question(task, group, options, warnings, lang)
                 except _TooLong as e:
                     too_long(e, f"no_answer task after {section_id(i)}")
                     continue
@@ -506,12 +525,12 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
         for m in meta:
             question_meta.append({"unit": len(unit_list), **m})
         unit_list.append({
-            "title": _cut(_plain(lesson["title"]) or "Hodina", UNIT_TITLE_MAX, "unit title"),
+            "title": _cut(_plain(lesson["title"]) or TEXTS[lang]["lesson"], UNIT_TITLE_MAX, "unit title"),
             "description": _cut(_plain(lesson["description"]), UNIT_DESCRIPTION_MAX, "unit description"),
             "questions": questions,
         })
     if not unit_list:  # every lesson was empty: one empty unit, as with a single lesson
-        title, description = _unit_title_and_description(los)
+        title, description = _unit_title_and_description(los, lang)
         unit_list.append({"title": _cut(title, UNIT_TITLE_MAX, "unit title"),
                           "description": _cut(description, UNIT_DESCRIPTION_MAX, "unit description"),
                           "questions": []})

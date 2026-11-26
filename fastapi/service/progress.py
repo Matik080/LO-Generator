@@ -5,7 +5,8 @@ Each stage has a share of the whole run, roughly its share of the LLM calls in a
 """
 
 STAGE_WEIGHTS: dict[str, float] = {
-    "extract": 0.02,
+    "extract": 0.01,
+    "language": 0.01,
     "units": 0.20,
     "learning_objects": 0.25,
     "lo_evaluation": 0.35,

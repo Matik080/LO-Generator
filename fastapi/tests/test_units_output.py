@@ -270,7 +270,7 @@ def test_no_questions_is_still_valid():
 
 
 def test_invalid_question_is_left_out(monkeypatch):
-    monkeypatch.setattr(units_output, "SOURCE_HINT_NAME", "x" * 51)  # longer than helps.name
+    monkeypatch.setitem(units_output.TEXTS["sk"], "source", "x" * 51)  # longer than helps.name
     units, report = build([make_lo()])
     assert units["units"][0]["questions"] == []
     assert "question_skipped" in [w["code"] for w in report["warnings"]]

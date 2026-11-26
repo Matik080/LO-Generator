@@ -69,14 +69,14 @@ def test_job_completes_with_result_and_report(store, fake_llm, monkeypatch):
     # one no_answer question per concept group (task 1c); the number of groups depends on the recording
     assert full["no_answer_tasks"] and types.count("no_answer") == len(full["no_answer_tasks"])
     assert types[-1] == "no_answer"
-    assert set(report["timings"]) == {"extract", "units", "learning_objects", "lo_evaluation",
+    assert set(report["timings"]) == {"extract", "language", "units", "learning_objects", "lo_evaluation",
                                       "graph", "questions", "split", "output"}
 
     progress = [u["progress"] for u in updates if "progress" in u]
     assert progress == sorted(progress) and progress[-1] == 1.0
     assert all(p <= 0.99 for p in progress[:-1])
     stages = list(dict.fromkeys(u["stage"] for u in updates if u.get("stage")))
-    assert stages == ["extract", "units", "learning_objects", "lo_evaluation", "graph", "questions", "split",
+    assert stages == ["extract", "language", "units", "learning_objects", "lo_evaluation", "graph", "questions", "split",
                       "output"]
     assert not store.checkpoint_dir(job_id).exists()  # cleared after success
     assert full["learning_objects"] and "final" in full["quality"]

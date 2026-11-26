@@ -22,7 +22,10 @@ logger = logging.getLogger(__name__)
 ProgressCallback = Callable[[str, int, int], None]
 
 # Stage names, in order (names match the API design, Appendix A).
-STAGES = ["extract", "units", "learning_objects", "lo_evaluation", "graph", "questions", "split", "output"]
+STAGES = ["extract", "language", "units", "learning_objects", "lo_evaluation", "graph", "questions", "split", "output"]
+# Stages whose LLM calls write texts for students: they get the output-language rule (llm/service.py) when the
+# job asks for another language than the documents'. Unit extraction stays in the documents' language.
+OUTPUT_LANGUAGE_STAGES = ("learning_objects", "lo_evaluation", "questions", "split")
 
 
 @dataclass
@@ -46,7 +49,7 @@ class PipelineOptions:
     dedup_threshold: float = 0.82
     # the job's split options (contract SplitOptions as a dict: mode, lesson_count, syllabus, …)
     split: dict = field(default_factory=lambda: {"mode": "single"})
-    language: Optional[str] = None  # language of lesson titles (None = the language of the LOs)
+    language: Optional[str] = None  # requested output language: "sk" | "en"; None or "auto" = the documents' language
     title_batch_size: int = 5
 
     @classmethod
@@ -113,8 +116,9 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     from lo_pipeline.questions.no_answer import anchor_groups, generate_no_answer_tasks
     from lo_pipeline.questions.shorten import shorten_long_texts
     from lo_pipeline.split.plan import split_lessons
+    from lo_pipeline.language import detect_language, output_language
     from lo_pipeline.checkpoint import fingerprint
-    from lo_pipeline.llm.service import use_response_cache
+    from lo_pipeline.llm.service import output_language_rule, use_output_language, use_response_cache
 
     opts = options or PipelineOptions.from_settings()
     sources = [_as_source(s) for s in sources]
@@ -136,6 +140,16 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
             # e.g. a scanned PDF without a text layer (no OCR yet): nothing to send to the LLM
             raise ExtractionError("No text could be extracted from the documents.")
         return {"sections_per_source": sections_per_source}
+
+    # 1b. Language of the documents (no LLM) and of the output (job option `language`)
+    def language():
+        detected = detect_language(s["content"] for sections in state["sections_per_source"] for s in sections)
+        result = {"document": detected["language"], "confident": detected["confident"],
+                  "requested": opts.language or "auto",
+                  "output": output_language(opts.language, detected["language"])}
+        logger.info(f"[Language] Documents: {result['document']} (confident: {result['confident']}), "
+                    f"output: {result['output']}.")
+        return {"language": result}
 
     # 2. Atomic units: extracted per document (a batch never mixes two documents), deduplicated across all
     def units():
@@ -226,7 +240,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     # 7. Lessons: order, split mode, titles (lo_pipeline/split). Never fails; problems are warnings in it.
     def split():
         result = split_lessons(state["learning_objects"], state["concept_graph"], opts.split,
-                               [src.title for src in sources], language=opts.language,
+                               [src.title for src in sources],
                                progress=progress.step("split"), title_batch_size=opts.title_batch_size)
         return {"split": result}
 
@@ -234,7 +248,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     def output():
         return {"echub": convert_by_source(state["learning_objects"])}
 
-    stage_functions = {"extract": extract, "units": units, "learning_objects": learning_objects,
+    stage_functions = {"extract": extract, "language": language, "units": units, "learning_objects": learning_objects,
                        "lo_evaluation": lo_evaluation, "graph": graph, "questions": questions, "split": split,
                        "output": output}
     assert list(stage_functions) == STAGES
@@ -251,7 +265,11 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                 progress.report(stage, 0, 0)
                 progress.report(stage, 1, 1)
                 continue
-            with _Timer(stage, timings, progress):
+            # stages that write for students get the output-language rule when it differs from the documents'
+            lang = state.get("language") or {}
+            rule = (output_language_rule(lang.get("output"), lang.get("document"))
+                    if stage in OUTPUT_LANGUAGE_STAGES else None)
+            with _Timer(stage, timings, progress), use_output_language(rule):
                 updates = run_stage()
                 state.update(updates)
             if checkpoint is not None:
@@ -261,6 +279,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
         "atomic_units": state["atomic_units"],
         "learning_objects": state["learning_objects"],
         "no_answer_tasks": state.get("no_answer_tasks", []),  # missing in a checkpoint from before task 1c
+        "language": state.get("language"),
         "split": state.get("split"),
         "knowledge_graph": state["knowledge_graph"],
         "concept_graph": state["concept_graph"],
