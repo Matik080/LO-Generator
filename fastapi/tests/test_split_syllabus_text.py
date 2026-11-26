@@ -57,11 +57,16 @@ def test_plan_keeps_titles_covers_valid_pages_and_skip(llm):
     json.dumps({"lessons": [{"title": " "}, "text"]}),
     None,
     LLMError("provider down"),
-    RuntimeError("unexpected"),
 ])
 def test_unusable_answer_gives_none(llm, answer):
     llm.answer = answer
     assert plan_from_text("2 hodiny", ["a.pdf"]) is None
+
+
+def test_other_errors_are_not_caught(llm):
+    llm.answer = RuntimeError("job timeout")  # must stop the job, not fall back
+    with pytest.raises(RuntimeError):
+        plan_from_text("2 hodiny", ["a.pdf"])
 
 
 def test_lesson_limit(llm):

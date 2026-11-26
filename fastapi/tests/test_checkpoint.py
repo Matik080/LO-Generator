@@ -78,10 +78,10 @@ def test_finished_stages_are_skipped(llm, reference, tmp_path):
     ckpt = cp.MemoryCheckpoint()
     events = []
 
-    llm.crash_after = total_calls - 1  # crash on the very last call (in the 'questions' stage)
+    llm.crash_after = total_calls - 1  # crash on the very last call (lesson titles, in the 'split' stage)
     with pytest.raises(Crash):
         run_pipeline([DOC], checkpoint=ckpt)
-    assert set(ckpt.stages) == {"extract", "units", "learning_objects", "lo_evaluation", "graph"}
+    assert set(ckpt.stages) == {"extract", "units", "learning_objects", "lo_evaluation", "graph", "questions"}
 
     llm.crash_after, llm.calls = None, 0
     resumed = run_pipeline([DOC], checkpoint=ckpt, progress_callback=lambda s, d, t: events.append((s, d, t)))

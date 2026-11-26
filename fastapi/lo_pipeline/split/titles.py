@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from typing import Optional, Sequence
 
 from lo_pipeline.llm.json_load import parse_json
-from lo_pipeline.llm.service import call_llm
+from lo_pipeline.llm.service import LLMError, call_llm
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ def lesson_titles(los: list[dict], specs: Sequence[LessonSpec], topic_names: Seq
         except ValueError:  # json.JSONDecodeError is a ValueError
             logger.warning("[Split] Lesson titles: answer is not valid JSON; fallback titles used.")
             return {}
-        except Exception as e:  # LLMError or anything else: the split must never fail the job
+        except LLMError as e:  # provider failed: fallback titles (a timeout or crash is not caught)
             logger.warning(f"[Split] Lesson titles: LLM call failed ({type(e).__name__}: {e}); fallback titles used.")
             return {}
         found = {}

@@ -6,8 +6,9 @@ The split step: LOs -> lessons for the job's `split` options (modes single / les
    "lo_topics": [topic name or None per LO],                                      # `topic` in the report
    "warnings": [{"code", "message"}, ...]}                                        # Mlynček A's codes
 
-It never raises: a syllabus that cannot be used falls back to `topics` (syllabus_plan_invalid /
-syllabus_fallback), and an unexpected error in any mode falls back to one lesson (split_failed).
+It does not fail the job: a syllabus that cannot be used falls back to `topics` (syllabus_plan_invalid /
+syllabus_fallback), and a bug in any mode (BUG_ERRORS) falls back to one lesson (split_failed). A job
+timeout or crash is not caught.
 """
 import logging
 from collections import Counter
@@ -26,6 +27,9 @@ logger = logging.getLogger(__name__)
 
 UNBALANCED = 0.5  # lessons_unbalanced: a lesson more than 50 % longer or shorter than the average (as A)
 DEFAULT_SECONDS = (120, 30)  # LO without time estimates
+# Errors a bug in the split code typically raises; these give one lesson instead of a failed job.
+# Not Exception as a whole: RQ's job timeout (and a simulated crash in tests) must still stop the job.
+BUG_ERRORS = (KeyError, TypeError, IndexError, ValueError, AttributeError, ZeroDivisionError)
 
 
 def _seconds(value, default: int) -> int:
@@ -146,7 +150,7 @@ def split_lessons(los: list[dict], concept_graph: dict, split: dict, files: Sequ
     modes = {"single": single_mode, "lessons": lessons_mode, "topics": topics_mode, "syllabus": syllabus_mode}
     try:
         specs = modes[mode]()
-    except Exception as e:  # the split must never fail the job
+    except BUG_ERRORS as e:  # a bug in the split must not fail the job (a timeout or crash still does)
         logger.exception(f"[Split] Mode '{mode}' failed ({type(e).__name__}); one lesson made.")
         warnings[:] = []
         warnings.add("split_failed", f"Split mode '{mode}' failed; all questions are in one lesson.")

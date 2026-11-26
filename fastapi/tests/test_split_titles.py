@@ -85,8 +85,8 @@ def test_lessons_are_batched_and_language_is_passed(llm):
     assert "Write in this language: sk." in llm.prompts[0]
 
 
-def test_any_error_in_the_llm_call_gives_fallback(llm):
-    # not only LLMError: e.g. a bug in a provider client must not fail the job
-    llm.reply = lambda prompt: RuntimeError("unexpected")
-    texts, failed = lesson_titles(LOS, [LessonSpec([0], hint="pointer")])
-    assert texts == [("pointer", "Pointer Basics")] and failed == 1
+def test_other_errors_are_not_caught(llm):
+    # e.g. RQ's job timeout is raised inside the running code: it must stop the job, not give a fallback
+    llm.reply = lambda prompt: RuntimeError("job timeout")
+    with pytest.raises(RuntimeError):
+        lesson_titles(LOS, [LessonSpec([0], hint="pointer")])

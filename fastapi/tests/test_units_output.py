@@ -112,12 +112,12 @@ def test_choice_options_option():
     assert "choice_options_unavailable" in [w["code"] for w in report["warnings"]]
 
 
-def test_unsupported_options_give_warnings():
+def test_per_section_warning_and_no_split_mode_warning():
     opts = options(split={"mode": "lessons", "lesson_count": 3})
     units, report = build([make_lo()], opts)
     codes = [w["code"] for w in report["warnings"]]
     assert len(units["units"]) == 1
-    assert {"split_mode_unsupported", "per_section_unsupported"} <= set(codes)
+    assert "per_section_unsupported" in codes and "split_mode_unsupported" not in codes
     assert "question_type_unsupported" not in codes  # no_answer is generated now (task 1c)
 
 
@@ -203,8 +203,8 @@ def test_invalid_question_is_left_out(monkeypatch):
 
 
 def test_invalid_output_raises(monkeypatch):
-    """The final check is a safety net for bugs: e.g. an empty lesson title (min length 1)."""
-    monkeypatch.setattr(units_output, "_unit_title_and_description", lambda los: ("", ""))
+    """The final check is a safety net for bugs: e.g. a section id that breaks the pattern."""
+    monkeypatch.setattr(units_output, "section_id", lambda i: "bad id")
     with pytest.raises(InvalidOutputError):
         build([make_lo()])
 
@@ -283,3 +283,69 @@ def test_no_answer_tasks_only_when_requested_and_valid():
 
     units, _ = build(los, options(questions={"hints": 1}), no_answer_tasks=tasks[:1])
     assert [h["name"] for h in units["units"][0]["questions"][2]["hints"]] == ["Zdroj"]
+
+
+# --- lessons from the split step ------------------------------------------------------------
+
+def three_los():
+    return [make_lo(id="a", generated_name="A"), make_lo(id="b", generated_name="B"),
+            make_lo(id="c", generated_name="C")]
+
+
+def split_result(lessons, lo_topics=None, warnings=()):
+    return {"lessons": [{"lo_indices": idx, "title": t, "description": f"About {t}."} for t, idx in lessons],
+            "lo_topics": lo_topics or [], "warnings": list(warnings)}
+
+
+def test_one_unit_per_lesson_in_lesson_order_with_topics():
+    split = split_result([("Druhá", [2, 0]), ("Prvá", [1])], lo_topics=["pointer", "malloc", None],
+                         warnings=[{"code": "lessons_unbalanced", "message": "uneven"}])
+    units, report = build(three_los(), split=split)
+    assert [(u["title"], u["description"], [q["name"] for q in u["questions"]]) for u in units["units"]] == \
+        [("Druhá", "About Druhá.", ["C", "A"]), ("Prvá", "About Prvá.", ["B"])]
+    assert [(m["unit"], m["question"], m["section_id"], m["topic"]) for m in report["question_meta"]] == \
+        [(0, 0, "S-3", None), (0, 1, "S-1", "pointer"), (1, 0, "S-2", "malloc")]
+    assert [s["topic"] for s in report["sections"]] == ["pointer", "malloc", None]
+    assert "lessons_unbalanced" in [w["code"] for w in report["warnings"]]
+
+
+def test_lesson_without_valid_question_is_left_out():
+    los = three_los()
+    los[1]["generated_name"] = ""  # no name -> no valid question
+    los[1]["question"] = ""
+    units, report = build(los, split=split_result([("Prvá", [0]), ("Prázdna", [1]), ("Tretia", [2])]))
+    assert [u["title"] for u in units["units"]] == ["Prvá", "Tretia"]
+    assert [m["unit"] for m in report["question_meta"]] == [0, 1]
+    assert {"empty_lesson", "question_skipped"} <= {w["code"] for w in report["warnings"]}
+
+
+def test_lo_left_out_by_the_split_has_a_section_but_no_question():
+    units, report = build(three_los(), split=split_result([("Jediná", [0, 2])]))
+    assert [q["name"] for q in units["units"][0]["questions"]] == ["A", "C"]
+    assert len(report["sections"]) == 3
+
+
+def test_no_answer_task_follows_the_group_lo_that_comes_last_in_the_lessons():
+    split = split_result([("Prvá", [2]), ("Druhá", [0, 1])])
+    tasks = [make_task([0, 2]), make_task([2], name="Only C"), make_task([1], name="Gone")]
+    units, report = build(three_los(), split=split_result([("Prvá", [2]), ("Druhá", [0])]), no_answer_tasks=tasks)
+    names = [[q["name"] for q in u["questions"]] for u in units["units"]]
+    # task [0, 2]: LO 0 (lesson 2) comes after LO 2 (lesson 1); task [1]: LO 1 is in no lesson -> dropped
+    assert names == [["C", "Only C"], ["A", "Pointer Operators"]]
+    units, _ = build(three_los(), split=split, no_answer_tasks=tasks[:1])
+    assert [q["name"] for q in units["units"][1]["questions"]] == ["A", "Pointer Operators", "B"]
+
+
+def test_missing_or_broken_split_gives_one_lesson_from_the_files():
+    for split in (None, {"lessons": [{"lo_indices": [0, 9], "title": "x", "description": ""}]},
+                  {"lessons": []}):
+        units, report = build(three_los(), split=split)
+        assert len(units["units"]) == 1 and units["units"][0]["title"] == "c.pdf"
+        assert [q["name"] for q in units["units"][0]["questions"]] == ["A", "B", "C"]
+        assert all(s["topic"] is None for s in report["sections"])
+
+
+def test_lo_in_two_lessons_is_used_once_and_empty_title_gets_a_fallback():
+    units, _ = build(three_los(), split=split_result([("", [0, 1]), ("Druhá", [1, 2])]))
+    assert [(u["title"], [q["name"] for q in u["questions"]]) for u in units["units"]] == \
+        [("Hodina", ["A", "B"]), ("Druhá", ["C"])]

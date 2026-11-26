@@ -85,13 +85,20 @@ def fresh_settings(monkeypatch):
     get_settings.cache_clear()
 
 
-@pytest.fixture
-def fake_llm(monkeypatch):
-    mode = os.getenv("LLM_MODE", "replay")
-    cassette = Cassette(CASSETTE, mode)
-    monkeypatch.setattr(llm_service, "_backend", cassette)
+@pytest.fixture(scope="session")
+def cassette_session():
+    """One cassette for the whole test session, saved once at the end. (A cassette per test, saved
+    after each test, made a test that stops early, e.g. a simulated crash, drop the answers the
+    following tests need, so recording the whole suite paid for the same calls again.)"""
+    cassette = Cassette(CASSETTE, os.getenv("LLM_MODE", "replay"))
     yield cassette
     cassette.save()
+
+
+@pytest.fixture
+def fake_llm(monkeypatch, cassette_session):
+    monkeypatch.setattr(llm_service, "_backend", cassette_session)
+    yield cassette_session
 
 
 @pytest.fixture

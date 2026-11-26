@@ -137,11 +137,19 @@ def test_failed_titles_use_fallback_and_warn(llm):
 
 def test_error_in_a_mode_gives_one_lesson(llm, monkeypatch):
     def broken(*args, **kwargs):
-        raise RuntimeError("bug")
+        raise KeyError("bug")
     monkeypatch.setattr(plan_module, "split_by_topics", broken)
     r = run({"mode": "topics"})
     assert len(r["lessons"]) == 1 and sorted(flat(r)) == list(range(6))
     assert codes(r) == ["split_failed"]
+
+
+def test_timeout_or_crash_in_a_mode_is_not_caught(llm, monkeypatch):
+    def timeout(*args, **kwargs):
+        raise RuntimeError("job timeout")  # not a bug type: must stop the job
+    monkeypatch.setattr(plan_module, "split_by_topics", timeout)
+    with pytest.raises(RuntimeError):
+        run({"mode": "topics"})
 
 
 def test_no_los():

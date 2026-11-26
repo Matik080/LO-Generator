@@ -4,8 +4,10 @@ Sprint task 5. No LLM calls here: everything comes from the finished learning ob
 
 - One LO becomes one question: an LO with multiple-choice options -> `choice`, otherwise `open`.
 - A no_answer task (questions/no_answer.py, from LOs that share a concept) becomes a `no_answer`
-  question right after the last LO of its group, so the material comes before the task.
-- split: only "single" (one lesson) is implemented; other modes give one lesson + a warning.
+  question right after the LO of its group that comes last in the lessons, so the material comes first.
+- Lessons come from the split step (result["split"], lo_pipeline/split): one unit per lesson, the
+  LOs in the lesson's order; a lesson without any valid question is left out (warning `empty_lesson`).
+  `topic` (concept-graph topic of the LO) is filled in `sections` and `question_meta`.
 - Hints: 1st = the source, made by code ("Zdroj": file, page); 2nd = the LLM-written hint text
   without the "[Source: ...]" suffix. options.questions.hints says how many (0, 1 or 2).
 - Times (seconds) are fitted into the range of the question type (TIME_RANGES, design kap. 7, the
@@ -210,18 +212,51 @@ def task_to_question(task: dict, group: list[dict], options: JobOptions, warning
     }
 
 
-def _tasks_after_lo(result: dict, n_los: int, options: JobOptions) -> dict[int, list[dict]]:
-    """No_answer tasks by the index of the last LO of their group (only when no_answer is requested;
-    a task whose LO indices do not fit the LO list is ignored)."""
+def _index_list(value, n_los: int) -> Optional[list[int]]:
+    """A list of valid LO indices, or None."""
+    if not isinstance(value, list) or not all(isinstance(i, int) and not isinstance(i, bool) and 0 <= i < n_los
+                                              for i in value):
+        return None
+    return value
+
+
+def _lessons(result: dict, los: list[dict]) -> tuple[list[dict], list]:
+    """(lessons [{"lo_indices", "title", "description"}], topic name per LO) from the split step.
+
+    A result without a split (older checkpoint) or with broken lessons gives one lesson with all LOs
+    in pipeline order and the title from the source files. An LO is used in one lesson only.
+    """
+    split = result.get("split") or {}
+    lessons, used = [], set()
+    for lesson in split.get("lessons") or []:
+        indices = _index_list(lesson.get("lo_indices") if isinstance(lesson, dict) else None, len(los))
+        if indices is None:
+            lessons = []
+            break
+        indices = [i for i in dict.fromkeys(indices) if i not in used]
+        used.update(indices)
+        lessons.append({"lo_indices": indices, "title": lesson.get("title"), "description": lesson.get("description")})
+    if not lessons:
+        title, description = _unit_title_and_description(los)
+        lessons = [{"lo_indices": list(range(len(los))), "title": title, "description": description}]
+    lo_topics = split.get("lo_topics") if isinstance(split.get("lo_topics"), list) else []
+    return lessons, lo_topics
+
+
+def _tasks_after_lo(result: dict, lessons: list[dict], n_los: int, options: JobOptions) -> dict[int, list[dict]]:
+    """No_answer tasks by the LO they follow: the group's LO that comes last in the lessons (only when
+    no_answer is requested). A task with invalid LO indices, or none of whose LOs is in a lesson
+    (left out by the syllabus), is ignored."""
     if "no_answer" not in options.questions.types:
         return {}
+    position = {i: n for n, i in enumerate(i for lesson in lessons for i in lesson["lo_indices"])}
     after: dict[int, list[dict]] = {}
     for task in result.get("no_answer_tasks") or []:
-        indices = task.get("lo_indices") if isinstance(task, dict) else None
-        if (not isinstance(indices, list) or not indices
-                or not all(isinstance(i, int) and not isinstance(i, bool) and 0 <= i < n_los for i in indices)):
+        indices = _index_list(task.get("lo_indices") if isinstance(task, dict) else None, n_los)
+        placed = [i for i in indices or [] if i in position]
+        if not placed:
             continue
-        after.setdefault(max(indices), []).append(task)
+        after.setdefault(max(placed, key=position.get), []).append(task)
     return after
 
 
@@ -331,12 +366,15 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
     for w in result.get("warnings") or []:
         warnings.add(w["code"], w["message"])
 
-    if options.split.mode != "single":
-        warnings.add("split_mode_unsupported",
-                     f"Split mode '{options.split.mode}' is not supported yet; all questions are in one lesson.")
     if options.questions.per_section > 1:
         warnings.add("per_section_unsupported",
                      f"B generates one question per learning object (requested {options.questions.per_section}).")
+    lessons, lo_topics = _lessons(result, los)
+    for w in (result.get("split") or {}).get("warnings") or []:
+        warnings.add(w["code"], w["message"])
+
+    def topic(i: int) -> Optional[str]:
+        return _plain(lo_topics[i]) or None if i < len(lo_topics) else None
 
     # sections = LOs, prerequisites by LO id
     id_to_section = {}
@@ -351,10 +389,8 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
             "statement": _plain(lo.get("source_statement")),
             "lo_type": _plain(lo.get("type")) or "unknown",
             "prerequisites": list(dict.fromkeys(p for p in prereqs if p != section_id(i))),
-            "topic": None,
+            "topic": topic(i),
         })
-
-    questions, question_meta = [], []
 
     def valid(question: Optional[dict], what: str) -> bool:
         if question is None:
@@ -366,38 +402,54 @@ def build_units_and_report(result: dict, options: JobOptions) -> tuple[dict, dic
             logger.info(f"[Units] {what} left out: {e.errors()[0]['msg']}")
             return False
 
-    def add(question: dict, i: int, keywords: list, source: list) -> None:
-        question_meta.append({"unit": 0, "question": len(questions), "section_id": section_id(i),
-                              "bloom_level": None, "keywords": keywords, "source": source, "topic": None})
-        questions.append(question)
+    tasks_after = _tasks_after_lo(result, lessons, len(los), options)
+    unit_list, question_meta = [], []
+    for lesson in lessons:  # one unit per lesson; LOs in the lesson's order
+        questions, meta = [], []
 
-    tasks_after = _tasks_after_lo(result, len(los), options)
-    for i, lo in enumerate(los):
-        question = lo_to_question(lo, options, warnings)
-        if valid(question, f"LO {section_id(i)}"):
-            file = _plain(lo.get("source_title"))
-            pages = [_page(lo)] if _page(lo) is not None else []
-            add(question, i, [k for k in lo.get("keywords") or [] if isinstance(k, str)],
-                [{"file": file, "pages": pages}] if file else [])
-        else:
-            warnings.count("question_skipped",
-                           lambda n: f"{n} learning object(s) gave no valid question of the requested types.")
-        for task in tasks_after.get(i, []):  # after the last LO of the task's group
-            group = [los[j] for j in task["lo_indices"]]
-            question = task_to_question(task, group, options, warnings)
-            if valid(question, f"no_answer task after {section_id(i)}"):
-                anchor = _plain(task.get("anchor"))
-                add(question, i, [anchor] if anchor else [], group_sources(group))
+        def add(question: dict, i: int, keywords: list, source: list) -> None:
+            meta.append({"question": len(questions), "section_id": section_id(i), "bloom_level": None,
+                         "keywords": keywords, "source": source, "topic": topic(i)})
+            questions.append(question)
+
+        for i in lesson["lo_indices"]:
+            lo = los[i]
+            question = lo_to_question(lo, options, warnings)
+            if valid(question, f"LO {section_id(i)}"):
+                file = _plain(lo.get("source_title"))
+                pages = [_page(lo)] if _page(lo) is not None else []
+                add(question, i, [k for k in lo.get("keywords") or [] if isinstance(k, str)],
+                    [{"file": file, "pages": pages}] if file else [])
             else:
-                warnings.count("no_answer_skipped",
-                               lambda n: f"{n} no_answer task(s) were not valid and were left out.")
+                warnings.count("question_skipped",
+                               lambda n: f"{n} learning object(s) gave no valid question of the requested types.")
+            for task in tasks_after.get(i, []):  # after the last LO of the task's group
+                group = [los[j] for j in task["lo_indices"]]
+                question = task_to_question(task, group, options, warnings)
+                if valid(question, f"no_answer task after {section_id(i)}"):
+                    anchor = _plain(task.get("anchor"))
+                    add(question, i, [anchor] if anchor else [], group_sources(group))
+                else:
+                    warnings.count("no_answer_skipped",
+                                   lambda n: f"{n} no_answer task(s) were not valid and were left out.")
 
-    title, description = _unit_title_and_description(los)
-    units = {"units": [{
-        "title": _shorten(title, UNIT_TITLE_MAX, "unit title", warnings),
-        "description": _shorten(description, UNIT_DESCRIPTION_MAX, "unit description", warnings),
-        "questions": questions,
-    }]}
+        if not questions and len(lessons) > 1:  # (one lesson only: kept, the result needs a unit)
+            warnings.add("empty_lesson", f"Lesson '{_plain(lesson['title'])}' has no valid question; it is left out.")
+            continue
+        for m in meta:
+            question_meta.append({"unit": len(unit_list), **m})
+        unit_list.append({
+            "title": _shorten(_plain(lesson["title"]) or "Hodina", UNIT_TITLE_MAX, "unit title", warnings),
+            "description": _shorten(_plain(lesson["description"]), UNIT_DESCRIPTION_MAX, "unit description",
+                                    warnings),
+            "questions": questions,
+        })
+    if not unit_list:  # every lesson was empty: one empty unit, as with a single lesson
+        title, description = _unit_title_and_description(los)
+        unit_list.append({"title": _shorten(title, UNIT_TITLE_MAX, "unit title", warnings),
+                          "description": _shorten(description, UNIT_DESCRIPTION_MAX, "unit description", warnings),
+                          "questions": []})
+    units = {"units": unit_list}
 
     final_scores = ((result.get("quality") or {}).get("final") or {}).get("scores") or {}
     report = {

@@ -19,7 +19,7 @@ from typing import Optional, Sequence
 
 from lo_pipeline.contract.options import PAGES_PATTERN, page_ranges
 from lo_pipeline.llm.json_load import parse_json
-from lo_pipeline.llm.service import call_llm
+from lo_pipeline.llm.service import LLMError, call_llm
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ def plan_from_text(text: str, files: Sequence[str], topics: Sequence[str] = ()) 
     """Teacher's syllabus_text -> SyllabusPlan, or None if the answer cannot be used."""
     try:
         response = call_llm(_prompt(text, files, topics), temperature=0.2)
-    except Exception as e:  # LLMError or anything else: the split must never fail the job
+    except LLMError as e:  # provider failed: fall back (a timeout or crash is not caught)
         logger.warning(f"[Split] Syllabus plan: LLM call failed ({type(e).__name__}: {e}); falling back.")
         return None
     if not response:
