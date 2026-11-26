@@ -14,6 +14,7 @@ from fastapi import UploadFile
 from pydantic import ValidationError
 
 from lo_pipeline.contract import JobOptions
+from lo_pipeline.contract.options import page_ranges
 from service.errors import ApiError, error_list
 from service.settings import ServiceSettings
 
@@ -57,6 +58,17 @@ def _content_matches(extension: str, content: bytes) -> bool:
         return True
     except UnicodeDecodeError:
         return False
+
+
+def check_syllabus_documents(options: JobOptions, n_files: int) -> None:
+    """Syllabus pages may only name uploaded documents: 'D3:…' with two files -> 400 invalid_options."""
+    syllabus = getattr(options.split, "syllabus", None) or []
+    for k, lesson in enumerate(syllabus):
+        for doc, _, _ in page_ranges(lesson.pages or ""):
+            if doc > n_files:
+                raise ApiError(400, "invalid_options",
+                               f"split.syllabus[{k}].pages names document D{doc}, but only {n_files} file(s) were uploaded.",
+                               {"lesson": k, "document": doc, "files": n_files})
 
 
 async def read_uploads(files: list[UploadFile], settings: ServiceSettings) -> list[Upload]:

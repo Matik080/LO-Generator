@@ -47,7 +47,7 @@ def lo_topics(los: list[dict], communities: dict[str, int]) -> list[Optional[int
     return topics
 
 
-def _default_embed():
+def default_embed():
     from lo_pipeline.llm.embeddings import get_embeddings_batch
     return get_embeddings_batch
 
@@ -63,8 +63,8 @@ def assign_missing_topics(los: list[dict], topics: list[Optional[int]],
     known = sorted({t for t in topics if t is not None})
     if not missing or not known:
         return list(topics)
-    vectors = [_unit(v) for v in (embed or _default_embed())([_lo_text(lo) for lo in los])]
-    centres = {t: _unit(np.mean([vectors[i] for i, x in enumerate(topics) if x == t], axis=0)) for t in known}
+    vectors = [unit_vector(v) for v in (embed or default_embed())([lo_text(lo) for lo in los])]
+    centres = {t: unit_vector(np.mean([vectors[i] for i, x in enumerate(topics) if x == t], axis=0)) for t in known}
     filled = list(topics)
     for i in missing:
         filled[i] = max(known, key=lambda t: (float(vectors[i] @ centres[t]), -t))  # ties -> lower number
@@ -87,7 +87,7 @@ def fill_missing_topics(order: Sequence[int], topics: list[Optional[int]]) -> li
     return filled
 
 
-def _lo_text(lo: dict) -> str:
+def lo_text(lo: dict) -> str:
     return f"{lo.get('question') or ''} {lo.get('answer') or ''}".strip()
 
 
@@ -102,7 +102,7 @@ def topic_names(los: list[dict], topics: Sequence[Optional[int]], communities: d
     Without candidates: the anchor most LOs of the topic share (ties: first in pipeline order).
     `embed` = texts -> vectors (default: get_embeddings_batch).
     """
-    embed = embed or _default_embed()
+    embed = embed or default_embed()
     members: dict[int, list[int]] = {}
     for i, t in enumerate(topics):
         if t is not None:
@@ -115,8 +115,8 @@ def topic_names(los: list[dict], topics: Sequence[Optional[int]], communities: d
             share.update(list(dict.fromkeys(c for c in concepts if c and communities.get(c) == t)))  # once per LO
         candidates = list(share)
         if candidates:
-            centre = _unit(np.mean([_unit(v) for v in embed([_lo_text(los[i]) for i in idx])], axis=0))
-            scores = [share[c] * float(_unit(v) @ centre) for c, v in zip(candidates, embed(candidates))]
+            centre = unit_vector(np.mean([unit_vector(v) for v in embed([lo_text(los[i]) for i in idx])], axis=0))
+            scores = [share[c] * float(unit_vector(v) @ centre) for c, v in zip(candidates, embed(candidates))]
             names[t] = candidates[int(np.argmax(scores))]  # ties -> first candidate
         else:
             anchors = Counter(los[i]["anchor"] for i in idx if los[i].get("anchor"))
@@ -125,7 +125,7 @@ def topic_names(los: list[dict], topics: Sequence[Optional[int]], communities: d
     return names
 
 
-def _unit(v) -> np.ndarray:
+def unit_vector(v) -> np.ndarray:
     v = np.asarray(v, dtype=float)
     norm = np.linalg.norm(v)
     return v / norm if norm else v

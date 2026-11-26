@@ -188,6 +188,18 @@ def test_unsupported_files(client, name, content):
                  415, "unsupported_file")
 
 
+def test_syllabus_pages_must_name_uploaded_documents(client):
+    two_files = [("files", ("a.pdf", PDF, "application/pdf")), ("files", ("b.pdf", PDF, "application/pdf"))]
+
+    def syllabus(pages):
+        return {"split": {"mode": "syllabus", "syllabus": [{"title": "Úvod", "pages": "D1:1-3"},
+                                                           {"title": "Ďalej", "pages": pages}]}}
+
+    assert post_job(client, syllabus("D2:1-5"), files=two_files).status_code == 202
+    error = assert_error(post_job(client, syllabus("D2:1, D3:4"), files=two_files), 400, "invalid_options")
+    assert error.details == {"lesson": 1, "document": 3, "files": 2}
+
+
 def test_accepts_pptx_and_html(client):
     files = [("files", ("slides.pptx", b"PK\x03\x04 zip", "application/zip")),
              ("files", ("page.html", "<p>Ahoj</p>".encode("utf-8"), "text/html"))]

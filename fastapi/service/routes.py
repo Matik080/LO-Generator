@@ -19,7 +19,7 @@ from lo_pipeline.contract.schemas import SCHEMA_NAMES, build_schema
 from service.backend import JobBackend
 from service.errors import ApiError
 from service.settings import ServiceSettings
-from service.uploads import FILE_TYPES, parse_options, read_uploads
+from service.uploads import FILE_TYPES, check_syllabus_documents, parse_options, read_uploads
 
 SERVICE_NAME = "lo-generator"
 VERSION = "0.1.0"
@@ -97,6 +97,7 @@ async def create_job(
 ):
     job_options = parse_options(options, settings)
     uploads = await read_uploads(list(files), settings)
+    check_syllabus_documents(job_options, len(uploads))
     created = backend.create(job_options, uploads)
     body = CreateJobResponse(job_id=created.status.job_id, status=created.status.status,
                              replayed=created.replayed, links=_links(created.status.job_id))
