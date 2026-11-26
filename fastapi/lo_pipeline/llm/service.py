@@ -260,7 +260,8 @@ def output_language_rule(output: str, document: str) -> Optional[str]:
             f"students or teachers (questions, answers, hints, answer options, names, tasks, lesson titles and "
             f"descriptions) must be written in {name}. This replaces any instruction above to use the language "
             f"of the source. Keep technical terms, code and formulas exact. If you evaluate learning objects, "
-            f"expect them in {name} and judge their meaning against the {source} source.")
+            f"expect them in {name} and judge their meaning against the {source} source. Keep the answer "
+            f"format required above exactly (e.g. JSON only, the same number of items).")
 
 
 @contextmanager

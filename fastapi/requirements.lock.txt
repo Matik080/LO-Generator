@@ -47,6 +47,7 @@ pydantic==2.14.1
 pydantic_core==2.50.1
 Pygments==2.21.0
 PyPDF2==3.0.1
+pypdfium2==5.15.2  # installed in its own Dockerfile step (see Dockerfile)
 python-dotenv==1.2.4
 python-multipart==0.0.32
 python-pptx==1.0.2

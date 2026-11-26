@@ -7,7 +7,11 @@ nlp = spacy.load(SPACY_MODEL)
 def normalize_concept(concept: str):
     doc = nlp(concept.lower())
     lemmas = [token.lemma_ for token in doc if not token.is_stop]
-    return " ".join(lemmas)
+    normalized = " ".join(lemmas)
+    # a concept made only of stop words ("GO", "NO-GO") would become "" or "-": keep it as written
+    if not any(ch.isalnum() for ch in normalized):
+        return " ".join(concept.lower().split())
+    return normalized
 
 def normalize_units(units):
     for unit in units:

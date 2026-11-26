@@ -24,6 +24,11 @@ RUN python -m spacy download en_core_web_sm \
  && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 
+# PDF text with PDFium (Chrome's PDF engine): PyPDF2 breaks PowerPoint exports into single letters
+# ("Rozh o d o v a n i e"). Separate step after the layers above, so adding it does not reinstall
+# the packages of requirements.txt (unpinned) in newer versions. Also renders pages for OCR (task 3).
+RUN pip install --no-cache-dir "pypdfium2>=4"
+
 # Non-root user; /data is the job folder volume (docker-compose.yml)
 RUN useradd --create-home --uid 1000 app \
  && mkdir -p /data && chown -R app /data /models

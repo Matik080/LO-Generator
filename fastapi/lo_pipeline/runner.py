@@ -116,7 +116,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
     from lo_pipeline.questions.no_answer import anchor_groups, generate_no_answer_tasks
     from lo_pipeline.questions.shorten import shorten_long_texts
     from lo_pipeline.split.plan import split_lessons
-    from lo_pipeline.language import detect_language, output_language
+    from lo_pipeline.language import detect_language, output_language, source_language
     from lo_pipeline.checkpoint import fingerprint
     from lo_pipeline.llm.service import output_language_rule, use_output_language, use_response_cache
 
@@ -177,7 +177,11 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
         logger.info(f"[Extract] Deduplicating {len(raw_units)} raw units...")
         atomic_units = normalize_units(clean_atomic_units(raw_units, similarity_threshold=opts.dedup_threshold))
         logger.info(f"[Extract] {len(atomic_units)} units after dedup.")
-        return {"atomic_units": atomic_units, "warnings": warnings}
+        # the units may be in another language than the documents (the LLM often writes them in English);
+        # the student-facing prompts are built from them, so the output-language rule compares with them
+        units_language = detect_language(u.get("statement") or "" for u in atomic_units)["language"]
+        return {"atomic_units": atomic_units, "warnings": warnings,
+                "language": {**state["language"], "units": units_language}}
 
     # 3. LOs + multiple-choice variants
     def learning_objects():
@@ -267,7 +271,7 @@ def run_pipeline(sources, options: Optional[PipelineOptions] = None,
                 continue
             # stages that write for students get the output-language rule when it differs from the documents'
             lang = state.get("language") or {}
-            rule = (output_language_rule(lang.get("output"), lang.get("document"))
+            rule = (output_language_rule(lang.get("output"), source_language(lang))
                     if stage in OUTPUT_LANGUAGE_STAGES else None)
             with _Timer(stage, timings, progress), use_output_language(rule):
                 updates = run_stage()

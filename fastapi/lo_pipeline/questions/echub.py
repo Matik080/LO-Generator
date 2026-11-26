@@ -2,6 +2,7 @@ import json
 import re
 from collections import defaultdict
 from lo_pipeline.files import load_json, export_json
+from lo_pipeline.llm.json_load import parse_json
 from lo_pipeline.llm.service import call_llm
 import logging
 
@@ -106,20 +107,17 @@ JSON array only. No markdown. No explanation.
     ]
 
     response = call_llm(messages, temperature=0.3)
-    response = re.sub(r"^```(?:json)?\s*", "", response.strip())
-    response = re.sub(r"\s*```$", "", response).strip()
-
     try:
-        results = json.loads(response)
-        if isinstance(results, list) and len(results) == len(los):
+        results = parse_json(response or "")  # tolerant: markdown fences, text around the JSON
+        if isinstance(results, list) and len(results) == len(los) and all(isinstance(r, dict) for r in results):
             return results
-        logger.warning(f"[Enrich] Got {len(results)} results for {len(los)} LOs, padding with defaults.")
-    except json.JSONDecodeError as e:
-        logger.warning(f"[Enrich] JSON parse error: {e}, using defaults for this batch.")
+        count = len(results) if isinstance(results, list) else "no list of"
+        logger.warning(f"[Enrich] Got {count} results for {len(los)} LOs; this batch gets no names (defaults).")
+    except ValueError as e:  # json.JSONDecodeError is a ValueError
+        logger.warning(f"[Enrich] JSON parse error: {e}; this batch gets no names (defaults).")
 
-    # Safe fallback
-    return [{"name": "Learning Object", "time_to_handle": 90, "time_to_explain": 45}
-            for _ in los]
+    # Fallback: no name (the output then uses the question text, not a meaningless "Learning Object")
+    return [{"name": None, "time_to_handle": 90, "time_to_explain": 45} for _ in los]
 
 
 def enrich_learning_objects(learning_objects: list, batch_size: int = 10, progress=None) -> list:
@@ -137,7 +135,8 @@ def enrich_learning_objects(learning_objects: list, batch_size: int = 10, progre
     # batches run in parallel (llm/parallel.py); results come back in batch order
     for batch, enriched in zip(batches, map_batches(_enrich_batch, batches, progress)):
         for lo, meta in zip(batch, enriched):
-            lo["generated_name"] = meta.get("name", "Learning Object")
+            name = meta.get("name")
+            lo["generated_name"] = name.strip() if isinstance(name, str) and name.strip() else None
             lo["time_to_handle"] = meta.get("time_to_handle", 90)
             lo["time_to_explain"] = meta.get("time_to_explain", 45)
 
@@ -153,7 +152,7 @@ def lo_to_question(lo: dict) -> dict:
 
     # Name: "[Module 1] Malloc Return Value and Pointer Use"
     prefix = _source_prefix(lo.get("source_title", ""))
-    raw_name = lo.get("generated_name", "Learning Object")
+    raw_name = lo.get("generated_name") or "Learning Object"
     name = f"[{prefix}] {raw_name}" if prefix else raw_name
 
     # Hints: one hint text + source reference, both unnamed per their format

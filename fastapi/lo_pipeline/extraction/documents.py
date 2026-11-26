@@ -1,25 +1,80 @@
+import logging
 import os
 from typing import List, Dict, Any
 
 import PyPDF2
+
+logger = logging.getLogger(__name__)
 
 
 class ExtractionError(Exception):
     """A document could not be read, or no text was found in it (job error code extraction_failed)."""
 
 
+LETTER_RUN_MIN_LINES = 6  # vertical text: at least this many lines in a row ...
+LETTER_RUN_MAX_CHARS = 5  # ... each this short (title pieces like "cisio", "rizik")
+
+
+def join_letter_runs(text: str) -> str:
+    """Vertical (rotated) text, e.g. a slide title along the side, comes out one letter per line
+    ("R\\no\\nz\\nh…"). Runs of LETTER_RUN_MIN_LINES or more very short lines are joined into one line.
+    Word spaces are mostly lost there ("Odtestovaniakrozhodnutiu…"), but the text stays readable."""
+    lines = text.split("\n")
+    out, run = [], []
+
+    def flush():
+        if len(run) >= LETTER_RUN_MIN_LINES:
+            out.append("".join(line.strip() for line in run))
+        else:
+            out.extend(run)
+        run.clear()
+
+    for line in lines:
+        if 0 < len(line.strip()) <= LETTER_RUN_MAX_CHARS:
+            run.append(line)
+        else:
+            flush()
+            out.append(line)
+    flush()
+    return "\n".join(out)
+
+
+def pdf_page_texts(pdf_path: str) -> List[str]:
+    """Text of each page (index 0 = page 1). PDFium (pypdfium2) when available: it keeps words of
+    PowerPoint exports together, where PyPDF2 gives "Rozh o d o v a n i e". PyPDF2 otherwise."""
+    try:
+        import pypdfium2 as pdfium
+    except ImportError:
+        pdfium = None
+    if pdfium is not None:
+        try:
+            pdf = pdfium.PdfDocument(pdf_path)
+            try:
+                texts = []
+                for index in range(len(pdf)):
+                    page = pdf[index]
+                    textpage = page.get_textpage()
+                    texts.append(join_letter_runs(textpage.get_text_range().replace("\r\n", "\n").replace("\r", "\n")))
+                    textpage.close()
+                    page.close()
+                return texts
+            finally:
+                pdf.close()
+        except Exception as e:  # a file PDFium cannot read: try PyPDF2
+            logger.warning(f"[Extract] PDFium could not read {os.path.basename(pdf_path)} ({e}); using PyPDF2.")
+    with open(pdf_path, "rb") as f:
+        return [page.extract_text() or "" for page in PyPDF2.PdfReader(f).pages]
+
+
 def extract_text_from_pdf(pdf_path: str, document_title: str = None) -> str:
     try:
-        with open(pdf_path, "rb") as f:
-            reader = PyPDF2.PdfReader(f)
-            text = ""
-            title = document_title or os.path.basename(pdf_path)
-            for page_num, page in enumerate(reader.pages, 1):
-                page_text = page.extract_text()
-                if page_text:
-                    text += f"\n\n--- Page {page_num} | Source: {title} ---\n\n"
-                    text += page_text
-            return text
+        text = ""
+        title = document_title or os.path.basename(pdf_path)
+        for page_num, page_text in enumerate(pdf_page_texts(pdf_path), 1):
+            if page_text.strip():
+                text += f"\n\n--- Page {page_num} | Source: {title} ---\n\n"
+                text += page_text
+        return text
     except Exception as e:
         raise ExtractionError(f"Failed to extract text from {pdf_path}: {e}") from e
 

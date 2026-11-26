@@ -16,6 +16,17 @@ def test_rule_only_when_the_languages_differ():
     assert "written in English" in output_language_rule("en", "sk")
 
 
+def test_rule_compares_with_the_language_of_the_units():
+    from lo_pipeline.language import source_language
+    # Slovak document whose units the LLM wrote in English: Slovak output needs the rule
+    slovak_doc = {"document": "sk", "output": "sk", "units": "en"}
+    assert source_language(slovak_doc) == "en"
+    assert "written in Slovak" in output_language_rule(slovak_doc["output"], source_language(slovak_doc))
+    # units kept in Slovak, or a result from before the units language was stored: no rule
+    assert output_language_rule("sk", source_language({"document": "sk", "output": "sk", "units": "sk"})) is None
+    assert output_language_rule("sk", source_language({"document": "sk", "output": "sk"})) is None
+
+
 def test_call_llm_appends_the_rule_only_inside_the_block(monkeypatch):
     sent = []
     monkeypatch.setattr(llm_service, "_backend", lambda messages, **kw: sent.append(messages) or "ok")
@@ -48,7 +59,8 @@ def test_language_stage_and_rule_only_in_the_stages_that_write_for_students(fake
     opts.language = "sk"
     result = run_pipeline([DOC], options=opts)
 
-    assert result["language"] == {"document": "en", "confident": True, "requested": "sk", "output": "sk"}
+    assert result["language"] == {"document": "en", "confident": True, "requested": "sk", "output": "sk",
+                                  "units": "en"}
     # unit extraction (and the graph check, no student text) stay in the documents' language
     assert any("extracting atomic knowledge units" in p for p in without_rule)
     assert not any("extracting atomic knowledge units" in p for p in with_rule)

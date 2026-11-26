@@ -43,6 +43,12 @@ def detect_language(texts: Iterable[str]) -> dict:
     return {"language": language, "confident": max(sk, en) >= MIN_EVIDENCE and sk != en, "sk": sk, "en": en}
 
 
+def source_language(language_state: dict) -> Optional[str]:
+    """Language of what the student-facing prompts are built from: the atomic units (unit extraction
+    may write them in English even for a Slovak document), else the documents' language."""
+    return language_state.get("units") or language_state.get("document")
+
+
 def output_language(requested: Optional[str], document: str) -> str:
     """The language questions are written in: the requested one, or the documents' for auto/None."""
     return requested if requested in SUPPORTED else document
