@@ -6,7 +6,7 @@ the one from the earlier source file, then the earlier page, then the earlier pi
 goes first. The graph step already removes cycles; if one is still there (e.g. two LOs with the
 same id), the LO that would come first by source and page is placed anyway and the case is counted.
 """
-import heapq
+from typing import Optional, Sequence
 
 
 def _page(lo: dict) -> float:
@@ -40,8 +40,12 @@ def prerequisite_indices(los: list[dict]) -> list[set[int]]:
     return prereqs
 
 
-def lo_order(los: list[dict]) -> tuple[list[int], int]:
-    """Returns (LO indices in lesson order, number of LOs placed before a prerequisite due to a cycle)."""
+def lo_order(los: list[dict], groups: Optional[Sequence] = None) -> tuple[list[int], int]:
+    """Returns (LO indices in lesson order, number of LOs placed before a prerequisite due to a cycle).
+
+    groups: optional label per LO (e.g. topic). When given, the next LO is taken from the same group
+    as the previous one whenever its prerequisites allow it, so groups stay together.
+    """
     keys = _sort_keys(los)
     prereqs = prerequisite_indices(los)
     dependents: list[list[int]] = [[] for _ in los]
@@ -50,22 +54,26 @@ def lo_order(los: list[dict]) -> tuple[list[int], int]:
         for p in ps:
             dependents[p].append(i)
 
-    ready = [keys[i] for i in range(len(los)) if missing[i] == 0]
-    heapq.heapify(ready)
+    ready = {i for i in range(len(los)) if missing[i] == 0}
     placed = [False] * len(los)
     order, cycle_breaks = [], 0
     while len(order) < len(los):
         if ready:
-            i = heapq.heappop(ready)[2]
+            candidates = ready
+            if groups is not None and order:
+                same = {j for j in ready if groups[j] == groups[order[-1]]}
+                candidates = same or ready
+            i = min(candidates, key=lambda j: keys[j])
+            ready.discard(i)
         else:  # only cycles left: take the earliest remaining LO
-            i = min((keys[j] for j in range(len(los)) if not placed[j]))[2]
+            i = min((j for j in range(len(los)) if not placed[j]), key=lambda j: keys[j])
             cycle_breaks += 1
         placed[i] = True
         order.append(i)
         for d in dependents[i]:
             missing[d] -= 1
             if missing[d] == 0 and not placed[d]:
-                heapq.heappush(ready, keys[d])
+                ready.add(d)
     return order, cycle_breaks
 
 
