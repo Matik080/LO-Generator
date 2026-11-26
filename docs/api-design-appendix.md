@@ -99,7 +99,7 @@ Parametre sú rovnaké ako pri Mlynčeku A. Všetky sú voliteľné, chýbajúce
   "extraction": { "ocr": false },
   "questions": {
     "types": ["choice", "open", "no_answer"],
-    "per_learning_object": 3,
+    "per_section": 3,
     "choice_options": 4,
     "hints": 2
   },
@@ -116,15 +116,15 @@ Parametre sú rovnaké ako pri Mlynčeku A. Všetky sú voliteľné, chýbajúce
 | --- | --- | --- |
 | `external_ref` | vlastný identifikátor stránky. Unikátny, pre ECEH povinný (Laravel posiela `generations.external_ref`) | - |
 | `callback_url` | adresa pre webhooky. Musí byť v `LOGEN_WEBHOOK_ALLOWED_HOSTS`, inak `400 invalid_options` | - |
-| `language` | `auto` \| `sk` \| `en` | prompty B sú currently v angličtine, generovanie v slovenčine je future work (hlavná stránka, kap. 4, 5) |
-| `extraction.ocr` | OCR obrázkov, voliteľné (predvolene `false`) | B dnes OCR nemá. V obraze bez OCR (`INSTALL_OCR=false`) vráti `true` chybu `400 invalid_options` |
-| `questions.types` | ktoré typy generovať | - |
-| `questions.per_learning_object` | počet otázok na jedno LO | B dnes vytvára jedno LO = jednu otázku, ďalšie pribudnú v novom kroku 7 |
-| `questions.choice_options` | počet možností pri `choice` | B dnes vždy generuje 4 (3 distraktory + správna) |
-| `questions.hints` | počet nápovied (napr. ľahká a ťažká) | B má dnes 1 nápovedu |
+| `language` | `auto` \| `sk` \| `en` | implementované (kap. 13): pri `auto` jazyk dokumentov; otázky, nápovedy a texty hodín v jazyku výstupu |
+| `extraction.ocr` | OCR obrázkov, voliteľné (predvolene `false`) | implementované (kap. 13): skenované strany PDF a obrázky v PPTX. V obraze bez OCR (`INSTALL_OCR=0`) vráti `true` chybu `400 invalid_options`; `/v1/info` hlási `ocr_available` |
+| `questions.types` | ktoré typy generovať | `choice`, `open`, `no_answer` (kap. 13) |
+| `questions.per_section` (v návrhu `per_learning_object`) | počet otázok na jeden celok | B vytvára jedno LO = jednu otázku; hodnota > 1 (aj predvolená 3) dá varovanie `per_section_unsupported` |
+| `questions.choice_options` | počet možností pri `choice` | B generuje najviac 4 (pri menej varovanie `choice_options_unavailable`), približne 30 % otázok má 2 správne |
+| `questions.hints` | počet nápovied | B: 1. zdroj (súbor a strana), 2. nápoveda od LLM |
 | `split.mode` | `single` \| `lessons` \| `topics` \| `syllabus` | - |
 | `split.lesson_count` | počet hodín (`lessons`) | - |
-| `split.lesson_minutes` | dĺžka hodiny v minútach | predvolene `LOGEN_DEFAULT_LESSON_MINUTES` |
+| `split.lesson_minutes` | dĺžka hodiny v minútach | prijme sa, ale počet hodín neurčuje (rovnako ako A, kap. 13) |
 | `split.syllabus` | zoznam hodín (`syllabus`) | - |
 
 Príklady rozdelenia (rovnaké ako pri Mlynčeku A):
@@ -427,6 +427,8 @@ Odstráni sa: súčasný `main.py` s endpointmi pre jednotlivé kroky a globáln
 ## Príloha D - Docker a konfigurácia
 
 ### Dockerfile (náčrt)
+
+Náčrt z návrhu. Skutočný `fastapi/Dockerfile` sa líši (kap. 13): `ARG INSTALL_OCR=1`, OCR iba cez balíky `tesseract-ocr`, `tesseract-ocr-slk`, `tesseract-ocr-eng` (bez pytesseract, pdf2image a poppleru), text PDF cez `pypdfium2`.
 
 ```dockerfile
 FROM python:3.11-slim

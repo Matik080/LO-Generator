@@ -23,12 +23,19 @@ Built as part of a bachelor's thesis at FIIT STU Bratislava.
 
 ## Overview
 
-The pipeline runs in four stages:
+The pipeline (`lo_pipeline/runner.py`) runs these stages:
 
-1. **Atomic Unit Extraction** - source documents are split into sections; each section is processed by an LLM to extract self-contained atomic knowledge units (definitions, rules, examples, algorithm steps, etc.) and semantically deduplicated
-2. **LO Generation** - each atomic unit is transformed into a structured learning object: a question, a detailed answer, an optional hint, and multiple-choice distractors
-3. **Quality Filtering** - generated LOs are evaluated by two models (Llama 3.3 70B and GPT-OSS 120B on Groq); LOs that fail faithfulness, atomicity, or self-containment thresholds are regenerated up to a configurable number of times
-4. **Knowledge Graph** - a concept co-occurrence graph is built from the units, candidate prerequisite edges are generated from type hierarchy and embedding similarity, each edge is verified by an LLM, and the result is enforced as a DAG
+1. **extract** - text per page/slide/section from PDF (PDFium; optional OCR of scanned pages), PPTX (optional OCR of pictures) and HTML
+2. **language** - the documents' language (Slovak or English, no LLM) and the output language (job option `language`)
+3. **units** - an LLM extracts self-contained atomic knowledge units (definitions, rules, examples, algorithm steps, …) from each section; they are deduplicated (MiniLM) and their concepts normalised (spaCy). The units are usually written in English, also for Slovak documents, because spaCy and MiniLM work best in English
+4. **learning_objects** - each unit becomes one learning object: question, answer, hint and multiple-choice options (about 30 % of choice questions get two correct options)
+5. **lo_evaluation** - two models (`qwen/qwen3.8-27b` and `openai/gpt-oss-120b` on Groq) score each LO; LOs below the faithfulness or hint thresholds are regenerated up to `LOGEN_MAX_ATTEMPTS` times
+6. **graph** - a concept co-occurrence graph from the units, candidate prerequisite edges from type hierarchy and embedding similarity, each edge verified by an LLM, cycles removed (a DAG)
+7. **questions** - question names and time estimates; `no_answer` tasks from LOs that share a concept; texts longer than the ECEH columns are shortened once by the LLM
+8. **split** - lessons: order from the prerequisite graph, topics = communities of the concept graph, modes `single` / `lessons` / `topics` / `syllabus`, lesson titles and descriptions by the LLM
+9. **output** - the `units` result and the report (built by the worker from the pipeline result)
+
+When the output language differs from the units' language (e.g. a Slovak document, Slovak output, English units), the prompts of stages 4, 5, 7 and 8 get an instruction to write everything for students in the output language.
 
 ---
 
@@ -41,12 +48,12 @@ The pipeline runs in four stages:
 
 | Provider | Used for | Get key at |
 |---|---|---|
-| [Groq](https://console.groq.com) | Llama 3.3 70B + GPT-OSS 120B (generation + evaluation) | console.groq.com |
-| [OpenRouter](https://openrouter.ai) | Kimi K2 Instruct (optional third evaluator) | openrouter.ai |
+| [Groq](https://console.groq.com) | `qwen/qwen3.8-27b` (generation) + `qwen/qwen3.8-27b`, `openai/gpt-oss-120b` (evaluation) | console.groq.com |
+| [OpenRouter](https://openrouter.ai) | other models (optional) | openrouter.ai |
 | GitHub Models | Fallback | github.com/marketplace/models |
 | OpenAI | Fallback | platform.openai.com |
 
-Groq's developer tier provides both Llama 3.3 70B and GPT-OSS 120B for free and is sufficient to run the full pipeline. OpenRouter is only needed if you want to add Kimi K2 as an additional evaluator model.
+Groq alone is enough to run the full pipeline. Any other OpenAI-compatible provider (also a local vLLM or Ollama server) can be used through `LOGEN_LLM_BASE_URL`. Models listed in `LEGACY_ROUTES` (`lo_pipeline/llm/service.py`, e.g. `llama-3.3-70b-versatile`, `moonshotai/kimi-k2*`) are routed through OpenRouter.
 
 ---
 
@@ -161,7 +168,28 @@ curl -s -H "X-API-Key: $KEY" http://localhost:8000/v1/jobs/3f6b…/report
 
 Other endpoints: `GET /v1/jobs?external_ref=gen-1` (find a job), `DELETE /v1/jobs/{id}` (cancel a running job, delete a finished one), `POST /v1/jobs/{id}/retry` (run a failed job again within 24 h, it continues where it stopped), `GET /v1/schema/{lesson|report|options}`, `GET /v1/info`, `GET /health` (no key). Every error has the form `{"error": {"code", "message", "details"}}`.
 
-**Webhooks.** With `callback_url` in the options (its host must be in `LOGEN_WEBHOOK_ALLOWED_HOSTS`), the service POSTs the job state there on `job.stage_changed`, `job.completed`, `job.failed` and `job.cancelled`; the result itself is fetched from `/result`. Headers and body are the same as Mlynček A's:
+**Job options** (the `options` form field, JSON; all optional; the full rules are in `GET /v1/schema/options`, the same contract as Mlynček A):
+
+| Option | Values | What B does |
+|---|---|---|
+| `language` | `auto` (default) \| `sk` \| `en` | language of questions, hints and lesson texts; `auto` = the documents' language (detected) |
+| `extraction.ocr` | `false` (default) \| `true` | read scanned PDF pages and pictures in PPTX with Tesseract (Slovak + English); only when `/v1/info` reports `ocr_available`, otherwise `400 invalid_options` |
+| `questions.types` | `choice`, `open`, `no_answer` | one LO gives one `choice` (or `open`) question; `no_answer` = tasks without automatic grading, one per group of LOs sharing a concept |
+| `questions.hints` | `0` \| `1` \| `2` (default) | 1st hint = the source (file and page, written by code: "Zdroj"/"Source"), 2nd = the LLM hint |
+| `questions.choice_options` | 2–10 | B generates up to 4 options (`choice_options_unavailable` when fewer than requested) |
+| `questions.per_section` | 1–10 (default 3, as Mlynček A) | B makes one question per LO; any value above 1 (also the default) gives the warning `per_section_unsupported` |
+| `split` | `{"mode": "single"}` (default) | one lesson |
+| | `{"mode": "lessons", "lesson_count": 5}` | that many lessons in prerequisite order, even in length, cut preferably between topics (`lesson_count_reduced`, `lessons_unbalanced`) |
+| | `{"mode": "topics"}` | one lesson per topic (concept-graph community); small topics merged, big ones cut (3–15 LOs) |
+| | `{"mode": "syllabus", "syllabus": [{"title": "…", "description": "…", "pages": "D1:1-10"}]}` | the teacher's lessons; LOs by page (`D1` = first uploaded file), else by similarity (`syllabus_unmentioned_sections`, `empty_lesson`, `prerequisite_order`); `D3` with two files → `400 invalid_options` |
+| | `{"mode": "syllabus", "syllabus_text": "3 hodiny: …"}` | the LLM turns the text into lessons (titles in the teacher's words, "vynechaj …" leaves content out: `syllabus_skipped_sections`); unusable text → `topics` (`syllabus_plan_invalid`) |
+| `split.lesson_minutes` | 5–240 | accepted but not used for the number of lessons (as Mlynček A; with a syllabus: `syllabus_lesson_minutes_ignored`) |
+
+Warnings go to the report (`warnings[]` with `code` and `message`); the codes are the same as Mlynček A's. The split never makes a job fail. In the result, the question text and the choices are HTML-escaped (ECEH shows them as HTML, so `#include <stdio.h>` appears exactly like that); names and lesson titles are plain text. A question text or choice still longer than its ECEH column after one LLM shortening leaves the question out (`field_too_long`); a too-long hint is left out (`hint_too_long`). The report's `quality` has `question_faithfulness_avg` and `answerability_avg` (B's faithfulness and question-clarity scores, 0–1) and `topic_coverage` (share of the document's topics that got a question).
+
+**OCR in the image.** The image is built with Tesseract by default. Without it: `docker build --build-arg INSTALL_OCR=0 .` (or `false`); `/v1/info` then reports `"ocr_available": false`.
+
+**Webhooks.** With `callback_url` in the options (its host must be in `LOGEN_WEBHOOK_ALLOWED_HOSTS`), the service POSTs the job state there on `job.stage_changed` (stages `extract`, `language`, `units`, `learning_objects`, `lo_evaluation`, `graph`, `questions`, `split`, `output`), `job.completed`, `job.failed` and `job.cancelled`; the result itself is fetched from `/result`. Headers and body are the same as Mlynček A's:
 
 ```http
 X-QGen-Event: job.completed
@@ -303,6 +331,17 @@ From Python: `from lo_pipeline.runner import run_pipeline; result = run_pipeline
 
 **Resuming after a crash.** The CLI saves progress to `<out>.checkpoint/`: the result of each finished step and every LLM answer as it arrives. If a run is interrupted, run the same command again. It skips finished steps and reuses the saved answers, so no LLM call is paid twice. If the input files or options changed, the old checkpoint is discarded and the run starts over. The folder is removed after a successful run. Use `--checkpoint-dir` to choose the folder or `--no-checkpoint` to turn this off.
 
+**A real run with a cost limit.** `tools/capped_run.py` runs the whole pipeline with job options and stops when it reaches a number of LLM calls; it writes the pipeline result, the `units` result and the report to `output/`. `--inspect` only shows the extracted pages and the detected language (no LLM):
+
+```bash
+cd fastapi
+docker run --rm -v "$(pwd):/app" -w /app lo-generator-fastapi python tools/capped_run.py input/X.pdf --inspect
+docker run --rm -u root -v "$(pwd):/app" -w /app lo-generator-fastapi \
+  python tools/capped_run.py input/X.pdf --max-calls 120 --language auto --split '{"mode": "topics"}'
+```
+
+A 12-slide deck takes about 90–120 calls, the 26-page `Testing_text.pdf` about 400.
+
 ---
 
 ## Running tests
@@ -345,8 +384,10 @@ python tools/resilience_check.py                # --only 3 4 for some scenarios,
     ├── pipeline_ui.html                <- single-page web UI served at http://localhost:8000
     ├── main.py                         <- FastAPI app: all endpoints, SSE log streaming, auto-save to output/
     ├── lo_pipeline/                    <- pipeline core (no web/UI code)
-    │   ├── extraction/documents.py     <- text extraction from PDF/HTML/PPTX, section splitting
-    │   ├── llm/service.py              <- LLM call wrapper with retries and rate limit handling
+    │   ├── extraction/documents.py     <- text extraction from PDF (PDFium, PyPDF2 fallback)/HTML/PPTX, section splitting
+    │   ├── extraction/ocr.py           <- optional OCR (Tesseract) of scanned PDF pages and PPTX pictures
+    │   ├── language.py                 <- document language (sk/en) and output language
+    │   ├── llm/service.py              <- LLM call wrapper with retries and rate limit handling, output-language rule
     │   ├── llm/embeddings.py           <- sentence-transformers wrapper (all-MiniLM-L6-v2) for cosine similarity
     │   ├── llm/json_load.py            <- tolerant JSON parsing of LLM output
     │   ├── units/extractor.py          <- extracts atomic knowledge units from text sections and semantic deduplication
@@ -356,13 +397,20 @@ python tools/resilience_check.py                # --only 3 4 for some scenarios,
     │   ├── lo/quality_filter.py        <- quality filter + regeneration of failing LOs
     │   ├── lo/lexical.py               <- tokenizer and lexical overlap
     │   ├── graph/builder.py            <- builds concept co-occurrence graph, generates and LLM-verifies prerequisite edges, enforces DAG
-    │   ├── questions/echub.py          <- enriches LOs and converts them to ECEH JSON format for platform upload
+    │   ├── questions/echub.py          <- question names and time estimates (enrich); older ECHub export
+    │   ├── questions/no_answer.py      <- no_answer tasks from LOs that share a concept
+    │   ├── questions/shorten.py        <- one LLM shortening of texts longer than the ECEH columns
+    │   ├── questions/text_safety.py    <- unsafe HTML removed from plain-text fields
+    │   ├── questions/units_output.py   <- pipeline result -> `units` result + report (checked against the schemas)
+    │   ├── split/                      <- lessons: order, lessons/topics/syllabus modes, syllabus_text plan, titles
+    │   ├── contract/                   <- API contract models (units, report, options, jobs) -> schemas/*.json
     │   ├── runner.py                   <- run_pipeline(): every step in one call, progress reporting, CLI
     │   ├── checkpoint.py               <- saved progress so an interrupted run can resume
     │   └── files.py                    <- JSON load/save helpers for standalone scripts
     ├── service/                        <- the /v1 API, job store (Redis + /data), worker, mock backend
     ├── schemas/                        <- JSON Schemas of the contract (units, report, options), generated
     ├── analysis/                       <- thesis analysis scripts (post_statistics, lexical overlap, unit merger)
+    ├── tools/                          <- capped_run.py (one real run with an LLM call cap), resilience_check.py, fake_llm_server.py
     ├── tests/                          <- pytest suite; LLM answers are replayed from tests/fixtures/llm_cassette.json
     ├── input/                          <- uploaded source files (persisted on host via Docker volume mount)
     └── output/                         <- generated outputs: atomic_units.json, learning_objects.json, echub_export.json

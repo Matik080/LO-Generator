@@ -531,13 +531,49 @@ Základné pravidlá prístupu sú spoločné s Mlynčekom A (kap. 3, Prístup a
 | Služba bez overenia (prázdny `LOGEN_API_KEYS`). Potom by ktokoľvek mohol volať aj `DELETE /v1/jobs/{id}`. | Pri nasadení s ECEH je `LOGEN_API_KEYS` povinný a kľúč má iba Laravel. Prázdny zoznam je povolený iba pri lokálnom vývoji. |
 | Uhádnuteľné `job_id`. | `job_id` je UUID4 (122 náhodných bitov) **(B)**. |
 | Zahltenie služby a minutie rozpočtu na LLM. | Limity počtu súborov, veľkosti a počtu strán (`LOGEN_MAX_FILES`, `LOGEN_MAX_UPLOAD_MB`, `LOGEN_MAX_PAGES`), upload sa číta po častiach s kontrolou veľkosti, limit rozbalenej veľkosti PPTX (`LOGEN_MAX_UNZIPPED_MB`, ZIP bomba) **(B)**, najviac `LOGEN_MAX_ACTIVE_JOBS` aktívnych úloh, inak `429 too_many_jobs`. |
-| Škodlivý dokument (prompt injection) prinúti LLM vložiť do `hints[].url` napr. `<script>`. Ak ho platforma zobrazí bez úpravy, ide o stored XSS v teste. | Služba pred uložením prečistí HTML v `hints[].url` podľa zoznamu povolených značiek (kap. 6). Ostatné polia sú čistý text. Platforma by mala HTML pri zobrazení aj tak escapovať alebo čistiť. |
+| Škodlivý dokument (prompt injection) prinúti LLM vložiť do `hints[].url` napr. `<script>`. Ak ho platforma zobrazí bez úpravy, ide o stored XSS v teste. | Služba pred uložením prečistí HTML v `hints[].url` podľa zoznamu povolených značiek (kap. 6). Zadanie a možnosti posiela ako escapované HTML, ostatné polia ako čistý text bez nebezpečných značiek (kap. 13). Platforma by mala HTML pri zobrazení aj tak escapovať alebo čistiť (frontend ECEH to robí cez DOMPurify). |
 | Zneužitie webhooku na volanie iných adries (SSRF) alebo podvrhnutý webhook. | Webhooky iba na hostiteľov z `LOGEN_WEBHOOK_ALLOWED_HOSTS` (inak `400 invalid_options`). Telo je podpísané HMAC, Laravel odmietne správu bez platného podpisu alebo staršiu ako 5 minút. |
 | Prompt injection mení obsah otázok (napr. nesprávne označená správna odpoveď). | LLM nemá žiadne nástroje ani prístup k systému, takže riziko je iba v obsahu. Hodnotenie (faithfulness, kontrola `is_correct`) takéto otázky zväčša odfiltruje. Otázky aj tak pred použitím kontroluje učiteľ v ECEH. |
 | Služba alebo Redis dostupné z internetu. | API iba v internej sieti (`expose`, nie `ports`), Redis nemá publikovaný port a má heslo (`requirepass`) **(B)**. `/docs` a `/openapi.json` sa v produkcii dajú vypnúť (`LOGEN_DOCS_ENABLED=false`) **(B)**. |
 | Únik tajomstiev. | Kľúče iba v `.env` / Docker secrets, nikdy v obraze ani v logoch. Logy neobsahujú text dokumentu ani API kľúče. Kontajner beží pod používateľom bez root práv. |
 
 **Poznámka k nálezom skenera.** Nájdené endpointy (`DELETE /api/helps/{id}`, `/api/options/{id}`, `/api/review/activity/{id}`, `/api/review/event/{id}`) patria backendu platformy, nie Mlynčeku A ani B. Odporúčanie pre backend: každý endpoint, ktorý mení dáta (POST/PUT/PATCH/DELETE), musí overiť prihláseného používateľa **aj** to, či má k danému objektu právo (napr. iba autor testu alebo učiteľ kurzu). Samotné prihlásenie nestačí.
+
+### 13. Stav implementácie (26. 11. 2026)
+
+Kapitoly 1–12 opisujú návrh. Táto kapitola zhŕňa, čo je implementované, a kde sa implementácia od návrhu líši. Rozhranie je rovnaké ako pri Mlynčeku A: endpointy, `options`, stavy, kódy chýb úlohy, webhooky (`X-QGen-*`), tvar `units` a reportu a kódy varovaní. Laravel preto volá oba mlynčeky rovnakým kódom. Spracovanie je vlastné (jadro B), kód Mlynčeka A sa nepreberal.
+
+**Čím sa B líši od A**
+
+| Oblasť | Mlynček B |
+| --- | --- |
+| Jadro spracovania | Atomické jednotky → learning objekty (otázka, odpoveď, nápoveda, možnosti) → hodnotenie dvoma modelmi a regenerácia slabých LO → graf prerekvizít a graf pojmov. Na tom stoja nové typy otázok aj rozdelenie do hodín. |
+| Tematický celok | Celok v reporte (`sections`, `S-<n>`) je jedno atomické LO s typom, tvrdením, prerekvizitami z grafu a témou. Z jedného LO je jedna otázka; `per_section` > 1 (aj predvolené 3) dá varovanie `per_section_unsupported`. |
+| Nápovedy | Dve: 1. zdroj (súbor a strana, píše kód), 2. nápoveda od LLM. A má iba zdroj; `questions.hints = 1` dá rovnaké správanie. |
+| Vstupy | PDF, PPTX aj HTML (snímka alebo sekcia pod nadpisom sa počíta ako strana). |
+| Kroky | `extract`, `language`, `units`, `learning_objects`, `lo_evaluation`, `graph`, `questions`, `split`, `output`. Kroky `units` a `graph` sú iba v B. |
+| `bloom_level` | Vždy `null` (dohodnuté s Martinom Š.). |
+| `quality` v reporte | `question_faithfulness_avg` = faithfulness z hodnotenia B, `answerability_avg` = question_clarity z hodnotenia B, `topic_coverage` = podiel tém dokumentu (komunity grafu pojmov s aspoň 2 pojmami), ku ktorým je otázka. `section_faithfulness_avg` je `null`, lebo celky B sú samotné LO. Všetko na škále 0–1 ((x − 1) / 4). |
+
+**Odchýlky od návrhu**
+
+| Kde | Návrh | Implementácia |
+| --- | --- | --- |
+| Kap. 4, jazyk | Prompty v angličtine, slovenčina ako budúca práca. | Krok `language` rozpozná jazyk dokumentov (sk/en, bez LLM). Atomické jednotky píše LLM väčšinou po anglicky aj pri slovenskom dokumente; zostávajú tak zámerne, lebo spaCy (`en_core_web_sm`) a MiniLM sú anglické a stojí na nich deduplikácia aj graf. Ak sa jazyk výstupu (`language`, pri `auto` jazyk dokumentov) líši od jazyka jednotiek, prompty krokov `learning_objects`, `lo_evaluation`, `questions` a `split` dostanú pokyn písať všetko pre študentov v jazyku výstupu. Inak sú prompty bez zmeny. Texty, ktoré píše kód („Zdroj“/„Source“, „strana“/„page“), sú v jazyku výstupu. Overené na slovenskej prezentácii (12 snímok): otázky, možnosti aj nápovedy po slovensky. |
+| Kap. 4, extrakcia | PyPDF2; OCR cez pytesseract a pdf2image. | Text PDF cez PDFium (`pypdfium2`, PyPDF2 ako záloha), lebo PyPDF2 rozbíjal PDF exportované z PowerPointu na jednotlivé písmená. Zvislé nadpisy (písmeno na riadok) sa spoja. OCR (`extraction.ocr`) volá program Tesseract (slk + eng) priamo; strany PDF bez textu vykreslí PDFium, obrázky v PPTX číta tiež. Bez OCR skončí naskenovaný PDF `extraction_failed`. |
+| Kap. 6, HTML | Ostatné polia čistý text, v `hints[].url` povolené aj `ul`, `ol`, `li`, `pre`, `sub`, `sup`. | Frontend ECEH zobrazuje zadanie, možnosti a nápovedy ako HTML (DOMPurify). Zadanie a texty možností sú preto escapované HTML (napr. `#include &lt;stdio.h&gt;`), takže sa zobrazia presne a nijaká značka sa nevykoná. `name` a názov a popis hodiny sú obyčajný text bez nebezpečných značiek. Nápoveda je `<p>` s escapovaným textom (nh3 povoľuje `p`, `br`, `strong`, `em`, `code`). |
+| Kap. 6, dĺžky | Skrátenie cez LLM, potom vyradenie otázky. | Texty nad limit skráti LLM raz (krok `questions`, bežne žiadne volanie). Potom: `name` sa skráti na koniec slova, príliš dlhá nápoveda sa vynechá (`hint_too_long`, otázka ostane), príliš dlhé zadanie alebo možnosť vyradí otázku (`field_too_long`). Dĺžka zadania a možností sa meria po escapovaní. |
+| Kap. 7, `choice` | Viac správnych odpovedí rozšírením distraktorov, kontrola `is_correct` hodnotením. | Približne 30 % otázok `choice` dostane 2 správne možnosti priamo pri generovaní možností (`LOGEN_TWO_CORRECT_SHARE`), vždy najviac 4 možnosti. Hodnotenie sa nemenilo (overené v `baseline-quality.md`). |
+| Kap. 7, `no_answer` | Nové kritérium hodnotenia. | Úloha pre skupinu LO s rovnakým pojmom `anchor` (aspoň 2 LO, najviac 6), v hodine hneď po poslednom LO skupiny, nápovedy = zdroje skupiny + nápoveda od LLM. Samostatné hodnotenie úloh `no_answer` nie je. |
+| Kap. 8, rozdelenie | Čas hodiny z `lesson_minutes`; N = ceil(čas / kapacita). | Ako pri A: `lesson_minutes` sa prijme, ale počet hodín neurčuje (pri sylabe varovanie `syllabus_lesson_minutes_ignored`); `lessons` vyžaduje `lesson_count`. `lessons`: súvislé úseky poradia podľa prerekvizít, vyvážené podľa času otázok, rez radšej medzi témami. `topics`: komunity grafu pojmov (Louvain), malé témy sa spoja, veľké rozdelia (3–15 LO); LO bez témy dostanú najpodobnejšiu tému (MiniLM); názov témy podľa pojmov LO a MiniLM. `syllabus`: podľa strán (`D<n>` = n-tý súbor), inak podľa podobnosti; `syllabus_text` prevedie LLM na zoznam hodín (názvy v jazyku učiteľa, „vynechaj …“ vynechá učivo). Poradie prerekvizít v sylabe učiteľa sa iba hlási (`prerequisite_order`), obsah sa neposúva (A ho posúva, `prerequisite_moved`). Názvy a popisy hodín píše LLM, 5 hodín na volanie; pri chybe náhradné názvy (`lesson_titles_failed`). Rozdelenie nikdy nespôsobí zlyhanie úlohy. |
+| Príloha A | `questions.per_learning_object`. | `questions.per_section` (rovnako ako A). |
+| Príloha D | `ARG INSTALL_OCR=true`, `requirements-ocr.txt`, poppler. | `ARG INSTALL_OCR=1` (prijme aj `true`; `0`/`false` = bez OCR), iba balíky `tesseract-ocr`, `tesseract-ocr-slk`, `tesseract-ocr-eng`; `/v1/info` hlási `ocr_available`. |
+
+**Overenie a čo ostáva**
+
+- 431 automatických testov bez skutočného LLM (nahraté odpovede, falošný LLM, falošné OCR) a test so skutočným Tesseractom v image.
+- Skutočné behy cez kontajnery: kvalita a nové typy otázok na `Testing_text.pdf` (`baseline-quality.md`), slovenská prezentácia (jazyk, PDFium), naskenovaná kópia prezentácie (OCR, správne strany).
+- Ostáva: integračný test s ECEH (Laravel, webhooky, uloženie výsledku), 2 záverečné behy na `Testing_text.pdf` proti cieľom z baseline (po zmene extrakcie PDF a jazyka).
 
 ### Odpovede pre backend
 

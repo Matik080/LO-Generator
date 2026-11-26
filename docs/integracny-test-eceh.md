@@ -10,12 +10,12 @@ Všetky príkazy sú z priečinka `fastapi/`. Popis API je v [README](../README.
 
 - [ ] Všetko je commitnuté a pushnuté, na serveri bude rovnaký kód.
 - [ ] Testy prechádzajú (`python -m pytest -q tests` v Docker image, cca 2 min).
-- [ ] Image sa dá zostaviť: `docker build -t lo-generator-fastapi:latest .`
+- [ ] Image sa dá zostaviť: `docker build -t lo-generator-fastapi:latest .` (predvolene s OCR, Tesseract; bez neho `--build-arg INSTALL_OCR=0`).
 - [ ] Pripravené tajné hodnoty (napr. `openssl rand -hex 24`):
   - heslo pre Redis (`LOGEN_REDIS_PASSWORD`), iba písmená a číslice,
   - API kľúč pre Laravel (`LOGEN_API_KEYS`),
   - tajný kľúč webhookov (`LOGEN_WEBHOOK_SECRET`). Ten istý musí mať Laravel.
-- [ ] Na Groq je kredit. Jedna úloha s malým dokumentom stojí cca 26 volaní, `Testing_text.pdf` cca 370 – 400 volaní (5 – 6 min).
+- [ ] Na Groq je kredit. Jedna úloha s malým dokumentom (`c_memory.html`) stojí cca 30 volaní, prezentácia s 12 snímkami cca 90 – 120, `Testing_text.pdf` cca 400 volaní (5 – 6 min).
 
 ### Na čo sa opýtať vopred
 
@@ -30,6 +30,13 @@ Všetky príkazy sú z priečinka `fastapi/`. Popis API je v [README](../README.
 - Posiela súbory vo formulárovom poli presne `files`? (Pole `files[]` služba neprijme, vráti `422 validation_error`.)
 - Číta Laravel aj `/report`, alebo iba `/result`?
 - Kontroluje výsledok JSON schémou (`GET /v1/schema/lesson`)?
+
+**Ladislavovi oznámiť (zmeny od posledného šprintu, rozhranie ostáva rovnaké ako pri Mlynčeku A):**
+- Webhooky `job.stage_changed` majú aj kroky `language` (po `extract`) a `split` (pred `output`). Obe sú v zozname krokov kontraktu.
+- Zadanie otázky (`description`) a texty možností (`choices[].text`) sú escapované HTML (napr. `#include &lt;stdio.h&gt;`), lebo frontend ECEH ich zobrazuje ako HTML cez DOMPurify. `name` a názov a popis hodiny sú obyčajný text.
+- Pri `split` inom ako `single` príde viac hodín v `units`; varovania rozdelenia (`lesson_count_reduced`, `empty_lesson`, `syllabus_*` …) majú rovnaké kódy ako pri A a sú v `/report`.
+- Texty, ktoré píše kód, sú v jazyku výstupu: pri anglickom dokumente nápoveda „Source“ a „page“, pri slovenskom „Zdroj“ a „strana“.
+- `/v1/info` má `ocr_available`; `extraction.ocr = true` bez OCR v image vráti `400 invalid_options`.
 
 ---
 
@@ -77,7 +84,7 @@ Poradie je od lacného po drahé. Body a–c nestoja nič, body d a ďalej volaj
 
 ### a) Kľúč a základné endpointy
 - [ ] `GET /v1/info` bez `X-API-Key` → `401 unauthorized`.
-- [ ] `GET /v1/info` so správnym kľúčom → `200`, v odpovedi `"backend": "redis"`.
+- [ ] `GET /v1/info` so správnym kľúčom → `200`, v odpovedi `"backend": "redis"` a `"ocr_available": true`.
 - [ ] `GET /v1/schema/lesson` → JSON schéma výsledku (Laravel si ju môže uložiť).
 
 ### b) Chybné požiadavky (bez LLM)
@@ -92,10 +99,10 @@ HTML bez textu (napr. `<html><body></body></html>`) s `callback_url`:
 - [ ] Laravel overí podpis (`X-QGen-Signature`) a odpovie `2xx`.
 - [ ] `GET /v1/jobs/{id}` vráti rovnaký stav ako posledný webhook.
 
-### d) Malá skutočná úloha (cca 26 volaní LLM, menej ako minúta)
+### d) Malá skutočná úloha (cca 30 volaní LLM, asi minúta)
 Dokument `fastapi/tests/fixtures/c_memory.html`, `options` napr. `{"external_ref": "test-1", "callback_url": "<adresa webhooku>"}`:
-- [ ] Webhooky `job.stage_changed` pre kroky `extract` … `output` a nakoniec `job.completed`.
-- [ ] `GET /v1/jobs/{id}/result` → `200`, jeden unit s otázkami `choice` / `open`, prejde schémou.
+- [ ] Webhooky `job.stage_changed` pre kroky `extract`, `language`, `units` … `split`, `output` a nakoniec `job.completed`.
+- [ ] `GET /v1/jobs/{id}/result` → `200`, jeden unit s názvom a popisom od LLM, otázky `choice` / `open` a na konci skupín `no_answer`, prejde schémou. Dokument je anglický, preto nápovedy „Source“ a „page“.
 - [ ] `GET /v1/jobs/{id}/report` → `200` (ak ho Laravel používa).
 - [ ] Laravel uloží výsledok do databázy ECEH (tabuľky units, events, helps, options) a otázky sa zobrazia v ECEH.
 - [ ] Druhý `POST` s rovnakým `external_ref` → `200`, `replayed: true`, rovnaké `job_id` (žiadna nová úloha).
@@ -105,7 +112,13 @@ Dokument `fastapi/tests/fixtures/c_memory.html`, `options` napr. `{"external_ref
 - [ ] `DELETE` dokončenej úlohy → `204`, potom `GET` → `404 job_not_found`.
 - [ ] `POST /v1/jobs/{id}/retry` pre úlohu z bodu c → `200`, `status: queued` (zlyhá znova, ale overí sa, že retry funguje).
 
-### f) Voliteľne: veľký dokument (cca 400 volaní, 5 – 6 min)
+### f) Voliteľne: rozdelenie do hodín a jazyk (cca 30 volaní každý)
+Ten istý malý dokument s iným `external_ref`:
+- [ ] `"split": {"mode": "lessons", "lesson_count": 2}` → v `result` dve hodiny, každá s vlastným názvom; v `report.question_meta` `unit` 0 aj 1.
+- [ ] `"language": "sk"` → otázky, možnosti a nápovedy po slovensky, hoci dokument je anglický.
+- [ ] `"split": {"mode": "syllabus", "syllabus": [{"title": "A", "pages": "D3:1"}]}` s jedným súborom → `400 invalid_options` (bez LLM).
+
+### g) Voliteľne: veľký dokument (cca 400 volaní, 5 – 6 min)
 - [ ] `Testing_text.pdf`: Laravel čaká na webhook `job.completed`, priebeh (`progress`) v ECEH rastie.
 
 ---
@@ -120,7 +133,8 @@ Dokument `fastapi/tests/fixtures/c_memory.html`, `options` napr. `{"external_ref
 | c) zlyhaná úloha + webhooky | | |
 | d) malá úloha, výsledok v ECEH | | |
 | e) zrušenie a retry | | |
-| f) veľký dokument (čas) | | |
+| f) rozdelenie a jazyk | | |
+| g) veľký dokument (čas) | | |
 
 Ak prejde aspoň d), úloha 6 je hotová (posledné kritérium). Odchýlky zapísať do Jiry k úlohe 6 alebo 7.
 
@@ -139,6 +153,8 @@ Ak prejde aspoň d), úloha 6 je hotová (posledné kritérium). Odchýlky zapí
 | Webhook nepríde | Log `docker compose ... logs scheduler`. Ak tam je „HTTP 401“, Laravel odmieta podpis (rôzny `LOGEN_WEBHOOK_SECRET`). Ak „ConnectError“, scheduler nevidí Laravel (sieť, meno hostiteľa). Služba skúsi doručiť ešte po 10 s, 60 s a 300 s. Záloha: `GET /v1/jobs/{id}`. |
 | Úloha `failed` s `llm_error` a správou „rejected the API key“ | Neplatný `GROQ_API_KEY`. Správa „Rate limit“: znížiť `LOGEN_LLM_MAX_CONCURRENCY` (napr. na 2). |
 | Úloha visí v `queued` | Nebeží `worker`. `docker compose ... ps`, `docker compose ... logs worker`. |
+| `400 invalid_options` pri `extraction.ocr` | Image je zostavený bez OCR (`INSTALL_OCR=0`); `/v1/info` ukáže `"ocr_available": false`. |
+| Otázky majú v ECEH viditeľné `&lt;` alebo `&amp;` | Laravel alebo frontend zobrazuje `description` / `choices` ako obyčajný text; patria do HTML zobrazenia (ako dnes v `QuestionView.tsx`). |
 
 Užitočné príkazy (vždy s oboma súbormi `-f docker-compose.yml -f docker-compose.eceh.yml`):
 ```bash
